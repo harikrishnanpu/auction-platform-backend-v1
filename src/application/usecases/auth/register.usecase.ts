@@ -50,7 +50,7 @@ export class RegisterUseCase implements IRegisterUseCase {
 
     const userId = this.idGeneratingService.generateId();
 
-    const newUser = User.create({
+    const userEntity = User.create({
       id: userId,
       name,
       email: emailVo.getValue(),
@@ -58,11 +58,15 @@ export class RegisterUseCase implements IRegisterUseCase {
       authProvider: authProviderVo,
     });
 
-    await this.userRepository.save(newUser);
+    if (userEntity.isFailure) {
+      return Result.fail(userEntity.getError());
+    }
+
+    await this.userRepository.save(userEntity.getValue());
 
     return Result.ok<RegisterUserOutput>({
       message: 'User registered successfully',
-      userId: newUser.getId(),
+      userId: userEntity.getValue().getId(),
     });
   }
 }
