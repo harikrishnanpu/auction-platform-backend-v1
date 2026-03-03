@@ -1,15 +1,23 @@
+import { Result } from '@domain/shared/result';
+
 export class Email {
   private readonly value: string;
 
-  constructor(email: string) {
-    if (!email.includes('@')) {
-      throw new Error('Invalid email format');
-    }
-
-    this.value = email.toLowerCase();
+  private constructor(email: string) {
+    this.value = email;
   }
 
-  getValue(): string {
+  public static create(email: string): Result<Email> {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return Result.fail<Email>('Invalid email format');
+    }
+
+    return Result.ok(new Email(email.toLowerCase()));
+  }
+
+  public getValue(): string {
     return this.value;
   }
 }

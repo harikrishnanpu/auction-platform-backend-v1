@@ -1,6 +1,7 @@
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';
 import { Kyc } from '@domain/value-objects/kyc.vo';
+import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
 
 export enum UserRoleEnum {
@@ -29,18 +30,46 @@ export class User {
     private readonly id: string,
     private name: string,
     private readonly email: Email,
+    private phone: Phone,
     private readonly authProvider: AuthProvider,
     roles: UserRole[],
     status: UserStatus = UserStatus.ACTIVE,
     kyc?: Kyc,
   ) {
-    if (roles.length === 0) {
-      throw new Error('User must have at least one role');
-    }
-
     this.roles = new Set(roles);
     this.status = status;
     this.kyc = kyc;
+
+    this.validate();
+  }
+
+  private validate() {
+    if (this.roles.size === 0) {
+      throw new Error('user must have at least one role');
+    }
+
+    if (
+      this.roles.has(UserRole.SELLER) &&
+      (!this.kyc || !this.kyc.isVerified())
+    ) {
+      throw new Error('seller role requires verified KYC');
+    }
+  }
+
+  public static create({
+    id,
+    name,
+    email,
+    phone,
+    authProvider,
+  }: {
+    id: string;
+    name: string;
+    email: Email;
+    phone: Phone;
+    authProvider: AuthProvider;
+  }): User {
+    return new User(id, name, email, phone, authProvider, [UserRole.USER]);
   }
 
   public addRole(role: UserRole) {
@@ -59,7 +88,7 @@ export class User {
 
   public verifyKyc() {
     if (!this.kyc) {
-      throw new Error('No KYC submitted');
+      throw new Error('no KYC submitted');
     }
 
     this.kyc = this.kyc.verify();

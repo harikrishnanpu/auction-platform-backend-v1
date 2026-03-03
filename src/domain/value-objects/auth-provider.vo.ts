@@ -3,7 +3,8 @@ import { AuthProviderType } from '@domain/entities/user.entity';
 export class AuthProvider {
   constructor(
     private readonly type: AuthProviderType,
-    private readonly providerId: string,
+    private readonly providerId: string | null,
+    private readonly passwordHash?: string,
   ) {}
 
   getType() {
