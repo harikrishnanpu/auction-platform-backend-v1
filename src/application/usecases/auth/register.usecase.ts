@@ -5,7 +5,7 @@ import {
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
-import { AuthProviderType, User } from '@domain/entities/user.entity';
+import { User } from '@domain/entities/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
@@ -46,11 +46,7 @@ export class RegisterUseCase implements IRegisterUseCase {
 
     const hashedPassword = await this.passwordService.hashPassword(password);
 
-    const authProviderVo = new AuthProvider(
-      AuthProviderType.LOCAL,
-      null,
-      hashedPassword,
-    );
+    const authProviderVo = AuthProvider.createLocal(hashedPassword);
 
     const userId = this.idGeneratingService.generateId();
 
