@@ -1,13 +1,13 @@
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { Email } from '@domain/value-objects/email.vo';
 import { EmailQueue } from '@infrastructure/queue/email.queue';
-import { REDIS_TYPES } from 'di/types/redis/redis.types';
+import { TYPES } from 'di/types.di';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class EmailService implements IEmailService {
   constructor(
-    @inject(REDIS_TYPES.EmailQueue)
+    @inject(TYPES.EmailQueue)
     private _emailQueue: EmailQueue,
   ) {}
 

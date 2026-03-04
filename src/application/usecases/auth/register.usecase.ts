@@ -14,7 +14,7 @@ import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
-import { AUTH_TYPES } from 'di/types/auth/auth.types';
+import { TYPES } from 'di/types.di';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -22,11 +22,11 @@ export class RegisterUseCase implements IRegisterUseCase {
   private userRepository: IUserRepository;
 
   constructor(
-    @inject(AUTH_TYPES.UserRepository)
+    @inject(TYPES.IUserRepository)
     userRepo: IUserRepository,
-    @inject(AUTH_TYPES.PasswordService)
+    @inject(TYPES.IPasswordService)
     private _passwordService: IPasswordService,
-    @inject(AUTH_TYPES.IdGeneratingService)
+    @inject(TYPES.IIdGeneratingService)
     private _idGeneratingService: IIdGeneratingService,
     private _otpService: IOtpService,
     private _emailService: IEmailService,
@@ -79,7 +79,7 @@ export class RegisterUseCase implements IRegisterUseCase {
     }
 
     await this.userRepository.save(userEntity.getValue());
-    const otp = await this._otpService.generateOtp();
+    const otp = this._otpService.generateOtp();
     await this._emailService.sendVerificationEmail(emailVo.getValue(), otp);
 
     return Result.ok<RegisterUserOutput>({

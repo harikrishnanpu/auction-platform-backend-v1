@@ -8,4 +8,5 @@ export const TYPES = {
   AuthController: Symbol.for('AuthController'),
   EmailQueue: Symbol.for('EmailQueue'),
   passwordService: Symbol.for('IPasswordService'),
+  PrismaClient: Symbol.for('PrismaClient'),
 };
