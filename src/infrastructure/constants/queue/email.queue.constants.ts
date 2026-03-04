@@ -1,0 +1,9 @@
+export const EMAIL_QUEUE_CONSTANTS = {
+  EMAIL_QUEUE: 'email-queue',
+  VERIFICATION_EMAIL_JOB: 'verification-email',
+  QUEUE_RETRY_TYPE: 'exponential',
+  QUEUE_RETRY_DELAY: 3000,
+  QUEUE_RETRY_ATTEMPTS: 3,
+  QUEUE_REMOVE_ON_COMPLETE: true,
+  QUEUE_REMOVE_ON_FAIL: false,
+};

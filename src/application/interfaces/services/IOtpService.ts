@@ -1,3 +1,3 @@
 export interface IOtpService {
-  generateOtp(): Promise<string>;
+  generateOtp(): string;
 }

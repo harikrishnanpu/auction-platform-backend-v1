@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { app } from './main';
+import 'reflect-metadata';
 dotenv.config();
 
 const PORT = process.env.PORT || 4000;
