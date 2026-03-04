@@ -19,6 +19,7 @@ export class AuthProvider {
     if (type === AuthProviderType.LOCAL) {
       Result.fail('Invalid auth provider type for OAuth');
     }
+
     return new AuthProvider(type, providerId);
   }
 

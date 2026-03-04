@@ -32,6 +32,7 @@ export class User {
     private name: string,
     private readonly email: Email,
     private phone: Phone | null,
+    private address: string | null,
     private readonly authProvider: AuthProvider,
     roles: UserRole[],
     status: UserStatus = UserStatus.ACTIVE,
@@ -46,22 +47,43 @@ export class User {
     id,
     name,
     email,
-    phone,
+    phone = null,
+    address = null,
     authProvider,
+    roles = [],
+    status,
   }: {
     id: string;
     name: string;
     email: Email;
-    phone: Phone;
+    phone?: Phone | null;
+    address?: string | null;
     authProvider: AuthProvider;
+    roles: UserRole[];
+    status: UserStatus;
   }): Result<User> {
     if (!name.trim() || name.length < 3) {
       return Result.fail('name must be at least 3 characters long');
     }
 
-    const user = new User(id, name, email, phone, authProvider, [
-      UserRole.USER,
-    ]);
+    if (!roles || roles.length === 0) {
+      return Result.fail('roles must be at least 1');
+    }
+
+    if (!status) {
+      return Result.fail('status is required');
+    }
+
+    const user = new User(
+      id,
+      name,
+      email,
+      phone,
+      address,
+      authProvider,
+      roles,
+      status,
+    );
     return Result.ok(user);
   }
 
@@ -105,11 +127,35 @@ export class User {
     return this.status === UserStatus.ACTIVE;
   }
 
-  public getId() {
+  public getId(): string {
     return this.id;
   }
 
-  public getEmail() {
-    return this.email.getValue();
+  public getName(): string {
+    return this.name;
+  }
+
+  public getEmail(): Email {
+    return this.email;
+  }
+
+  public getPhone(): Phone | null {
+    return this.phone;
+  }
+
+  public getAddress(): string | null {
+    return this.address;
+  }
+
+  public getAuthProvider(): AuthProvider {
+    return this.authProvider;
+  }
+
+  public getRoles(): UserRole[] {
+    return Array.from(this.roles);
+  }
+
+  public getStatus(): UserStatus {
+    return this.status;
   }
 }

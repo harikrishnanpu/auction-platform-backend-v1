@@ -1,8 +1,9 @@
 import { User } from '@domain/entities/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Email } from '@domain/value-objects/email.vo';
-import { Phone } from '@domain/value-objects/phone.vo';
 import { PrismaClient } from '@prisma/client';
+import { UserMapper } from '../../mappers/user/user.mapper';
+import { Phone } from '@domain/value-objects/phone.vo';
 
 export class PrismaUserRepo implements IUserRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -19,20 +20,68 @@ export class PrismaUserRepo implements IUserRepository {
 
     if (!dbUser) return null;
 
-    return User.create({
-      id: dbUser.id,
-      email: Email.create(dbUser.email).getValue(),
-      password: dbUser.password,
-      name: dbUser.name,
-      phone: dbUser.phone ? Phone.create(dbUser.phone).getValue() : null,
-      address: dbUser.address,
-      city: dbUser.city,
-      state: dbUser.state,
-      zipCode: dbUser.zipCode,
-      country: dbUser.country,
-      createdAt: dbUser.createdAt,
-      updatedAt: dbUser.updatedAt,
-      roles: dbUser.roles.map((role) => role.name),
+    const userResult = UserMapper.toDomain(dbUser);
+    if (userResult.isFailure) return null;
+
+    return userResult.getValue();
+  }
+
+  async findByEmail(email: Email): Promise<User | null> {
+    const dbUser = await this.prisma.user.findUnique({
+      where: {
+        email: email.getValue(),
+      },
+      include: {
+        roles: true,
+      },
+    });
+
+    if (!dbUser) return null;
+
+    const userResult = UserMapper.toDomain(dbUser);
+    if (userResult.isFailure) return null;
+
+    return userResult.getValue();
+  }
+
+  async findByPhone(phone: Phone): Promise<User | null> {
+    const dbUser = await this.prisma.user.findUnique({
+      where: {
+        phone: phone.getValue(),
+      },
+      include: {
+        roles: true,
+      },
+    });
+
+    if (!dbUser) return null;
+
+    const userResult = UserMapper.toDomain(dbUser);
+    if (userResult.isFailure) return null;
+
+    return userResult.getValue();
+  }
+
+  async save(user: User): Promise<void> {
+    const persistantUser = UserMapper.toPersistence(user);
+
+    await this.prisma.user.upsert({
+      where: {
+        id: user.getId(),
+      },
+      update: {
+        ...persistantUser,
+        roles: {
+          deleteMany: {},
+          create: user.getRoles().map((r) => ({ role: r.getValue() })),
+        },
+      },
+      create: {
+        ...persistantUser,
+        roles: {
+          create: user.getRoles().map((r) => ({ role: r.getValue() })),
+        },
+      },
     });
   }
 }
