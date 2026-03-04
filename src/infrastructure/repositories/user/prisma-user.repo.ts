@@ -5,12 +5,12 @@ import { PrismaClient } from '@prisma/client';
 import { UserMapper } from '../../mappers/user/user.mapper';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
-import { AUTH_TYPES } from 'di/types/auth/auth.types';
+import { TYPES } from 'di/types.di';
 
 @injectable()
 export class PrismaUserRepo implements IUserRepository {
   constructor(
-    @inject(AUTH_TYPES.PrismaClient)
+    @inject(TYPES.PrismaClient)
     private readonly prisma: PrismaClient,
   ) {}
 

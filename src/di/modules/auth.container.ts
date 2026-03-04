@@ -11,7 +11,7 @@ import { EmailService } from '@infrastructure/services/email/email.service';
 import { IDGeneratingService } from '@infrastructure/services/id/idGenerate.service';
 import { OtpService } from '@infrastructure/services/otp/otp.service';
 import { PasswordService } from '@infrastructure/services/password/password.service';
-import { AuthController } from '@presentation/http/controllers/auth.controller';
+import { AuthController } from '@presentation/http/controllers/auth/auth.controller';
 import { TYPES } from 'di/types.di';
 import { ContainerModule } from 'inversify';
 

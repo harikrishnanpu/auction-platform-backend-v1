@@ -35,9 +35,6 @@
       "@result/*": [
         "domain/result/*"
       ],
-      "@http/*": [
-        "presentation/http/*"
-      ]
     }
   },
   "include": [
