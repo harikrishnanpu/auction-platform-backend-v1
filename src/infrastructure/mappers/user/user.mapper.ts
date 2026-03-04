@@ -2,7 +2,7 @@ import {
   User,
   AuthProviderType,
   UserStatus,
-} from '@domain/entities/user.entity';
+} from '@domain/entities/user/user.entity';
 import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';

@@ -1,12 +1,18 @@
 import { RegisterUserInput } from '@application/dtos/auth/registerUser.dto';
 import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
 import { AUTH_CONSTANTS } from '@presentation/constants/auth/auth.constants';
+import { AUTH_TYPES } from 'di/types/auth/auth.types';
 import { Request, Response } from 'express';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class AuthController {
   registerUseCase: IRegisterUseCase;
 
-  constructor(registerUseCase: IRegisterUseCase) {
+  constructor(
+    @inject(AUTH_TYPES.RegisterUseCase)
+    registerUseCase: IRegisterUseCase,
+  ) {
     this.registerUseCase = registerUseCase;
   }
 

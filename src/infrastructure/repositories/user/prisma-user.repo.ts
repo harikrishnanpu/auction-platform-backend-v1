@@ -1,12 +1,18 @@
-import { User } from '@domain/entities/user.entity';
+import { User } from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Email } from '@domain/value-objects/email.vo';
 import { PrismaClient } from '@prisma/client';
 import { UserMapper } from '../../mappers/user/user.mapper';
 import { Phone } from '@domain/value-objects/phone.vo';
+import { inject, injectable } from 'inversify';
+import { AUTH_TYPES } from 'di/types/auth/auth.types';
 
+@injectable()
 export class PrismaUserRepo implements IUserRepository {
-  constructor(private readonly prisma: PrismaClient) {}
+  constructor(
+    @inject(AUTH_TYPES.PrismaClient)
+    private readonly prisma: PrismaClient,
+  ) {}
 
   async findById(userId: string): Promise<User | null> {
     const dbUser = await this.prisma.user.findUnique({

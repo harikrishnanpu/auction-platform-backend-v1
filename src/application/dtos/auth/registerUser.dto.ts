@@ -7,6 +7,5 @@ export interface RegisterUserInput {
 }
 
 export interface RegisterUserOutput {
-  message: string;
   userId: string;
 }

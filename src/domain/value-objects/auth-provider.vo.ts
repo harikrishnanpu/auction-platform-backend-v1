@@ -1,4 +1,4 @@
-import { AuthProviderType } from '@domain/entities/user.entity';
+import { AuthProviderType } from '@domain/entities/user/user.entity';
 import { Result } from '@domain/shared/result';
 
 export class AuthProvider {

@@ -2,29 +2,40 @@ import {
   RegisterUserInput,
   RegisterUserOutput,
 } from '@application/dtos/auth/registerUser.dto';
+import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { IOtpService } from '@application/interfaces/services/IOtpService';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
-import { User } from '@domain/entities/user.entity';
+import { User, UserStatus } from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
+import { UserRole } from '@domain/value-objects/user-roles.vo';
+import { AUTH_TYPES } from 'di/types/auth/auth.types';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class RegisterUseCase implements IRegisterUseCase {
   private userRepository: IUserRepository;
 
   constructor(
+    @inject(AUTH_TYPES.UserRepository)
     userRepo: IUserRepository,
-    private passwordService: IPasswordService,
-    private idGeneratingService: IIdGeneratingService,
+    @inject(AUTH_TYPES.PasswordService)
+    private _passwordService: IPasswordService,
+    @inject(AUTH_TYPES.IdGeneratingService)
+    private _idGeneratingService: IIdGeneratingService,
+    private _otpService: IOtpService,
+    private _emailService: IEmailService,
   ) {
     this.userRepository = userRepo;
   }
 
   async execute(dto: RegisterUserInput): Promise<Result<RegisterUserOutput>> {
-    const { name, email, phone, password } = dto;
+    const { name, email, phone, password, address } = dto;
 
     const emailVo = Email.create(email);
     if (emailVo.isFailure) {
@@ -44,11 +55,13 @@ export class RegisterUseCase implements IRegisterUseCase {
       return Result.fail('Email already exists');
     }
 
-    const hashedPassword = await this.passwordService.hashPassword(password);
+    const hashedPassword = await this._passwordService.hashPassword(password);
 
     const authProviderVo = AuthProvider.createLocal(hashedPassword);
 
-    const userId = this.idGeneratingService.generateId();
+    const userId = this._idGeneratingService.generateId();
+
+    const userRoleVo = UserRole.USER;
 
     const userEntity = User.create({
       id: userId,
@@ -56,6 +69,9 @@ export class RegisterUseCase implements IRegisterUseCase {
       email: emailVo.getValue(),
       phone: phoneVo.getValue(),
       authProvider: authProviderVo,
+      address: address,
+      roles: [userRoleVo],
+      status: UserStatus.ACTIVE,
     });
 
     if (userEntity.isFailure) {
@@ -63,9 +79,10 @@ export class RegisterUseCase implements IRegisterUseCase {
     }
 
     await this.userRepository.save(userEntity.getValue());
+    const otp = await this._otpService.generateOtp();
+    await this._emailService.sendVerificationEmail(emailVo.getValue(), otp);
 
     return Result.ok<RegisterUserOutput>({
-      message: 'User registered successfully',
       userId: userEntity.getValue().getId(),
     });
   }

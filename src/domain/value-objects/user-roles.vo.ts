@@ -1,4 +1,4 @@
-import { UserRoleEnum } from '@domain/entities/user.entity';
+import { UserRoleEnum } from '@domain/entities/user/user.entity';
 
 export class UserRole {
   private constructor(private readonly value: UserRoleEnum) {}
