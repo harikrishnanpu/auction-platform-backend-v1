@@ -4,6 +4,9 @@ import { AUTH_CONSTANTS } from '@presentation/constants/auth/auth.constants';
 import { TYPES } from '@di/types.di';
 import { Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
+import { AppError } from '@presentation/http/error/app.error';
+import expressAsyncHandler from 'express-async-handler';
+import { registerSchema } from '@presentation/validators/schemas/auth/register.schema';
 
 @injectable()
 export class AuthController {
@@ -16,11 +19,21 @@ export class AuthController {
     this._registerUseCase = registerUseCase;
   }
 
-  register = async (req: Request, res: Response) => {
-    const { name, email, phone, password, address } = req.body;
+  register = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = registerSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { firstName, lastName, email, phone, password, address } =
+      validationResult.data;
 
     const registerUserDto: RegisterUserInput = {
-      name,
+      name: `${firstName} ${lastName}`,
       email,
       phone,
       password,
@@ -30,19 +43,16 @@ export class AuthController {
     const result = await this._registerUseCase.execute(registerUserDto);
 
     if (result.isFailure) {
-      return res.status(AUTH_CONSTANTS.CODES.BAD_REQUEST).json({
-        data: null,
-        message: AUTH_CONSTANTS.MESSAGES.INVALID_INPUT,
-        status: AUTH_CONSTANTS.CODES.BAD_REQUEST,
-        error: result.getError(),
-      });
+      console.log('error');
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    return res.status(AUTH_CONSTANTS.CODES.CREATED).json({
+    res.status(AUTH_CONSTANTS.CODES.CREATED).json({
       data: result.getValue(),
+      success: true,
       message: AUTH_CONSTANTS.MESSAGES.USER_REGISTERED_SUCCESSFULLY,
       status: AUTH_CONSTANTS.CODES.CREATED,
       error: null,
     });
-  };
+  });
 }
