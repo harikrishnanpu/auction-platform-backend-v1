@@ -10,18 +10,15 @@ import nodemailer from 'nodemailer';
 
 interface EmailJobData {
   template: string;
-  data: {
-    email: string;
-    otp: string;
-  };
+  email: string;
+  otp: string;
 }
 
 export class EmailWorker {
-  constructor(
-    private _worker: Worker,
-    private _transporter: nodemailer.Transporter,
-    private _templateService: TemplateService,
-  ) {
+  private _worker: Worker;
+  private _transporter: nodemailer.Transporter;
+
+  constructor(private _templateService: TemplateService) {
     const MAIL_USER = process.env.MAIL_USER;
     const MAIL_PASS = process.env.MAIL_PASS;
 
@@ -55,7 +52,7 @@ export class EmailWorker {
   }
 
   private async processJob(job: Job<EmailJobData>): Promise<void> {
-    const { data } = job.data;
+    const { email, otp, template } = job.data;
 
     try {
       let templatePath: string | null = null;
@@ -75,21 +72,21 @@ export class EmailWorker {
 
       const templateProps: TemplateServiceProps = {
         templatePath,
-        data,
+        data: { email, otp },
       };
 
       const html = await this._templateService.render(templateProps);
 
       await this._transporter.sendMail({
         from: `"Auction Platform" ${process.env.MAIL_USER}`,
-        to: data.email,
-        subject: job.data.template,
+        to: email,
+        subject: template,
         html: html,
       });
-      console.log(`Email sent to ${data.email}`);
+
+      console.log(`Email sent to ${email}`);
     } catch (error) {
-      console.error(`Failed to send email to ${data.email}:`, error);
-      throw error;
+      console.log(`Failed to send email to ${email}:`, error);
     }
   }
 }

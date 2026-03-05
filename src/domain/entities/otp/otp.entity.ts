@@ -22,6 +22,7 @@ export enum OtpStatus {
 
 export class Otp {
   private constructor(
+    private readonly userId: string,
     private readonly purpose: OtpPurpose,
     private readonly channel: OtpChannel,
     private readonly otp: string,
@@ -30,13 +31,21 @@ export class Otp {
     private status: OtpStatus,
   ) {}
 
-  public static create(
-    purpose: OtpPurpose,
-    channel: OtpChannel,
-    otp: string,
-    expiresAt: Date,
-    status: OtpStatus,
-  ) {
+  public static create({
+    userId,
+    purpose,
+    channel,
+    otp,
+    expiresAt,
+    status,
+  }: {
+    userId: string;
+    purpose: OtpPurpose;
+    channel: OtpChannel;
+    otp: string;
+    expiresAt: Date;
+    status: OtpStatus;
+  }): Result<Otp> {
     let maxAttempts = 2;
 
     if (purpose === OtpPurpose.REGISTER || purpose === OtpPurpose.LOGIN) {
@@ -49,12 +58,32 @@ export class Otp {
     }
 
     return Result.ok<Otp>(
-      new Otp(purpose, channel, otp, expiresAt, maxAttempts, status),
+      new Otp(userId, purpose, channel, otp, expiresAt, maxAttempts, status),
     );
+  }
+
+  public getUserId(): string {
+    return this.userId;
+  }
+
+  public getOtp(): string {
+    return this.otp;
   }
 
   public getOtpStatus(): OtpStatus {
     return this.status;
+  }
+
+  public getExpiresAt(): Date {
+    return this.expiresAt;
+  }
+
+  public getPurpose(): OtpPurpose {
+    return this.purpose;
+  }
+
+  public getChannel(): OtpChannel {
+    return this.channel;
   }
 
   public isOtpExpired(): boolean {

@@ -9,4 +9,5 @@ export const TYPES = {
   PrismaClient: Symbol.for('PrismaClient'),
   AuthController: Symbol.for('AuthController'),
   Argon2Service: Symbol.for('Argon2Service'),
+  IOtpRepository: Symbol.for('IOtpRepository'),
 };

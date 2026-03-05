@@ -7,7 +7,14 @@ import { IIdGeneratingService } from '@application/interfaces/services/IIdGenera
 import { IOtpService } from '@application/interfaces/services/IOtpService';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
+import {
+  Otp,
+  OtpChannel,
+  OtpPurpose,
+  OtpStatus,
+} from '@domain/entities/otp/otp.entity';
 import { User, UserStatus } from '@domain/entities/user/user.entity';
+import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
@@ -32,60 +39,84 @@ export class RegisterUseCase implements IRegisterUseCase {
     private _otpService: IOtpService,
     @inject(TYPES.IEmailService)
     private _emailService: IEmailService,
+    @inject(TYPES.IOtpRepository)
+    private _otpRepository: IOtpRepository,
   ) {
     this.userRepository = userRepo;
   }
 
   async execute(dto: RegisterUserInput): Promise<Result<RegisterUserOutput>> {
-    const { name, email, phone, password, address } = dto;
+    try {
+      const { name, email, phone, password, address } = dto;
 
-    const emailVo = Email.create(email);
-    if (emailVo.isFailure) {
-      return Result.fail(emailVo.getError());
+      const emailVo = Email.create(email);
+      if (emailVo.isFailure) {
+        return Result.fail(emailVo.getError());
+      }
+
+      const phoneVo = Phone.create(phone);
+      if (phoneVo.isFailure) {
+        return Result.fail(phoneVo.getError());
+      }
+
+      const [emailUser, phoneUser] = await Promise.all([
+        this.userRepository.findByEmail(emailVo.getValue()),
+        this.userRepository.findByPhone(phoneVo.getValue()),
+      ]);
+
+      if (emailUser || phoneUser) {
+        return Result.fail('Email or Phone already exists');
+      }
+
+      const hashedPassword = await this._passwordService.hashPassword(password);
+
+      const authProviderVo = AuthProvider.createLocal(hashedPassword);
+
+      const userId = this._idGeneratingService.generateId();
+
+      const userRoleVo = UserRole.USER;
+
+      const userEntity = User.create({
+        id: userId,
+        name,
+        email: emailVo.getValue(),
+        phone: phoneVo.getValue(),
+        authProvider: authProviderVo,
+        address: address,
+        roles: [userRoleVo],
+        status: UserStatus.ACTIVE,
+      });
+
+      if (userEntity.isFailure) {
+        return Result.fail(userEntity.getError());
+      }
+
+      await this.userRepository.save(userEntity.getValue());
+      const otp = this._otpService.generateOtp();
+      console.log('otp is', otp);
+
+      const otpEntity = Otp.create({
+        userId: userId,
+        purpose: OtpPurpose.REGISTER,
+        channel: OtpChannel.EMAIL,
+        otp: otp,
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        status: OtpStatus.PENDING,
+      });
+
+      if (otpEntity.isFailure) {
+        return Result.fail(otpEntity.getError());
+      }
+
+      await this._otpRepository.save(otpEntity.getValue());
+      await this._emailService.sendVerificationEmail(emailVo.getValue(), otp);
+
+      return Result.ok<RegisterUserOutput>({
+        userId: userEntity.getValue().getId(),
+      });
+    } catch {
+      // console.log(err.message);
+      return Result.fail('UNEXPECTED_ERROR_FROM_REGISTER_USECASE');
     }
-
-    const phoneVo = Phone.create(phone);
-    if (phoneVo.isFailure) {
-      return Result.fail(phoneVo.getError());
-    }
-
-    const existingUser = await this.userRepository.findByEmail(
-      emailVo.getValue(),
-    );
-
-    if (existingUser) {
-      return Result.fail('Email already exists');
-    }
-
-    const hashedPassword = await this._passwordService.hashPassword(password);
-
-    const authProviderVo = AuthProvider.createLocal(hashedPassword);
-
-    const userId = this._idGeneratingService.generateId();
-
-    const userRoleVo = UserRole.USER;
-
-    const userEntity = User.create({
-      id: userId,
-      name,
-      email: emailVo.getValue(),
-      phone: phoneVo.getValue(),
-      authProvider: authProviderVo,
-      address: address,
-      roles: [userRoleVo],
-      status: UserStatus.ACTIVE,
-    });
-
-    if (userEntity.isFailure) {
-      return Result.fail(userEntity.getError());
-    }
-
-    await this.userRepository.save(userEntity.getValue());
-    const otp = this._otpService.generateOtp();
-    await this._emailService.sendVerificationEmail(emailVo.getValue(), otp);
-
-    return Result.ok<RegisterUserOutput>({
-      userId: userEntity.getValue().getId(),
-    });
   }
 }

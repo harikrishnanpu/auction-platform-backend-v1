@@ -1,5 +1,6 @@
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { Email } from '@domain/value-objects/email.vo';
+import { EMAIL_TEMPLATES } from '@infrastructure/constants/template/email.template.constants';
 import { EmailQueue } from '@infrastructure/queue/email.queue';
 import { TYPES } from 'di/types.di';
 import { inject, injectable } from 'inversify';
@@ -12,6 +13,10 @@ export class EmailService implements IEmailService {
   ) {}
 
   async sendVerificationEmail(email: Email, otp: string): Promise<void> {
-    await this._emailQueue.addVerificationEmailJob(email.getValue(), otp);
+    await this._emailQueue.addEmailJob({
+      email: email.getValue(),
+      otp,
+      template: EMAIL_TEMPLATES.VERIFY_EMAIL,
+    });
   }
 }
