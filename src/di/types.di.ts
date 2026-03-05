@@ -10,4 +10,6 @@ export const TYPES = {
   AuthController: Symbol.for('AuthController'),
   Argon2Service: Symbol.for('Argon2Service'),
   IOtpRepository: Symbol.for('IOtpRepository'),
+  ISendVerificationCodeUsecase: Symbol.for('ISendVerificationCodeUsecase'),
+  IVerifyCredentialsUseCase: Symbol.for('IVerifyCredentialsUseCase'),
 };

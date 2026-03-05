@@ -15,6 +15,7 @@ export class PrismaOtpRepo implements IOtpRepository {
   async save(otp: Otp): Promise<void> {
     await this.prisma.otp.create({
       data: {
+        id: otp.getId(),
         userId: otp.getUserId(),
         otp: otp.getOtp(),
         expiresAt: otp.getExpiresAt(),
@@ -25,16 +26,28 @@ export class PrismaOtpRepo implements IOtpRepository {
     });
   }
 
-  async findByUserIdAndPurpose(
+  async update(otp: Otp): Promise<void> {
+    await this.prisma.otp.update({
+      where: {
+        id: otp.getId(),
+      },
+      data: {
+        status: otp.getOtpStatus(),
+      },
+    });
+  }
+
+  async findRecentOtpByUserIdAndPurpose(
     userId: string,
     purpose: OtpPurpose,
   ): Promise<Otp | null> {
-    const otp = await this.prisma.otp.findUnique({
+    const otp = await this.prisma.otp.findFirst({
       where: {
-        userId_purpose: {
-          userId,
-          purpose,
-        },
+        userId,
+        purpose,
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
 
@@ -43,9 +56,39 @@ export class PrismaOtpRepo implements IOtpRepository {
     }
 
     const otpEntity = OtpMapper.toDomain(otp);
+
     if (otpEntity.isFailure) {
       return null;
     }
+
     return otpEntity.getValue();
+  }
+
+  async findRecentOtpsByUserIdAndPurpose(
+    userId: string,
+    otpPurpose: OtpPurpose,
+  ): Promise<Otp[] | []> {
+    const otps = await this.prisma.otp.findMany({
+      where: {
+        userId,
+        purpose: otpPurpose,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 3,
+    });
+
+    if (!otps) {
+      return [];
+    }
+
+    const otpEntities = otps.map((otp) => OtpMapper.toDomain(otp));
+
+    if (otpEntities.some((otp) => otp.isFailure)) {
+      return [];
+    }
+
+    return otpEntities.map((otp) => otp.getValue());
   }
 }

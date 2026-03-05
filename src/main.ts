@@ -20,6 +20,6 @@ app.use(express.json());
 
 new EmailWorker(new TemplateService());
 
-app.use('/api/auth', AuthRouterFactory.authRouter(container));
+app.use('/api/v1/auth', AuthRouterFactory.authRouter(container));
 
 app.use(errorMiddleware);

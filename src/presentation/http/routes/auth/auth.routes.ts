@@ -11,6 +11,16 @@ export class AuthRoutes {
   register(): Router {
     this._router.post('/register', this._authController.register);
 
+    this._router.post(
+      '/send-verification-code',
+      this._authController.sendVerificationCode,
+    );
+
+    this._router.post(
+      '/verify-credentials',
+      this._authController.verifyCredentials,
+    );
+
     return this._router;
   }
 }
