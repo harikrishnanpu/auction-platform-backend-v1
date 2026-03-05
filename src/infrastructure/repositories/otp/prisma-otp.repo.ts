@@ -48,4 +48,31 @@ export class PrismaOtpRepo implements IOtpRepository {
     }
     return otpEntity.getValue();
   }
+
+  async findRecentOtpByUserIdAndPurpose(
+    userId: string,
+    otpPurpose: OtpPurpose,
+  ): Promise<Otp[] | []> {
+    const otps = await this.prisma.otp.findMany({
+      where: {
+        userId,
+        purpose: otpPurpose,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!otps) {
+      return [];
+    }
+
+    const otpEntities = otps.map((otp) => OtpMapper.toDomain(otp));
+
+    if (otpEntities.some((otp) => otp.isFailure)) {
+      return [];
+    }
+
+    return otpEntities.map((otp) => otp.getValue());
+  }
 }

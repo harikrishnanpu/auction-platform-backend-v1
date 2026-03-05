@@ -17,6 +17,8 @@ import { Argon2Service } from '@infrastructure/security/argon2Service';
 import { PasswordService } from '@infrastructure/services/password/password.service';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { PrismaOtpRepo } from '@infrastructure/repositories/otp/prisma-otp.repo';
+import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
+import { SendVerificationCodeUsecase } from '@application/usecases/auth/sendVerificationCode.usecase';
 
 export const authContainer = new ContainerModule(({ bind }) => {
   console.log('Auth container loaded');
@@ -36,4 +38,7 @@ export const authContainer = new ContainerModule(({ bind }) => {
   bind<EmailQueue>(TYPES.EmailQueue).to(EmailQueue);
 
   bind<IOtpRepository>(TYPES.IOtpRepository).to(PrismaOtpRepo);
+  bind<ISendVerificationCodeUsecase>(TYPES.ISendVerificationCodeUsecase).to(
+    SendVerificationCodeUsecase,
+  );
 });

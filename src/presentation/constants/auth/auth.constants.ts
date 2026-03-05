@@ -18,6 +18,8 @@ export const AUTH_MESSAGES = {
   PROFILE_NOT_FOUND: 'User profile not found',
   AUTHENTICATION_REQUIRED: 'Authentication Required',
   LOGGED_OUT_SUCCESSFULLY: 'Logged out successfully',
+  VERIFICATION_CODE_SENT_SUCCESSFULLY: 'Verification code sent successfully',
+  TOO_MANY_OTPS_SENT: 'Too many otps sent',
 };
 
 export const AUTH_CONSTANTS = {
