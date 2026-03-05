@@ -28,7 +28,9 @@ export class RegisterUseCase implements IRegisterUseCase {
     private _passwordService: IPasswordService,
     @inject(TYPES.IIdGeneratingService)
     private _idGeneratingService: IIdGeneratingService,
+    @inject(TYPES.IOtpService)
     private _otpService: IOtpService,
+    @inject(TYPES.IEmailService)
     private _emailService: IEmailService,
   ) {
     this.userRepository = userRepo;

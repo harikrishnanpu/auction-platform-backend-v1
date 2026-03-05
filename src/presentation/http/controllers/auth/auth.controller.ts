@@ -1,19 +1,19 @@
 import { RegisterUserInput } from '@application/dtos/auth/registerUser.dto';
 import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
 import { AUTH_CONSTANTS } from '@presentation/constants/auth/auth.constants';
-import { TYPES } from 'di/types.di';
+import { TYPES } from '@di/types.di';
 import { Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class AuthController {
-  registerUseCase: IRegisterUseCase;
+  private _registerUseCase: IRegisterUseCase;
 
   constructor(
     @inject(TYPES.IRegisterUseCase)
     registerUseCase: IRegisterUseCase,
   ) {
-    this.registerUseCase = registerUseCase;
+    this._registerUseCase = registerUseCase;
   }
 
   register = async (req: Request, res: Response) => {
@@ -27,7 +27,7 @@ export class AuthController {
       address,
     };
 
-    const result = await this.registerUseCase.execute(registerUserDto);
+    const result = await this._registerUseCase.execute(registerUserDto);
 
     if (result.isFailure) {
       return res.status(AUTH_CONSTANTS.CODES.BAD_REQUEST).json({

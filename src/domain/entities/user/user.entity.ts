@@ -5,12 +5,6 @@ import { Kyc } from '@domain/value-objects/kyc.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
 
-export enum UserRoleEnum {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  SELLER = 'SELLER',
-}
-
 export enum AuthProviderType {
   LOCAL = 'LOCAL',
   GOOGLE = 'GOOGLE',

@@ -5,8 +5,8 @@ export const TYPES = {
   IIdGeneratingService: Symbol.for('IIdGeneratingService'),
   IOtpService: Symbol.for('IOtpService'),
   IRegisterUseCase: Symbol.for('IRegisterUseCase'),
-  AuthController: Symbol.for('AuthController'),
   EmailQueue: Symbol.for('EmailQueue'),
-  passwordService: Symbol.for('IPasswordService'),
   PrismaClient: Symbol.for('PrismaClient'),
+  AuthController: Symbol.for('AuthController'),
+  Argon2Service: Symbol.for('Argon2Service'),
 };

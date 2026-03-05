@@ -10,20 +10,26 @@ import { PrismaUserRepo } from '@infrastructure/repositories/user/prisma-user.re
 import { EmailService } from '@infrastructure/services/email/email.service';
 import { IDGeneratingService } from '@infrastructure/services/id/idGenerate.service';
 import { OtpService } from '@infrastructure/services/otp/otp.service';
-import { PasswordService } from '@infrastructure/services/password/password.service';
-import { AuthController } from '@presentation/http/controllers/auth/auth.controller';
-import { TYPES } from 'di/types.di';
+import { TYPES } from '@di/types.di';
 import { ContainerModule } from 'inversify';
+import { PrismaClient } from '@prisma/client';
+import { Argon2Service } from '@infrastructure/security/argon2Service';
+import { PasswordService } from '@infrastructure/services/password/password.service';
 
 export const authContainer = new ContainerModule(({ bind }) => {
+  console.log('Auth container loaded');
+
+  bind<PrismaClient>(TYPES.PrismaClient).toConstantValue(new PrismaClient());
   bind<IUserRepository>(TYPES.IUserRepository).to(PrismaUserRepo);
-  bind<IEmailService>(TYPES.IEmailService).to(EmailService);
+
   bind<IPasswordService>(TYPES.IPasswordService).to(PasswordService);
+  bind<IEmailService>(TYPES.IEmailService).to(EmailService);
+  bind<Argon2Service>(TYPES.Argon2Service).to(Argon2Service);
   bind<IIdGeneratingService>(TYPES.IIdGeneratingService).to(
     IDGeneratingService,
   );
   bind<IOtpService>(TYPES.IOtpService).to(OtpService);
+
   bind<IRegisterUseCase>(TYPES.IRegisterUseCase).to(RegisterUseCase);
-  bind<AuthController>(TYPES.AuthController).to(AuthController);
   bind<EmailQueue>(TYPES.EmailQueue).to(EmailQueue);
 });

@@ -6,7 +6,7 @@ import { inject, injectable } from 'inversify';
 @injectable()
 export class PasswordService implements IPasswordService {
   constructor(
-    @inject(TYPES.IPasswordService)
+    @inject(TYPES.Argon2Service)
     private _hashingService: Argon2Service,
   ) {}
 

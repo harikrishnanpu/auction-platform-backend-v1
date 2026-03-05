@@ -1,11 +1,9 @@
-import { UserRoleEnum } from '@domain/entities/user/user.entity';
-
 export class UserRole {
-  private constructor(private readonly value: UserRoleEnum) {}
+  private constructor(private readonly value: string) {}
 
-  static USER = new UserRole(UserRoleEnum.USER);
-  static ADMIN = new UserRole(UserRoleEnum.ADMIN);
-  static SELLER = new UserRole(UserRoleEnum.SELLER);
+  static USER = new UserRole('USER');
+  static ADMIN = new UserRole('ADMIN');
+  static SELLER = new UserRole('SELLER');
 
   getValue() {
     return this.value;
