@@ -22,6 +22,7 @@ export enum OtpStatus {
 
 export class Otp {
   private constructor(
+    private readonly id: string,
     private readonly userId: string,
     private readonly purpose: OtpPurpose,
     private readonly channel: OtpChannel,
@@ -29,28 +30,36 @@ export class Otp {
     private readonly expiresAt: Date,
     private attempts: number,
     private status: OtpStatus,
+    private readonly createdAt: Date,
   ) {}
 
   public static create({
+    id,
     userId,
     purpose,
     channel,
     otp,
     expiresAt,
     status,
+    createdAt,
   }: {
+    id: string;
     userId: string;
     purpose: OtpPurpose;
     channel: OtpChannel;
     otp: string;
     expiresAt: Date;
     status: OtpStatus;
+    createdAt?: Date;
   }): Result<Otp> {
-    let maxAttempts = 2;
+    const maxAttempts = 2;
 
-    if (purpose === OtpPurpose.REGISTER || purpose === OtpPurpose.LOGIN) {
-      maxAttempts = 3;
+    if (!expiresAt) {
       expiresAt = new Date(new Date().getTime() + 10 * 60 * 1000);
+    }
+
+    if (!createdAt) {
+      createdAt = new Date();
     }
 
     if (expiresAt < new Date()) {
@@ -58,8 +67,26 @@ export class Otp {
     }
 
     return Result.ok<Otp>(
-      new Otp(userId, purpose, channel, otp, expiresAt, maxAttempts, status),
+      new Otp(
+        id,
+        userId,
+        purpose,
+        channel,
+        otp,
+        expiresAt,
+        maxAttempts,
+        status,
+        createdAt,
+      ),
     );
+  }
+
+  public getId(): string {
+    return this.id;
+  }
+
+  public getCreatedAt(): Date {
+    return this.createdAt;
   }
 
   public getUserId(): string {
@@ -96,5 +123,9 @@ export class Otp {
 
   public isOtpVerified(): boolean {
     return this.status === OtpStatus.VERIFIED;
+  }
+
+  public setOtpStatus(status: OtpStatus): void {
+    this.status = status;
   }
 }

@@ -96,8 +96,9 @@ export class RegisterUseCase implements IRegisterUseCase {
       console.log('otp is', otp);
 
       const otpEntity = Otp.create({
+        id: this._idGeneratingService.generateId(),
         userId: userId,
-        purpose: OtpPurpose.REGISTER,
+        purpose: OtpPurpose.VERIFY_EMAIL,
         channel: OtpChannel.EMAIL,
         otp: otp,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),

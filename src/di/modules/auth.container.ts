@@ -19,6 +19,8 @@ import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { PrismaOtpRepo } from '@infrastructure/repositories/otp/prisma-otp.repo';
 import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
 import { SendVerificationCodeUsecase } from '@application/usecases/auth/sendVerificationCode.usecase';
+import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
+import { VerifyCredentialsUseCase } from '@application/usecases/auth/verifyCredentials.usecase';
 
 export const authContainer = new ContainerModule(({ bind }) => {
   console.log('Auth container loaded');
@@ -40,5 +42,8 @@ export const authContainer = new ContainerModule(({ bind }) => {
   bind<IOtpRepository>(TYPES.IOtpRepository).to(PrismaOtpRepo);
   bind<ISendVerificationCodeUsecase>(TYPES.ISendVerificationCodeUsecase).to(
     SendVerificationCodeUsecase,
+  );
+  bind<IVerifyCredentialsUseCase>(TYPES.IVerifyCredentialsUseCase).to(
+    VerifyCredentialsUseCase,
   );
 });

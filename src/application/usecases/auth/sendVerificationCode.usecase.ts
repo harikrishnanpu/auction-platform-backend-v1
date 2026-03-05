@@ -1,4 +1,5 @@
 import { IEmailService } from '@application/interfaces/services/IEmailService';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IOtpService } from '@application/interfaces/services/IOtpService';
 import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
 import { TYPES } from '@di/types.di';
@@ -25,6 +26,8 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
     private readonly _otpService: IOtpService,
     @inject(TYPES.IOtpRepository)
     private readonly _otpRepository: IOtpRepository,
+    @inject(TYPES.IIdGeneratingService)
+    private readonly _idGeneratingService: IIdGeneratingService,
   ) {}
 
   async execute(email: string): Promise<Result<void>> {
@@ -40,7 +43,7 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
       }
 
       const recentOtps =
-        await this._otpRepository.findRecentOtpByUserIdAndPurpose(
+        await this._otpRepository.findRecentOtpsByUserIdAndPurpose(
           user.getId(),
           OtpPurpose.VERIFY_EMAIL,
         );
@@ -51,7 +54,7 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
       const pendingOtps = recentOtps.filter(
         (otp) =>
           otp.getOtpStatus() === OtpStatus.PENDING &&
-          otp.getExpiresAt() >= new Date(new Date().getTime() - 1 * 60 * 1000),
+          otp.getCreatedAt() >= new Date(Date.now() - 60 * 60 * 1000),
       );
 
       if (pendingOtps.length >= MAX_OTPS_PER_PURPOSE) {
@@ -61,6 +64,7 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
       const otp = this._otpService.generateOtp();
 
       const otpEntity = Otp.create({
+        id: this._idGeneratingService.generateId(),
         userId: user.getId(),
         purpose: OtpPurpose.VERIFY_EMAIL,
         channel: OtpChannel.EMAIL,
@@ -68,6 +72,8 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         status: OtpStatus.PENDING,
       });
+
+      console.log('otp', otp);
 
       await this._otpRepository.save(otpEntity.getValue());
 

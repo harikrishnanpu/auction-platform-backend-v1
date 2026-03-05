@@ -10,12 +10,14 @@ import { Otp as PrismaOtp } from '@prisma/client';
 export class OtpMapper {
   static toDomain(otp: PrismaOtp): Result<Otp> {
     const otpEntity = Otp.create({
+      id: otp.id,
       userId: otp.userId,
       purpose: otp.purpose as OtpPurpose,
       channel: otp.channel as OtpChannel,
       otp: otp.otp,
       expiresAt: otp.expiresAt,
       status: otp.status as OtpStatus,
+      createdAt: otp.createdAt,
     });
 
     if (otpEntity.isFailure) {
