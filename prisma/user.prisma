@@ -1,0 +1,45 @@
+enum UserRoleType {
+    USER
+    SELLER
+    ADMIN
+}
+
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+    BLOCKED
+}
+
+enum AuthProvider {
+    EMAIL
+    GOOGLE
+    GITHUB
+    LOCAL
+}
+
+model User {
+    id                 String       @id @default(uuid())
+    name               String
+    email              String       @unique
+    phone              String?      @unique
+    password           String?
+    address            String?
+    avatar_url         String?
+    authProvider       AuthProvider
+    isProfileCompleted Boolean      @default(false)
+    isVerified         Boolean      @default(false)
+    status             UserStatus   @default(ACTIVE)
+    createdAt          DateTime     @default(now())
+    updatedAt          DateTime     @updatedAt
+    roles              UserRole[]
+    otps               Otp[]
+}
+
+model UserRole {
+    id        String       @id @default(uuid())
+    userId    String
+    role      UserRoleType @default(USER)
+    createdAt DateTime     @default(now())
+    updatedAt DateTime     @updatedAt
+    user      User         @relation(fields: [userId], references: [id])
+}

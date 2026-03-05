@@ -1,11 +1,20 @@
-import express from 'express';
+import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { app } from './main';
+dotenv.config();
 
-const app = express();
+const PORT = process.env.PORT || 4000;
 
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
+const startServer = async () => {
+  try {
+    const httpServer = createServer(app);
 
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
-});
+    httpServer.listen(PORT, () => {
+      console.log(`Server started on ${PORT}`);
+    });
+  } catch (err) {
+    console.log('Server error:' + err);
+  }
+};
+
+startServer();
