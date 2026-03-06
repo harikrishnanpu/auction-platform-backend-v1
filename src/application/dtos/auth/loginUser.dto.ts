@@ -1,9 +1,17 @@
-import { AuthProviderType } from '@domain/entities/user/user.entity';
-import { UserRoleType } from '@prisma/client';
+import {
+  AuthProviderType,
+  UserStatus,
+} from '@domain/entities/user/user.entity';
 
 export interface LoginUserInput {
   email: string;
   password: string;
+}
+
+export enum UserRoleType {
+  USER = 'USER',
+  ADMIN = 'ADMIN',
+  SELLER = 'SELLER',
 }
 
 export interface userResponseDto {
@@ -13,6 +21,9 @@ export interface userResponseDto {
   phone: string;
   address: string;
   avatar_url: string;
+  isProfileCompleted: boolean;
+  isVerified: boolean;
+  status: UserStatus;
   authProvider: AuthProviderType;
   roles: UserRoleType[];
 }

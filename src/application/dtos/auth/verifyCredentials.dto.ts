@@ -1,5 +1,5 @@
 import { AuthProviderType } from '@domain/entities/user/user.entity';
-import { UserRoleType } from '@prisma/client';
+import { UserRoleType } from './loginUser.dto';
 
 export interface userResponseDto {
   id: string;

@@ -57,6 +57,7 @@ export class UserMapper {
       address: dbUser.address,
       authProvider: authProviderVo,
       roles: [...roles],
+      isVerified: dbUser.isVerified,
       status: UserStatus[dbUser.status],
     });
 
@@ -84,6 +85,7 @@ export class UserMapper {
       address: user.getAddress(),
       status: user.getStatus(),
       authProvider: user.getAuthProvider().getType(),
+      isVerified: user.getIsVerified(),
       roles: user.getRoles().map((r) => r.getValue()),
     };
   }

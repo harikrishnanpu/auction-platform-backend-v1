@@ -26,7 +26,6 @@ model User {
     address            String?
     avatar_url         String?
     authProvider       AuthProvider
-    isProfileCompleted Boolean      @default(false)
     isVerified         Boolean      @default(false)
     status             UserStatus   @default(ACTIVE)
     createdAt          DateTime     @default(now())

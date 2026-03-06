@@ -1,4 +1,7 @@
-import { userResponseDto } from '@application/dtos/auth/loginUser.dto';
+import {
+  userResponseDto,
+  UserRoleType,
+} from '@application/dtos/auth/loginUser.dto';
 import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
@@ -8,7 +11,6 @@ import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
-import { UserRoleType } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -68,6 +70,8 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
 
       otpEntity.setOtpStatus(OtpStatus.VERIFIED);
       await this._otpRepository.update(otpEntity);
+      userEntity.getValue().setIsVerified(true);
+      await this._userRepository.save(userEntity.getValue());
 
       const accessToken = this._tokenGenerator.generateAccessToken(
         userEntity.getValue().getId(),
@@ -83,6 +87,9 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
         phone: userEntity.getValue().getPhone()?.getValue() ?? '',
         address: userEntity.getValue().getAddress() ?? '',
         avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
+        isProfileCompleted: userEntity.getValue().isProfileCompleted(),
+        isVerified: userEntity.getValue().getIsVerified(),
+        status: userEntity.getValue().getStatus(),
         authProvider: userEntity.getValue().getAuthProvider().getType(),
         roles: userEntity
           .getValue()
