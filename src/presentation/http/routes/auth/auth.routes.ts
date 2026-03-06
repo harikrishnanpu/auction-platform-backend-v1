@@ -21,6 +21,8 @@ export class AuthRoutes {
       this._authController.verifyCredentials,
     );
 
+    this._router.post('/login', this._authController.login);
+
     return this._router;
   }
 }

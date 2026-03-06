@@ -1,3 +1,5 @@
+import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
+import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
 import { TYPES } from '@di/types.di';
 import { OtpPurpose, OtpStatus } from '@domain/entities/otp/otp.entity';
@@ -14,13 +16,15 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
     private readonly _otpRepository: IOtpRepository,
     @inject(TYPES.IUserRepository)
     private readonly _userRepository: IUserRepository,
+    @inject(TYPES.ITokenGeneratorService)
+    private readonly _tokenGenerator: ITokenGeneratorService,
   ) {}
 
   async execute(
     otp: string,
     email: string,
     purpose: OtpPurpose,
-  ): Promise<Result<void>> {
+  ): Promise<Result<verifyCredentialsOutput>> {
     try {
       const emailVo = Email.create(email);
       if (emailVo.isFailure) {
@@ -30,13 +34,14 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
       const userEntity = await this._userRepository.findByEmail(
         emailVo.getValue(),
       );
-      if (!userEntity) {
+
+      if (userEntity.isFailure) {
         return Result.fail('User not found');
       }
 
       const otpEntity =
         await this._otpRepository.findRecentOtpByUserIdAndPurpose(
-          userEntity.getId(),
+          userEntity.getValue().getId(),
           purpose,
         );
 
@@ -44,8 +49,15 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
         return Result.fail('Otp not found');
       }
 
+      if (otpEntity.isOtpBlocked()) {
+        return Result.fail('Otp blocked');
+      }
+
       if (otpEntity.getOtp() !== otp) {
-        return Result.fail('Invalid otp');
+        otpEntity.incrementAttempts();
+        console.log('otpEntity', otpEntity);
+        await this._otpRepository.update(otpEntity);
+        return Result.fail('Invalid otp 123');
       }
 
       if (otpEntity.getOtpStatus() !== OtpStatus.PENDING) {
@@ -55,7 +67,20 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
       otpEntity.setOtpStatus(OtpStatus.VERIFIED);
       await this._otpRepository.update(otpEntity);
 
-      return Result.ok();
+      const accessToken = this._tokenGenerator.generateAccessToken(
+        userEntity.getValue().getId(),
+      );
+      const refreshToken = this._tokenGenerator.generateRefreshToken(
+        userEntity.getValue().getId(),
+      );
+
+      const response: verifyCredentialsOutput = {
+        user: userEntity.getValue(),
+        accessToken,
+        refreshToken,
+      };
+
+      return Result.ok(response);
     } catch (error) {
       console.log(error);
       return Result.fail('UNEXPECTED ERROR FROM VERIFY CREDENTIALS USECASE');

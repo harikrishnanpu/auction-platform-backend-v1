@@ -11,6 +11,8 @@ import { sendVerificationCodeSchema } from '@presentation/validators/schemas/aut
 import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
 import { verifyCredentialsSchema } from '@presentation/validators/schemas/auth/verifyCredentials.schema';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
+import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
+import { loginSchema } from '@presentation/validators/schemas/auth/login.schema';
 
 @injectable()
 export class AuthController {
@@ -21,6 +23,8 @@ export class AuthController {
     private readonly _sendVerificationCodeUseCase: ISendVerificationCodeUsecase,
     @inject(TYPES.IVerifyCredentialsUseCase)
     private readonly _verifyCredentialsUseCase: IVerifyCredentialsUseCase,
+    @inject(TYPES.ILoginUseCase)
+    private readonly _loginUseCase: ILoginUseCase,
   ) {}
 
   register = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -121,7 +125,11 @@ export class AuthController {
       }
 
       res.status(AUTH_CONSTANTS.CODES.OK).json({
-        data: null,
+        data: {
+          user: result.getValue().user,
+          accessToken: result.getValue().accessToken,
+          refreshToken: result.getValue().refreshToken,
+        },
         success: true,
         message: AUTH_CONSTANTS.MESSAGES.EMAIL_VERIFIED_SUCCESSFULLY,
         status: AUTH_CONSTANTS.CODES.OK,
@@ -129,4 +137,36 @@ export class AuthController {
       });
     },
   );
+
+  login = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = loginSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { email, password } = validationResult.data;
+
+    const result = await this._loginUseCase.execute({ email, password });
+
+    if (result.isFailure) {
+      console.log('error');
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: {
+        user: result.getValue().user,
+        accessToken: result.getValue().accessToken,
+        refreshToken: result.getValue().refreshToken,
+      },
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
 }

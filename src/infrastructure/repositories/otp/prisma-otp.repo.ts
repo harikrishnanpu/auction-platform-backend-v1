@@ -33,6 +33,7 @@ export class PrismaOtpRepo implements IOtpRepository {
       },
       data: {
         status: otp.getOtpStatus(),
+        attempts: otp.getAttempts(),
       },
     });
   }

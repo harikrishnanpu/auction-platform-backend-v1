@@ -1,3 +1,4 @@
+import { EXPIRY, MAX_OTP_ATTEMPTS } from '@domain/constants/otp.constants';
 import { Result } from '@domain/shared/result';
 
 export enum OtpPurpose {
@@ -28,6 +29,7 @@ export class Otp {
     private readonly channel: OtpChannel,
     private readonly otp: string,
     private readonly expiresAt: Date,
+    private readonly maxAttempts: number,
     private attempts: number,
     private status: OtpStatus,
     private readonly createdAt: Date,
@@ -42,6 +44,7 @@ export class Otp {
     expiresAt,
     status,
     createdAt,
+    attempts,
   }: {
     id: string;
     userId: string;
@@ -51,15 +54,21 @@ export class Otp {
     expiresAt: Date;
     status: OtpStatus;
     createdAt?: Date;
+    attempts?: number;
   }): Result<Otp> {
-    const maxAttempts = 2;
+    const maxAttempts = MAX_OTP_ATTEMPTS;
+    const expiresAtDate = new Date(new Date().getTime() + EXPIRY);
 
     if (!expiresAt) {
-      expiresAt = new Date(new Date().getTime() + 10 * 60 * 1000);
+      expiresAt = expiresAtDate;
     }
 
     if (!createdAt) {
       createdAt = new Date();
+    }
+
+    if (!attempts) {
+      attempts = 0;
     }
 
     if (expiresAt < new Date()) {
@@ -75,6 +84,7 @@ export class Otp {
         otp,
         expiresAt,
         maxAttempts,
+        attempts,
         status,
         createdAt,
       ),
@@ -127,5 +137,13 @@ export class Otp {
 
   public setOtpStatus(status: OtpStatus): void {
     this.status = status;
+  }
+
+  public incrementAttempts(): void {
+    this.attempts++;
+  }
+
+  public getAttempts(): number {
+    return this.attempts;
   }
 }
