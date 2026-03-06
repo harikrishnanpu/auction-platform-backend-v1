@@ -15,4 +15,5 @@ export const TYPES = {
   ITokenGeneratorService: Symbol.for('ITokenGeneratorService'),
   ILoginUseCase: Symbol.for('ILoginUseCase'),
   IGetUserUsecase: Symbol.for('IGetUserUsecase'),
+  IGoogleAuthUsecase: Symbol.for('IGoogleAuthUsecase'),
 };

@@ -27,6 +27,8 @@ import { ITokenGeneratorService } from '@application/interfaces/services/ITokenG
 import { TokenGenerator } from '@infrastructure/services/token/tokenGenerator.service';
 import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
 import { GetUserUseCase } from '@application/usecases/auth/getUser.usecase';
+import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
+import { GoogleAuthUsecase } from '@application/usecases/auth/googleAuth.usecase';
 
 export const authContainer = new ContainerModule(({ bind }) => {
   console.log('Auth container loaded');
@@ -56,4 +58,6 @@ export const authContainer = new ContainerModule(({ bind }) => {
   bind<ITokenGeneratorService>(TYPES.ITokenGeneratorService).to(TokenGenerator);
   bind<ILoginUseCase>(TYPES.ILoginUseCase).to(LoginUseCase);
   bind<IGetUserUsecase>(TYPES.IGetUserUsecase).to(GetUserUseCase);
+
+  bind<IGoogleAuthUsecase>(TYPES.IGoogleAuthUsecase).to(GoogleAuthUsecase);
 });

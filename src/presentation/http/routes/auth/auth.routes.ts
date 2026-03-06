@@ -30,6 +30,12 @@ export class AuthRoutes {
       this._authController.getUser,
     );
 
+    this._router.get('/google', this._authController.googleAuth);
+    this._router.get(
+      '/google/callback',
+      this._authController.googleAuthCallback,
+    );
+
     return this._router;
   }
 }

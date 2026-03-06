@@ -7,6 +7,8 @@ import { errorMiddleware } from '@presentation/http/middlewares/error.middleware
 import { EmailWorker } from '@infrastructure/workers/email.worker';
 import { TemplateService } from '@infrastructure/services/template/template.service';
 import cookieParser from 'cookie-parser';
+import passport from 'passport';
+import { configureGoogleStrategy } from '@infrastructure/passport/passport.config';
 
 export const app = express();
 
@@ -20,7 +22,9 @@ app.use(
 app.use(express.json());
 
 app.use(cookieParser());
+app.use(passport.initialize());
 
+configureGoogleStrategy();
 new EmailWorker(new TemplateService());
 
 app.use('/api/v1/auth', AuthRouterFactory.authRouter(container));
