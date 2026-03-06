@@ -44,7 +44,7 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
 
       const recentOtps =
         await this._otpRepository.findRecentOtpsByUserIdAndPurpose(
-          user.getId(),
+          user.getValue().getId(),
           OtpPurpose.VERIFY_EMAIL,
         );
 
@@ -65,7 +65,7 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
 
       const otpEntity = Otp.create({
         id: this._idGeneratingService.generateId(),
-        userId: user.getId(),
+        userId: user.getValue().getId(),
         purpose: OtpPurpose.VERIFY_EMAIL,
         channel: OtpChannel.EMAIL,
         otp,

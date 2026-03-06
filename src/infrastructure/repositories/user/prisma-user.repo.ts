@@ -6,6 +6,7 @@ import { UserMapper } from '../../mappers/user/user.mapper';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
 import { TYPES } from 'di/types.di';
+import { Result } from '@domain/shared/result';
 
 @injectable()
 export class PrismaUserRepo implements IUserRepository {
@@ -14,7 +15,7 @@ export class PrismaUserRepo implements IUserRepository {
     private readonly prisma: PrismaClient,
   ) {}
 
-  async findById(userId: string): Promise<User | null> {
+  async findById(userId: string): Promise<Result<User>> {
     const dbUser = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -24,15 +25,15 @@ export class PrismaUserRepo implements IUserRepository {
       },
     });
 
-    if (!dbUser) return null;
+    if (!dbUser) return Result.fail('User not found');
 
     const userResult = UserMapper.toDomain(dbUser);
-    if (userResult.isFailure) return null;
+    if (userResult.isFailure) return Result.fail(userResult.getError());
 
-    return userResult.getValue();
+    return Result.ok(userResult.getValue());
   }
 
-  async findByEmail(email: Email): Promise<User | null> {
+  async findByEmail(email: Email): Promise<Result<User>> {
     const dbUser = await this.prisma.user.findUnique({
       where: {
         email: email.getValue(),
@@ -42,15 +43,15 @@ export class PrismaUserRepo implements IUserRepository {
       },
     });
 
-    if (!dbUser) return null;
+    if (!dbUser) return Result.fail('User not found');
 
     const userResult = UserMapper.toDomain(dbUser);
-    if (userResult.isFailure) return null;
+    if (userResult.isFailure) return Result.fail(userResult.getError());
 
-    return userResult.getValue();
+    return Result.ok(userResult.getValue());
   }
 
-  async findByPhone(phone: Phone): Promise<User | null> {
+  async findByPhone(phone: Phone): Promise<Result<User>> {
     const dbUser = await this.prisma.user.findUnique({
       where: {
         phone: phone.getValue(),
@@ -60,12 +61,14 @@ export class PrismaUserRepo implements IUserRepository {
       },
     });
 
-    if (!dbUser) return null;
+    if (!dbUser) return Result.fail('User not found');
 
     const userResult = UserMapper.toDomain(dbUser);
-    if (userResult.isFailure) return null;
+    if (userResult.isFailure) {
+      return Result.fail(userResult.getError());
+    }
 
-    return userResult.getValue();
+    return Result.ok(userResult.getValue());
   }
 
   async save(user: User): Promise<void> {

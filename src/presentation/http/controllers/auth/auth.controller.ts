@@ -2,7 +2,7 @@ import { RegisterUserInput } from '@application/dtos/auth/registerUser.dto';
 import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
 import { AUTH_CONSTANTS } from '@presentation/constants/auth/auth.constants';
 import { TYPES } from '@di/types.di';
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { AppError } from '@presentation/http/error/app.error';
 import expressAsyncHandler from 'express-async-handler';
@@ -11,6 +11,12 @@ import { sendVerificationCodeSchema } from '@presentation/validators/schemas/aut
 import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
 import { verifyCredentialsSchema } from '@presentation/validators/schemas/auth/verifyCredentials.schema';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
+import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
+import { loginSchema } from '@presentation/validators/schemas/auth/login.schema';
+import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
+import passport, { Profile } from 'passport';
+import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
+import { GoogleUserDto } from '@application/dtos/auth/googleUser.dto';
 
 @injectable()
 export class AuthController {
@@ -21,6 +27,12 @@ export class AuthController {
     private readonly _sendVerificationCodeUseCase: ISendVerificationCodeUsecase,
     @inject(TYPES.IVerifyCredentialsUseCase)
     private readonly _verifyCredentialsUseCase: IVerifyCredentialsUseCase,
+    @inject(TYPES.ILoginUseCase)
+    private readonly _loginUseCase: ILoginUseCase,
+    @inject(TYPES.IGetUserUsecase)
+    private readonly _getUserUseCase: IGetUserUsecase,
+    @inject(TYPES.IGoogleAuthUsecase)
+    private readonly _googleAuthUseCase: IGoogleAuthUsecase,
   ) {}
 
   register = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -120,13 +132,161 @@ export class AuthController {
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
+      res.cookie('accessToken', result.getValue().accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+        sameSite: 'strict',
+      });
+
+      res.cookie('refreshToken', result.getValue().refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+        sameSite: 'strict',
+      });
+
       res.status(AUTH_CONSTANTS.CODES.OK).json({
-        data: null,
+        data: {
+          user: result.getValue().user,
+          accessToken: result.getValue().accessToken,
+          refreshToken: result.getValue().refreshToken,
+        },
         success: true,
         message: AUTH_CONSTANTS.MESSAGES.EMAIL_VERIFIED_SUCCESSFULLY,
         status: AUTH_CONSTANTS.CODES.OK,
         error: null,
       });
+    },
+  );
+
+  login = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = loginSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { email, password } = validationResult.data;
+
+    const result = await this._loginUseCase.execute({ email, password });
+
+    if (result.isFailure) {
+      console.log('error');
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.cookie('accessToken', result.getValue().accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+      sameSite: 'strict',
+    });
+
+    res.cookie('refreshToken', result.getValue().refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+      sameSite: 'strict',
+    });
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: {
+        user: result.getValue().user,
+        accessToken: result.getValue().accessToken,
+        refreshToken: result.getValue().refreshToken,
+      },
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  getUser = expressAsyncHandler(async (req: Request, res: Response) => {
+    console.log('getUser controller called');
+    const userId = req.user;
+
+    if (!userId) {
+      throw new AppError('User not found', AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    const result = await this._getUserUseCase.execute(userId as string);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.USER_FETCHED_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  googleAuth = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        session: false,
+      })(req, res, next);
+    },
+  );
+
+  googleAuthCallback = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      passport.authenticate(
+        'google',
+        { session: false },
+        async (err: unknown, user: Profile) => {
+          if (err || !user) {
+            return res.redirect(
+              `${process.env.FRONTEND_URL}/login?error=Google authentication failed`,
+            );
+          }
+
+          const googleUserDto: GoogleUserDto = {
+            name: user.displayName,
+            email: user.emails?.[0]?.value ?? '',
+            avatar: user.photos?.[0]?.value ?? '',
+            googleId: user.id as string,
+          };
+
+          const result = await this._googleAuthUseCase.execute(googleUserDto);
+
+          if (result.isFailure) {
+            return res.redirect(
+              `${process.env.FRONTEND_URL}/login?error=${encodeURIComponent(result.getError())}`,
+            );
+          }
+
+          const { accessToken, refreshToken } = result.getValue();
+          const userRes = result.getValue().user;
+
+          res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 30,
+            sameSite: 'lax',
+          });
+
+          res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 1000 * 60 * 60 * 24 * 30,
+            sameSite: 'lax',
+          });
+
+          res.redirect(
+            `${process.env.FRONTEND_URL}/home?accessToken=${accessToken}&refreshToken=${refreshToken}&success=true&user=${JSON.stringify(userRes)}`,
+          );
+        },
+      )(req, res);
     },
   );
 }

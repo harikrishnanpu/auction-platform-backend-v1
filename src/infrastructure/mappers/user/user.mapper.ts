@@ -57,6 +57,7 @@ export class UserMapper {
       address: dbUser.address,
       authProvider: authProviderVo,
       roles: [...roles],
+      isVerified: dbUser.isVerified,
       status: UserStatus[dbUser.status],
     });
 
@@ -64,14 +65,27 @@ export class UserMapper {
   }
 
   public static toPersistence(user: User) {
+    let passwordHash: string | null = null;
+    const authProvider = user.getAuthProvider();
+
+    if (authProvider.getType() === AuthProviderType.LOCAL) {
+      const passwordHashResult = authProvider.getPasswordHash();
+      if (passwordHashResult.isFailure) {
+        throw new Error(passwordHashResult.getError());
+      }
+      passwordHash = passwordHashResult.getValue();
+    }
+
     return {
       id: user.getId(),
       name: user.getName(),
       email: user.getEmail().getValue(),
+      password: passwordHash,
       phone: user.getPhone()?.getValue() ?? null,
       address: user.getAddress(),
       status: user.getStatus(),
       authProvider: user.getAuthProvider().getType(),
+      isVerified: user.getIsVerified(),
       roles: user.getRoles().map((r) => r.getValue()),
     };
   }

@@ -12,4 +12,8 @@ export const TYPES = {
   IOtpRepository: Symbol.for('IOtpRepository'),
   ISendVerificationCodeUsecase: Symbol.for('ISendVerificationCodeUsecase'),
   IVerifyCredentialsUseCase: Symbol.for('IVerifyCredentialsUseCase'),
+  ITokenGeneratorService: Symbol.for('ITokenGeneratorService'),
+  ILoginUseCase: Symbol.for('ILoginUseCase'),
+  IGetUserUsecase: Symbol.for('IGetUserUsecase'),
+  IGoogleAuthUsecase: Symbol.for('IGoogleAuthUsecase'),
 };

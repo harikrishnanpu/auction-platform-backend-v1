@@ -27,7 +27,9 @@ export class User {
     private readonly email: Email,
     private phone: Phone | null,
     private address: string | null,
+    private avatar_url: string | null,
     private readonly authProvider: AuthProvider,
+    private isVerified: boolean,
     roles: UserRole[],
     status: UserStatus = UserStatus.ACTIVE,
     kyc?: Kyc,
@@ -44,6 +46,8 @@ export class User {
     phone = null,
     address = null,
     authProvider,
+    avatar_url = null,
+    isVerified = false,
     roles = [],
     status,
   }: {
@@ -53,6 +57,8 @@ export class User {
     phone?: Phone | null;
     address?: string | null;
     authProvider: AuthProvider;
+    avatar_url?: string | null;
+    isVerified?: boolean;
     roles: UserRole[];
     status: UserStatus;
   }): Result<User> {
@@ -74,7 +80,9 @@ export class User {
       email,
       phone,
       address,
+      avatar_url,
       authProvider,
+      isVerified,
       roles,
       status,
     );
@@ -151,5 +159,29 @@ export class User {
 
   public getStatus(): UserStatus {
     return this.status;
+  }
+
+  public getAvatarUrl(): string | null {
+    return this.avatar_url;
+  }
+
+  public isProfileCompleted(): boolean {
+    const phone = this.phone?.getValue();
+    const address = this.address ?? '';
+    const email = this.email.getValue();
+
+    if (!phone || !address || !email) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public getIsVerified(): boolean {
+    return this.isVerified;
+  }
+
+  public setIsVerified(isVerified: boolean) {
+    this.isVerified = isVerified;
   }
 }

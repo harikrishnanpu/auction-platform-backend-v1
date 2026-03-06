@@ -64,7 +64,7 @@ export class RegisterUseCase implements IRegisterUseCase {
         this.userRepository.findByPhone(phoneVo.getValue()),
       ]);
 
-      if (emailUser || phoneUser) {
+      if (emailUser.isSuccess || phoneUser.isSuccess) {
         return Result.fail('Email or Phone already exists');
       }
 

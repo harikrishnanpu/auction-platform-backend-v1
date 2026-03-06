@@ -1,10 +1,11 @@
 import { User } from '@domain/entities/user/user.entity';
+import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 
 export interface IUserRepository {
-  findById(id: string): Promise<User | null>;
-  findByEmail(email: Email): Promise<User | null>;
-  findByPhone(phone: Phone): Promise<User | null>;
+  findById(id: string): Promise<Result<User>>;
+  findByEmail(email: Email): Promise<Result<User>>;
+  findByPhone(phone: Phone): Promise<Result<User>>;
   save(user: User): Promise<void>;
 }

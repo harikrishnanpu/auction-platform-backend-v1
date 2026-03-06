@@ -18,6 +18,7 @@ export class OtpMapper {
       expiresAt: otp.expiresAt,
       status: otp.status as OtpStatus,
       createdAt: otp.createdAt,
+      attempts: otp.attempts,
     });
 
     if (otpEntity.isFailure) {

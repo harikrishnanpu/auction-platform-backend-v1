@@ -21,6 +21,14 @@ import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/I
 import { SendVerificationCodeUsecase } from '@application/usecases/auth/sendVerificationCode.usecase';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
 import { VerifyCredentialsUseCase } from '@application/usecases/auth/verifyCredentials.usecase';
+import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
+import { LoginUseCase } from '@application/usecases/auth/login.usecase';
+import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
+import { TokenGenerator } from '@infrastructure/services/token/tokenGenerator.service';
+import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
+import { GetUserUseCase } from '@application/usecases/auth/getUser.usecase';
+import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
+import { GoogleAuthUsecase } from '@application/usecases/auth/googleAuth.usecase';
 
 export const authContainer = new ContainerModule(({ bind }) => {
   console.log('Auth container loaded');
@@ -46,4 +54,10 @@ export const authContainer = new ContainerModule(({ bind }) => {
   bind<IVerifyCredentialsUseCase>(TYPES.IVerifyCredentialsUseCase).to(
     VerifyCredentialsUseCase,
   );
+
+  bind<ITokenGeneratorService>(TYPES.ITokenGeneratorService).to(TokenGenerator);
+  bind<ILoginUseCase>(TYPES.ILoginUseCase).to(LoginUseCase);
+  bind<IGetUserUsecase>(TYPES.IGetUserUsecase).to(GetUserUseCase);
+
+  bind<IGoogleAuthUsecase>(TYPES.IGoogleAuthUsecase).to(GoogleAuthUsecase);
 });

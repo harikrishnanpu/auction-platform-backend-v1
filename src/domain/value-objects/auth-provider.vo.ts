@@ -6,7 +6,15 @@ export class AuthProvider {
     private readonly type: AuthProviderType,
     private readonly providerId: string | null,
     private readonly passwordHash?: string,
-  ) {}
+  ) {
+    if (type === AuthProviderType.LOCAL && !passwordHash) {
+      Result.fail('Password hash is required for local auth provider');
+    }
+
+    if (type === AuthProviderType.GOOGLE && !providerId) {
+      Result.fail('Provider id is required for google auth provider');
+    }
+  }
 
   public static createLocal(passwordHash: string): AuthProvider {
     return new AuthProvider(AuthProviderType.LOCAL, null, passwordHash);
@@ -29,5 +37,14 @@ export class AuthProvider {
 
   getProviderId() {
     return this.providerId;
+  }
+
+  getPasswordHash(): Result<string> {
+    if (this.type !== AuthProviderType.LOCAL) {
+      return Result.fail(
+        'Password hash is not available for this auth provider',
+      );
+    }
+    return Result.ok(this.passwordHash!);
   }
 }
