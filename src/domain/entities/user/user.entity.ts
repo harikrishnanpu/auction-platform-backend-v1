@@ -27,6 +27,7 @@ export class User {
     private readonly email: Email,
     private phone: Phone | null,
     private address: string | null,
+    private avatar_url: string | null,
     private readonly authProvider: AuthProvider,
     roles: UserRole[],
     status: UserStatus = UserStatus.ACTIVE,
@@ -44,6 +45,7 @@ export class User {
     phone = null,
     address = null,
     authProvider,
+    avatar_url = null,
     roles = [],
     status,
   }: {
@@ -53,6 +55,7 @@ export class User {
     phone?: Phone | null;
     address?: string | null;
     authProvider: AuthProvider;
+    avatar_url?: string | null;
     roles: UserRole[];
     status: UserStatus;
   }): Result<User> {
@@ -74,6 +77,7 @@ export class User {
       email,
       phone,
       address,
+      avatar_url,
       authProvider,
       roles,
       status,
@@ -151,5 +155,9 @@ export class User {
 
   public getStatus(): UserStatus {
     return this.status;
+  }
+
+  public getAvatarUrl(): string | null {
+    return this.avatar_url;
   }
 }

@@ -1,3 +1,4 @@
+import { userResponseDto } from '@application/dtos/auth/loginUser.dto';
 import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
@@ -7,6 +8,7 @@ import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
+import { UserRoleType } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -74,8 +76,22 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
         userEntity.getValue().getId(),
       );
 
+      const userResponseDto: userResponseDto = {
+        id: userEntity.getValue().getId(),
+        name: userEntity.getValue().getName(),
+        email: userEntity.getValue().getEmail().getValue(),
+        phone: userEntity.getValue().getPhone()?.getValue() ?? '',
+        address: userEntity.getValue().getAddress() ?? '',
+        avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
+        authProvider: userEntity.getValue().getAuthProvider().getType(),
+        roles: userEntity
+          .getValue()
+          .getRoles()
+          .map((role) => role.getValue() as UserRoleType),
+      };
+
       const response: verifyCredentialsOutput = {
-        user: userEntity.getValue(),
+        user: userResponseDto,
         accessToken,
         refreshToken,
       };

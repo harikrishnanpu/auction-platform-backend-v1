@@ -1,6 +1,7 @@
 import {
   LoginUserInput,
   LoginUserOutput,
+  userResponseDto,
 } from '@application/dtos/auth/loginUser.dto';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
@@ -10,6 +11,7 @@ import { AuthProviderType } from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
+import { UserRoleType } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -71,8 +73,22 @@ export class LoginUseCase implements ILoginUseCase {
         userEntity.getValue().getId(),
       );
 
+      const userResponseDto: userResponseDto = {
+        id: userEntity.getValue().getId(),
+        name: userEntity.getValue().getName(),
+        email: userEntity.getValue().getEmail().getValue(),
+        phone: userEntity.getValue().getPhone()?.getValue() ?? '',
+        address: userEntity.getValue().getAddress() ?? '',
+        avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
+        authProvider: userEntity.getValue().getAuthProvider().getType(),
+        roles: userEntity
+          .getValue()
+          .getRoles()
+          .map((role) => role.getValue() as UserRoleType),
+      };
+
       return Result.ok({
-        user: userEntity.getValue(),
+        user: userResponseDto,
         accessToken,
         refreshToken,
       });
