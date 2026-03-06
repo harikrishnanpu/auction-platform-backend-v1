@@ -20,6 +20,7 @@ export const AUTH_MESSAGES = {
   LOGGED_OUT_SUCCESSFULLY: 'Logged out successfully',
   VERIFICATION_CODE_SENT_SUCCESSFULLY: 'Verification code sent successfully',
   TOO_MANY_OTPS_SENT: 'Too many otps sent',
+  USER_FETCHED_SUCCESSFULLY: 'User fetched successfully',
 };
 
 export const AUTH_CONSTANTS = {

@@ -14,4 +14,5 @@ export const TYPES = {
   IVerifyCredentialsUseCase: Symbol.for('IVerifyCredentialsUseCase'),
   ITokenGeneratorService: Symbol.for('ITokenGeneratorService'),
   ILoginUseCase: Symbol.for('ILoginUseCase'),
+  IGetUserUsecase: Symbol.for('IGetUserUsecase'),
 };

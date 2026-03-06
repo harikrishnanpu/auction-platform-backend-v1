@@ -25,6 +25,8 @@ import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
 import { LoginUseCase } from '@application/usecases/auth/login.usecase';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { TokenGenerator } from '@infrastructure/services/token/tokenGenerator.service';
+import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
+import { GetUserUseCase } from '@application/usecases/auth/getUser.usecase';
 
 export const authContainer = new ContainerModule(({ bind }) => {
   console.log('Auth container loaded');
@@ -53,4 +55,5 @@ export const authContainer = new ContainerModule(({ bind }) => {
 
   bind<ITokenGeneratorService>(TYPES.ITokenGeneratorService).to(TokenGenerator);
   bind<ILoginUseCase>(TYPES.ILoginUseCase).to(LoginUseCase);
+  bind<IGetUserUsecase>(TYPES.IGetUserUsecase).to(GetUserUseCase);
 });

@@ -1,4 +1,5 @@
 import { AuthController } from '@presentation/http/controllers/auth/auth.controller';
+import { authenticateMiddleware } from '@presentation/http/middlewares/authenticate.middleware';
 import { Router } from 'express';
 
 export class AuthRoutes {
@@ -22,6 +23,12 @@ export class AuthRoutes {
     );
 
     this._router.post('/login', this._authController.login);
+
+    this._router.get(
+      '/me',
+      authenticateMiddleware,
+      this._authController.getUser,
+    );
 
     return this._router;
   }

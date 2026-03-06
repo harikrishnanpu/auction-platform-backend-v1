@@ -13,6 +13,7 @@ import { verifyCredentialsSchema } from '@presentation/validators/schemas/auth/v
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
 import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
 import { loginSchema } from '@presentation/validators/schemas/auth/login.schema';
+import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
 
 @injectable()
 export class AuthController {
@@ -25,6 +26,8 @@ export class AuthController {
     private readonly _verifyCredentialsUseCase: IVerifyCredentialsUseCase,
     @inject(TYPES.ILoginUseCase)
     private readonly _loginUseCase: ILoginUseCase,
+    @inject(TYPES.IGetUserUsecase)
+    private readonly _getUserUseCase: IGetUserUsecase,
   ) {}
 
   register = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -124,6 +127,20 @@ export class AuthController {
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
+      res.cookie('accessToken', result.getValue().accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+        sameSite: 'strict',
+      });
+
+      res.cookie('refreshToken', result.getValue().refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 1000 * 60 * 60 * 24 * 30,
+        sameSite: 'strict',
+      });
+
       res.status(AUTH_CONSTANTS.CODES.OK).json({
         data: {
           user: result.getValue().user,
@@ -157,6 +174,20 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
+    res.cookie('accessToken', result.getValue().accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+      sameSite: 'strict',
+    });
+
+    res.cookie('refreshToken', result.getValue().refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+      sameSite: 'strict',
+    });
+
     res.status(AUTH_CONSTANTS.CODES.OK).json({
       data: {
         user: result.getValue().user,
@@ -165,6 +196,29 @@ export class AuthController {
       },
       success: true,
       message: AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  getUser = expressAsyncHandler(async (req: Request, res: Response) => {
+    console.log('getUser controller called');
+    const userId = req.user;
+
+    if (!userId) {
+      throw new AppError('User not found', AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    const result = await this._getUserUseCase.execute(userId as string);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.USER_FETCHED_SUCCESSFULLY,
       status: AUTH_CONSTANTS.CODES.OK,
       error: null,
     });

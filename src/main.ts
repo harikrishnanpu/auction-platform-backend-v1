@@ -3,9 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import { AuthRouterFactory } from '@presentation/http/factories/auth.router.factory';
 import { container } from '@di/container';
-import { errorMiddleware } from '@presentation/http/middlewares/errorMiddleware';
+import { errorMiddleware } from '@presentation/http/middlewares/error.middleware';
 import { EmailWorker } from '@infrastructure/workers/email.worker';
 import { TemplateService } from '@infrastructure/services/template/template.service';
+import cookieParser from 'cookie-parser';
 
 export const app = express();
 
@@ -17,6 +18,8 @@ app.use(
 );
 
 app.use(express.json());
+
+app.use(cookieParser());
 
 new EmailWorker(new TemplateService());
 
