@@ -16,8 +16,10 @@ export class AuthProvider {
     }
   }
 
-  public static createLocal(passwordHash: string): AuthProvider {
-    return new AuthProvider(AuthProviderType.LOCAL, null, passwordHash);
+  public static createLocal(passwordHash: string): Result<AuthProvider> {
+    return Result.ok(
+      new AuthProvider(AuthProviderType.LOCAL, null, passwordHash),
+    );
   }
 
   public static createOAuth(

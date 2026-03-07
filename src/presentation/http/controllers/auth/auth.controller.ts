@@ -17,6 +17,15 @@ import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecas
 import passport, { Profile } from 'passport';
 import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
 import { GoogleUserDto } from '@application/dtos/auth/googleUser.dto';
+import { completeProfileSchema } from '@presentation/validators/schemas/auth/completeProfile.schema';
+import { ICompleteProfileUsecase } from '@application/interfaces/usecases/ICompleteProfileUsecase';
+import { CompleteProfileInput } from '@application/dtos/auth/completeProfile.dto';
+import { forgottenPasswordSchema } from '@presentation/validators/schemas/auth/forgottenPassword.schema';
+import { IForgotPasswordUsecase } from '@application/interfaces/usecases/IForgotPasswordUsecase';
+import { IChangePasswordUsecase } from '@application/interfaces/usecases/IChangePasswordUsecase';
+import { changePasswordSchema } from '@presentation/validators/schemas/auth/changePassword.schema';
+import { ChangePasswordInput } from '@application/dtos/auth/changePassword.dto';
+import { JWT_CONSTANTS } from '@presentation/constants/jwt/jwt.constants';
 
 @injectable()
 export class AuthController {
@@ -33,6 +42,12 @@ export class AuthController {
     private readonly _getUserUseCase: IGetUserUsecase,
     @inject(TYPES.IGoogleAuthUsecase)
     private readonly _googleAuthUseCase: IGoogleAuthUsecase,
+    @inject(TYPES.ICompleteProfileUsecase)
+    private readonly _completeProfileUseCase: ICompleteProfileUsecase,
+    @inject(TYPES.IForgotPasswordUsecase)
+    private readonly _forgotPasswordUseCase: IForgotPasswordUsecase,
+    @inject(TYPES.IChangePasswordUsecase)
+    private readonly _changePasswordUseCase: IChangePasswordUsecase,
   ) {}
 
   register = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -132,20 +147,6 @@ export class AuthController {
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
-      res.cookie('accessToken', result.getValue().accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-        sameSite: 'strict',
-      });
-
-      res.cookie('refreshToken', result.getValue().refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 24 * 30,
-        sameSite: 'strict',
-      });
-
       res.status(AUTH_CONSTANTS.CODES.OK).json({
         data: {
           user: result.getValue().user,
@@ -178,20 +179,6 @@ export class AuthController {
       console.log('error');
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
-
-    res.cookie('accessToken', result.getValue().accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 24 * 30,
-      sameSite: 'strict',
-    });
-
-    res.cookie('refreshToken', result.getValue().refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 60 * 24 * 30,
-      sameSite: 'strict',
-    });
 
     res.status(AUTH_CONSTANTS.CODES.OK).json({
       data: {
@@ -266,27 +253,120 @@ export class AuthController {
           }
 
           const { accessToken, refreshToken } = result.getValue();
-          const userRes = result.getValue().user;
 
           res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 60 * 24 * 30,
+            secure: false,
+            maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
             sameSite: 'lax',
           });
 
           res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 1000 * 60 * 60 * 24 * 30,
+            secure: false,
+            maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
             sameSite: 'lax',
           });
 
-          res.redirect(
-            `${process.env.FRONTEND_URL}/home?accessToken=${accessToken}&refreshToken=${refreshToken}&success=true&user=${JSON.stringify(userRes)}`,
-          );
+          res.redirect(`${process.env.FRONTEND_URL}/home?success=true`);
         },
       )(req, res);
     },
   );
+
+  completeProfile = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = completeProfileSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { phone, address } = validationResult.data;
+
+    const completeProfileInput: CompleteProfileInput = {
+      userId: req.user as string,
+      phone,
+      address,
+    };
+
+    const result =
+      await this._completeProfileUseCase.execute(completeProfileInput);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    const user = result.getValue().user;
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: user,
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.PROFILE_COMPLETED_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  forgotPassword = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = forgottenPasswordSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { email } = validationResult.data;
+
+    const result = await this._forgotPasswordUseCase.execute(email);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.FORGOT_PASSWORD_SENT_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  changePassword = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = changePasswordSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { token, newPassword } = validationResult.data;
+
+    const changePasswordInput: ChangePasswordInput = {
+      token,
+      newPassword,
+    };
+
+    const result =
+      await this._changePasswordUseCase.execute(changePasswordInput);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: AUTH_CONSTANTS.MESSAGES.PASSWORD_CHANGED_SUCCESSFULLY,
+      status: AUTH_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
 }

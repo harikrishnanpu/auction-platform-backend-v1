@@ -21,6 +21,9 @@ export const AUTH_MESSAGES = {
   VERIFICATION_CODE_SENT_SUCCESSFULLY: 'Verification code sent successfully',
   TOO_MANY_OTPS_SENT: 'Too many otps sent',
   USER_FETCHED_SUCCESSFULLY: 'User fetched successfully',
+  PROFILE_COMPLETED_SUCCESSFULLY: 'Profile completed successfully',
+  FORGOT_PASSWORD_SENT_SUCCESSFULLY: 'Forgot password email sent successfully',
+  PASSWORD_CHANGED_SUCCESSFULLY: 'Password changed successfully',
 };
 
 export const AUTH_CONSTANTS = {

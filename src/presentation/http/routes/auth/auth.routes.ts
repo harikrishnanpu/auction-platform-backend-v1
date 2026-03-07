@@ -36,6 +36,16 @@ export class AuthRoutes {
       this._authController.googleAuthCallback,
     );
 
+    this._router.post(
+      '/complete-profile',
+      authenticateMiddleware,
+      this._authController.completeProfile,
+    );
+
+    this._router.post('/forgot-password', this._authController.forgotPassword);
+
+    this._router.post('/change-password', this._authController.changePassword);
+
     return this._router;
   }
 }

@@ -16,4 +16,7 @@ export const TYPES = {
   ILoginUseCase: Symbol.for('ILoginUseCase'),
   IGetUserUsecase: Symbol.for('IGetUserUsecase'),
   IGoogleAuthUsecase: Symbol.for('IGoogleAuthUsecase'),
+  ICompleteProfileUsecase: Symbol.for('ICompleteProfileUsecase'),
+  IForgotPasswordUsecase: Symbol.for('IForgotPasswordUsecase'),
+  IChangePasswordUsecase: Symbol.for('IChangePasswordUsecase'),
 };

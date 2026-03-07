@@ -71,6 +71,9 @@ export class RegisterUseCase implements IRegisterUseCase {
       const hashedPassword = await this._passwordService.hashPassword(password);
 
       const authProviderVo = AuthProvider.createLocal(hashedPassword);
+      if (authProviderVo.isFailure) {
+        return Result.fail(authProviderVo.getError());
+      }
 
       const userId = this._idGeneratingService.generateId();
 
@@ -81,7 +84,7 @@ export class RegisterUseCase implements IRegisterUseCase {
         name,
         email: emailVo.getValue(),
         phone: phoneVo.getValue(),
-        authProvider: authProviderVo,
+        authProvider: authProviderVo.getValue(),
         address: address,
         roles: [userRoleVo],
         status: UserStatus.ACTIVE,

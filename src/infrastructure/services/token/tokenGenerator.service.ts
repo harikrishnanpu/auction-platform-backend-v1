@@ -4,11 +4,13 @@ import jwt from 'jsonwebtoken';
 export class TokenGenerator implements ITokenGeneratorService {
   private _accessTokenSecret: string;
   private _refreshTokenSecret: string;
+  private _tokenSecret: string;
 
   constructor() {
     if (
       !process.env.JWT_ACCESSTOKEN_SECRET ||
-      !process.env.JWT_REFRESHTOKEN_SECRET
+      !process.env.JWT_REFRESHTOKEN_SECRET ||
+      !process.env.JWT_TOKEN_SECRET
     ) {
       throw new Error(
         'jwt secret issue: env file does not contains jwt secret',
@@ -17,6 +19,7 @@ export class TokenGenerator implements ITokenGeneratorService {
 
     this._accessTokenSecret = process.env.JWT_ACCESSTOKEN_SECRET;
     this._refreshTokenSecret = process.env.JWT_REFRESHTOKEN_SECRET;
+    this._tokenSecret = process.env.JWT_TOKEN_SECRET;
   }
 
   generateAccessToken(payload: string): string {
@@ -25,6 +28,14 @@ export class TokenGenerator implements ITokenGeneratorService {
 
   generateRefreshToken(payload: string): string {
     return jwt.sign(payload, this._refreshTokenSecret);
+  }
+
+  generateToken(payload: string): string {
+    return jwt.sign(payload, this._tokenSecret);
+  }
+
+  verifyToken(token: string): string {
+    return jwt.verify(token, this._tokenSecret) as string;
   }
 
   verifyAccesstoken(token: string): string {

@@ -19,4 +19,12 @@ export class EmailService implements IEmailService {
       template: EMAIL_TEMPLATES.VERIFY_EMAIL,
     });
   }
+
+  async sendForgotPasswordEmail(email: Email, token: string): Promise<void> {
+    await this._emailQueue.addEmailJob({
+      email: email.getValue(),
+      otp: token,
+      template: EMAIL_TEMPLATES.RESET_PASSWORD,
+    });
+  }
 }
