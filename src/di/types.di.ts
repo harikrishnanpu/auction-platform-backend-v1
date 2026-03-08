@@ -19,4 +19,6 @@ export const TYPES = {
   ICompleteProfileUsecase: Symbol.for('ICompleteProfileUsecase'),
   IForgotPasswordUsecase: Symbol.for('IForgotPasswordUsecase'),
   IChangePasswordUsecase: Symbol.for('IChangePasswordUsecase'),
+  AuthenticateMiddleware: Symbol.for('AuthenticateMiddleware'),
+  AuthorizeMiddleware: Symbol.for('AuthorizeMiddleware'),
 };

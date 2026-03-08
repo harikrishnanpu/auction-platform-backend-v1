@@ -2,6 +2,8 @@ import { AuthRoutes } from '../routes/auth/auth.routes';
 import { AuthController } from '../controllers/auth/auth.controller';
 import { TYPES } from 'di/types.di';
 import { Container } from 'inversify';
+import { AuthenticateMiddleware } from '../middlewares/authenticate.middleware';
+import { AuthorizeMiddleware } from '../middlewares/authorize.middleware';
 
 export class AuthRouterFactory {
   public static authRouter(container: Container) {
@@ -11,7 +13,17 @@ export class AuthRouterFactory {
     console.log('Is boun symbol:', container.isBound(TYPES.AuthController));
 
     const authController = container.get<AuthController>(TYPES.AuthController);
-    const authRoutes = new AuthRoutes(authController);
+    const authenticateMiddleware = container.get<AuthenticateMiddleware>(
+      TYPES.AuthenticateMiddleware,
+    );
+    const authorizeMiddleware = container.get<AuthorizeMiddleware>(
+      TYPES.AuthorizeMiddleware,
+    );
+    const authRoutes = new AuthRoutes(
+      authController,
+      authenticateMiddleware,
+      authorizeMiddleware,
+    );
     return authRoutes.register();
   }
 }

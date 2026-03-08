@@ -1,25 +1,54 @@
-import { STATUS_CODES } from '@presentation/constants/http/status.code';
+import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Request, Response, NextFunction } from 'express';
 import expressAsyncHandler from 'express-async-handler';
 import { AppError } from '../error/app.error';
-import { TokenGenerator } from '@infrastructure/services/token/tokenGenerator.service';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
+import { STATUS_CODES } from '@presentation/constants/http/status.code';
+import { UserRole } from '@domain/value-objects/user-roles.vo';
+import { inject, injectable } from 'inversify';
+import { TYPES } from '@di/types.di';
 
-export const authenticateMiddleware = expressAsyncHandler(
-  async (
-    req: Request & { user?: string },
-    res: Response,
-    next: NextFunction,
-  ) => {
-    console.log('authenticateMiddleware called');
-    console.log(req.cookies);
-    const token = req.cookies.accessToken;
+@injectable()
+export class AuthenticateMiddleware {
+  constructor(
+    @inject(TYPES.IUserRepository)
+    private _userRepository: IUserRepository,
+    @inject(TYPES.ITokenGeneratorService)
+    private _tokenGenerator: ITokenGeneratorService,
+  ) {}
 
-    if (!token) {
-      throw new AppError('Unauthorized', STATUS_CODES.UNAUTHORIZED);
-    }
+  authenticate = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const token = req.cookies.accessToken;
+      const decoded = this._tokenGenerator.verifyAccesstoken(token);
 
-    const payload = new TokenGenerator().verifyAccesstoken(token);
-    req.user = payload;
-    next();
-  },
-);
+      if (!decoded) {
+        throw new AppError(
+          AUTH_MESSAGES.UNAUTHORIZED,
+          STATUS_CODES.UNAUTHORIZED,
+        );
+      }
+
+      const userEntity = await this._userRepository.findById(decoded);
+
+      if (userEntity.isFailure) {
+        throw new AppError(
+          AUTH_MESSAGES.USER_NOT_FOUND,
+          STATUS_CODES.NOT_FOUND,
+        );
+      }
+
+      if (!userEntity.getValue().hasRole(UserRole.USER)) {
+        throw new AppError(
+          AUTH_MESSAGES.UNAUTHORIZED,
+          STATUS_CODES.UNAUTHORIZED,
+        );
+      }
+
+      req.user = userEntity.getValue();
+
+      next();
+    },
+  );
+}

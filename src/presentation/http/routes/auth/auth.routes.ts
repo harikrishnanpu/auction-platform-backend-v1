@@ -1,11 +1,16 @@
 import { AuthController } from '@presentation/http/controllers/auth/auth.controller';
-import { authenticateMiddleware } from '@presentation/http/middlewares/authenticate.middleware';
+import { AuthenticateMiddleware } from '@presentation/http/middlewares/authenticate.middleware';
+import { AuthorizeMiddleware } from '@presentation/http/middlewares/authorize.middleware';
 import { Router } from 'express';
 
 export class AuthRoutes {
   private _router: Router;
 
-  constructor(private _authController: AuthController) {
+  constructor(
+    private _authController: AuthController,
+    private _authenticateMiddleware: AuthenticateMiddleware,
+    private _authorizeMiddleware: AuthorizeMiddleware,
+  ) {
     this._router = Router();
   }
 
@@ -26,7 +31,7 @@ export class AuthRoutes {
 
     this._router.get(
       '/me',
-      authenticateMiddleware,
+      this._authenticateMiddleware.authenticate,
       this._authController.getUser,
     );
 
@@ -38,7 +43,7 @@ export class AuthRoutes {
 
     this._router.post(
       '/complete-profile',
-      authenticateMiddleware,
+      this._authenticateMiddleware.authenticate,
       this._authController.completeProfile,
     );
 
