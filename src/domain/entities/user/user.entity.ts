@@ -28,7 +28,7 @@ export class User {
     private phone: Phone | null,
     private address: string | null,
     private avatar_url: string | null,
-    private readonly authProvider: AuthProvider,
+    private authProvider: AuthProvider,
     private isVerified: boolean,
     roles: UserRole[],
     status: UserStatus = UserStatus.ACTIVE,
@@ -183,5 +183,21 @@ export class User {
 
   public setIsVerified(isVerified: boolean) {
     this.isVerified = isVerified;
+  }
+
+  public setPhone(phone: Phone) {
+    this.phone = phone;
+  }
+
+  public setAddress(address: string) {
+    this.address = address;
+  }
+
+  public setAvatarUrl(avatar_url: string) {
+    this.avatar_url = avatar_url;
+  }
+
+  public setAuthProvider(authProvider: AuthProvider) {
+    this.authProvider = authProvider;
   }
 }

@@ -29,6 +29,12 @@ import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecas
 import { GetUserUseCase } from '@application/usecases/auth/getUser.usecase';
 import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
 import { GoogleAuthUsecase } from '@application/usecases/auth/googleAuth.usecase';
+import { CompleteProfileUsecase } from '@application/usecases/auth/completeProfile.usecase';
+import { ICompleteProfileUsecase } from '@application/interfaces/usecases/ICompleteProfileUsecase';
+import { IForgotPasswordUsecase } from '@application/interfaces/usecases/IForgotPasswordUsecase';
+import { ForgotPasswordUsecase } from '@application/usecases/auth/forgotPassword.usecase';
+import { IChangePasswordUsecase } from '@application/interfaces/usecases/IChangePasswordUsecase';
+import { ChangePasswordUsecase } from '@application/usecases/auth/changePassword.usecase';
 
 export const authContainer = new ContainerModule(({ bind }) => {
   console.log('Auth container loaded');
@@ -60,4 +66,13 @@ export const authContainer = new ContainerModule(({ bind }) => {
   bind<IGetUserUsecase>(TYPES.IGetUserUsecase).to(GetUserUseCase);
 
   bind<IGoogleAuthUsecase>(TYPES.IGoogleAuthUsecase).to(GoogleAuthUsecase);
+  bind<ICompleteProfileUsecase>(TYPES.ICompleteProfileUsecase).to(
+    CompleteProfileUsecase,
+  );
+  bind<IForgotPasswordUsecase>(TYPES.IForgotPasswordUsecase).to(
+    ForgotPasswordUsecase,
+  );
+  bind<IChangePasswordUsecase>(TYPES.IChangePasswordUsecase).to(
+    ChangePasswordUsecase,
+  );
 });

@@ -36,7 +36,7 @@ export class UserMapper {
     let authProviderVo: AuthProvider;
 
     if (dbUser.authProvider === 'LOCAL') {
-      authProviderVo = AuthProvider.createLocal(dbUser.password || '');
+      authProviderVo = AuthProvider.createLocal(dbUser.password!).getValue();
     } else {
       authProviderVo = AuthProvider.createOAuth(
         AuthProviderType.GOOGLE,
