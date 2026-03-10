@@ -1,6 +1,15 @@
+import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
+import { OtpPurpose } from '@domain/entities/otp/otp.entity';
 import { Email } from '@domain/value-objects/email.vo';
 
+export type EmailTemplate =
+  (typeof EMAIL_TEMPLATES)[keyof typeof EMAIL_TEMPLATES];
+
 export interface IEmailService {
-  sendVerificationEmail(email: Email, otp: string): Promise<void>;
-  sendForgotPasswordEmail(email: Email, token: string): Promise<void>;
+  sendOtpEmail(
+    email: Email,
+    otp: string,
+    purpose: OtpPurpose,
+    template: EmailTemplate,
+  ): Promise<void>;
 }

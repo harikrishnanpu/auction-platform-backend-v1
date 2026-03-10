@@ -21,4 +21,13 @@ export const TYPES = {
   IChangePasswordUsecase: Symbol.for('IChangePasswordUsecase'),
   AuthenticateMiddleware: Symbol.for('AuthenticateMiddleware'),
   AuthorizeMiddleware: Symbol.for('AuthorizeMiddleware'),
+  UserController: Symbol.for('UserController'),
+  ISendProfileChangePasswordOtpUsecase: Symbol.for(
+    'ISendProfileChangePasswordOtpUsecase',
+  ),
+  IChangeProfilePasswordUsecase: Symbol.for('IChangeProfilePasswordUsecase'),
+  IEditprofileSendOtpUsecase: Symbol.for('IEditprofileSendOtpUsecase'),
+  IEditProfileUsecase: Symbol.for('IEditProfileUsecase'),
+  ISendOtpUsecase: Symbol.for('ISendOtpUsecase'),
+  OtpPolicyService: Symbol.for('OtpPolicyService'),
 };

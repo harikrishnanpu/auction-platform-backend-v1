@@ -43,9 +43,7 @@ export class AuthProvider {
 
   getPasswordHash(): Result<string> {
     if (this.type !== AuthProviderType.LOCAL) {
-      return Result.fail(
-        'Password hash is not available for this auth provider',
-      );
+      return Result.fail('user is not using local auth provider');
     }
     return Result.ok(this.passwordHash!);
   }

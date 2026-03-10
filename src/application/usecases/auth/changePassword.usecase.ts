@@ -1,7 +1,7 @@
 import { ChangePasswordInput } from '@application/dtos/auth/changePassword.dto';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
-import { IChangePasswordUsecase } from '@application/interfaces/usecases/IChangePasswordUsecase';
+import { IChangePasswordUsecase } from '@application/interfaces/usecases/auth/IChangePasswordUsecase';
 import { TYPES } from '@di/types.di';
 import { OtpPurpose, OtpStatus } from '@domain/entities/otp/otp.entity';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';

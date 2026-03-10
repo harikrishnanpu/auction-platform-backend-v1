@@ -4,7 +4,7 @@ import {
 } from '@application/dtos/auth/completeProfile.dto';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
-import { ICompleteProfileUsecase } from '@application/interfaces/usecases/ICompleteProfileUsecase';
+import { ICompleteProfileUsecase } from '@application/interfaces/usecases/auth/ICompleteProfileUsecase';
 import { TYPES } from '@di/types.di';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';

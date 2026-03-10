@@ -2,19 +2,25 @@ import { Request, Response, NextFunction } from 'express';
 import expressAsyncHandler from 'express-async-handler';
 import { AppError } from '../error/app.error';
 import { STATUS_CODES } from '@presentation/constants/http/status.code';
-import { UserRole } from '@domain/value-objects/user-roles.vo';
 import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
-import { User } from '@domain/entities/user/user.entity';
+import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 
 export class AuthorizeMiddleware {
-  authorize = (userRoles: UserRole[]) =>
+  authorize = (userRoles: UserRoleType[]) =>
     expressAsyncHandler(
       async (req: Request, res: Response, next: NextFunction) => {
-        const user = req.user as User;
+        const user = req.user;
+
+        if (!user) {
+          throw new AppError(
+            AUTH_MESSAGES.UNAUTHORIZED,
+            STATUS_CODES.UNAUTHORIZED,
+          );
+        }
 
         let isAuthorized = true;
         for (const userRole of userRoles) {
-          if (!user.hasRole(userRole)) {
+          if (!user.roles.includes(userRole)) {
             isAuthorized = false;
             break;
           }

@@ -3,7 +3,7 @@ import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
-import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
+import { IGoogleAuthUsecase } from '@application/interfaces/usecases/auth/IGoogleAuthUsecase';
 import { TYPES } from '@di/types.di';
 import {
   AuthProviderType,

@@ -24,7 +24,7 @@ export class User {
   private constructor(
     private readonly id: string,
     private name: string,
-    private readonly email: Email,
+    private email: Email,
     private phone: Phone | null,
     private address: string | null,
     private avatar_url: string | null,
@@ -199,5 +199,13 @@ export class User {
 
   public setAuthProvider(authProvider: AuthProvider) {
     this.authProvider = authProvider;
+  }
+
+  public setName(name: string) {
+    this.name = name;
+  }
+
+  public setEmail(email: Email) {
+    this.email = email;
   }
 }

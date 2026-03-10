@@ -6,7 +6,7 @@ import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IOtpService } from '@application/interfaces/services/IOtpService';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
-import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
+import { IRegisterUseCase } from '@application/interfaces/usecases/auth/IRegisterUsecase';
 import {
   Otp,
   OtpChannel,

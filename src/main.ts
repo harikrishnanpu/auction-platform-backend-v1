@@ -9,6 +9,7 @@ import { TemplateService } from '@infrastructure/services/template/template.serv
 import cookieParser from 'cookie-parser';
 import passport from 'passport';
 import { configureGoogleStrategy } from '@infrastructure/passport/passport.config';
+import { UserRouterFactory } from '@presentation/http/factories/user.router.factory';
 
 export const app = express();
 
@@ -28,5 +29,6 @@ configureGoogleStrategy();
 new EmailWorker(new TemplateService());
 
 app.use('/api/v1/auth', AuthRouterFactory.authRouter(container));
+app.use('/api/v1/user', UserRouterFactory.userRouter(container));
 
 app.use(errorMiddleware);

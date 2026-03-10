@@ -1,9 +1,13 @@
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { Email } from '@domain/value-objects/email.vo';
-import { EMAIL_TEMPLATES } from '@infrastructure/constants/template/email.template.constants';
+import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
 import { EmailQueue } from '@infrastructure/queue/email.queue';
 import { TYPES } from 'di/types.di';
 import { inject, injectable } from 'inversify';
+import { OtpPurpose } from '@domain/entities/otp/otp.entity';
+
+export type EmailTemplate =
+  (typeof EMAIL_TEMPLATES)[keyof typeof EMAIL_TEMPLATES];
 
 @injectable()
 export class EmailService implements IEmailService {
@@ -12,19 +16,16 @@ export class EmailService implements IEmailService {
     private _emailQueue: EmailQueue,
   ) {}
 
-  async sendVerificationEmail(email: Email, otp: string): Promise<void> {
+  async sendOtpEmail(
+    email: Email,
+    otp: string,
+    purpose: OtpPurpose,
+    template: EmailTemplate,
+  ): Promise<void> {
     await this._emailQueue.addEmailJob({
       email: email.getValue(),
       otp,
-      template: EMAIL_TEMPLATES.VERIFY_EMAIL,
-    });
-  }
-
-  async sendForgotPasswordEmail(email: Email, token: string): Promise<void> {
-    await this._emailQueue.addEmailJob({
-      email: email.getValue(),
-      otp: token,
-      template: EMAIL_TEMPLATES.RESET_PASSWORD,
+      template,
     });
   }
 }

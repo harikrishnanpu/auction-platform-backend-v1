@@ -1,6 +1,6 @@
 import { redisConfig } from '@config/redis.config';
 import { EMAIL_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/email.queue.constants';
-import { EMAIL_TEMPLATES } from '@infrastructure/constants/template/email.template.constants';
+import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
 import { Queue } from 'bullmq';
 
 export class EmailQueue {

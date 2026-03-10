@@ -1,7 +1,7 @@
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
-import { IForgotPasswordUsecase } from '@application/interfaces/usecases/IForgotPasswordUsecase';
+import { IForgotPasswordUsecase } from '@application/interfaces/usecases/auth/IForgotPasswordUsecase';
 import { TYPES } from '@di/types.di';
 import {
   Otp,
