@@ -38,8 +38,12 @@ export const registerSchema = z.object({
   password: z
     .string()
     .trim()
-    .min(1, 'Password is required')
-    .max(10, 'Password cannot s exceed 10 characters'),
+    .min(6, 'Password is required')
+    .max(10, 'Password cannot s exceed 10 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
+      'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+    ),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

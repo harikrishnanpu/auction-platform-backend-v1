@@ -2,7 +2,7 @@ import {
   userResponseDto,
   UserRoleType,
 } from '@application/dtos/auth/loginUser.dto';
-import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
+import { IGetUserUsecase } from '@application/interfaces/usecases/auth/IGetUserUsecase';
 import { TYPES } from '@di/types.di';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';

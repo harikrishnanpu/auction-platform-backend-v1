@@ -1,7 +1,7 @@
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IOtpService } from '@application/interfaces/services/IOtpService';
-import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
+import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/auth/ISendVerificationCodeUsecase';
 import { TYPES } from '@di/types.di';
 import {
   Otp,

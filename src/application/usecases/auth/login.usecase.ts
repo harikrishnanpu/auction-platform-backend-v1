@@ -6,7 +6,7 @@ import {
 } from '@application/dtos/auth/loginUser.dto';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
-import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
+import { ILoginUseCase } from '@application/interfaces/usecases/auth/ILoginUsecase';
 import { TYPES } from '@di/types.di';
 import { AuthProviderType } from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';

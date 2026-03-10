@@ -4,7 +4,7 @@ import {
 } from '@application/dtos/auth/loginUser.dto';
 import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
-import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
+import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/auth/IVerifyCredentialsUseCase';
 import { TYPES } from '@di/types.di';
 import { OtpPurpose, OtpStatus } from '@domain/entities/otp/otp.entity';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';

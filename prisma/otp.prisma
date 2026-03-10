@@ -4,6 +4,8 @@ enum OtpPurpose {
     VERIFY_PHONE
     VERIFY_EMAIL
     RESET_PASSWORD
+    CHANGE_PROFILE_PASSWORD
+    EDIT_PROFILE
 }
 
 enum OtpChannel {

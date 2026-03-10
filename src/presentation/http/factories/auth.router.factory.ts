@@ -4,9 +4,10 @@ import { TYPES } from 'di/types.di';
 import { Container } from 'inversify';
 import { AuthenticateMiddleware } from '../middlewares/authenticate.middleware';
 import { AuthorizeMiddleware } from '../middlewares/authorize.middleware';
+import { Router } from 'express';
 
 export class AuthRouterFactory {
-  public static authRouter(container: Container) {
+  public static authRouter(container: Container): Router {
     console.log('is bound: ', container.isBound(TYPES.AuthController));
 
     console.log('Is boun Class:', container.isBound(AuthController));

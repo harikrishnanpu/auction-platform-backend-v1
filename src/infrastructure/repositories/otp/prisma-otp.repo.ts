@@ -45,7 +45,7 @@ export class PrismaOtpRepo implements IOtpRepository {
     const otp = await this.prisma.otp.findFirst({
       where: {
         userId,
-        purpose,
+        purpose: purpose,
       },
       orderBy: {
         createdAt: 'desc',

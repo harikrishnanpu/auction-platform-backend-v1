@@ -5,16 +5,22 @@ import { AuthController } from '@presentation/http/controllers/auth/auth.control
 import { TYPES } from './types.di';
 import { AuthenticateMiddleware } from '@presentation/http/middlewares/authenticate.middleware';
 import { AuthorizeMiddleware } from '@presentation/http/middlewares/authorize.middleware';
+import { UserController } from '@presentation/http/controllers/user/user.controler';
+import { userContainer } from './modules/user.container';
 
 const container = new Container();
 
 console.log('Initializing Global Container...');
 container.load(authContainer);
+container.load(userContainer);
 
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
+container.bind<UserController>(TYPES.UserController).to(UserController);
+
 container
   .bind<AuthenticateMiddleware>(TYPES.AuthenticateMiddleware)
   .to(AuthenticateMiddleware);
+
 container
   .bind<AuthorizeMiddleware>(TYPES.AuthorizeMiddleware)
   .to(AuthorizeMiddleware);

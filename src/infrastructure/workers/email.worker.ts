@@ -1,6 +1,6 @@
 import { redisConfig } from '@config/redis.config';
 import { EMAIL_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/email.queue.constants';
-import { EMAIL_TEMPLATES } from '@infrastructure/constants/template/email.template.constants';
+import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
 import {
   TemplateService,
   TemplateServiceProps,
@@ -64,6 +64,10 @@ export class EmailWorker {
 
         case EMAIL_TEMPLATES.RESET_PASSWORD:
           templatePath = 'reset-password.template.html';
+          break;
+
+        case EMAIL_TEMPLATES.CHANGE_PROFILE_PASSWORD:
+          templatePath = 'change-profile-passwors.template.html';
           break;
 
         default:

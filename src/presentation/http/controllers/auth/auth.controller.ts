@@ -1,6 +1,9 @@
 import { RegisterUserInput } from '@application/dtos/auth/registerUser.dto';
-import { IRegisterUseCase } from '@application/interfaces/usecases/IRegisterUsecase';
-import { AUTH_CONSTANTS } from '@presentation/constants/auth/auth.constants';
+import { IRegisterUseCase } from '@application/interfaces/usecases/auth/IRegisterUsecase';
+import {
+  AUTH_CONSTANTS,
+  AUTH_MESSAGES,
+} from '@presentation/constants/auth/auth.constants';
 import { TYPES } from '@di/types.di';
 import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
@@ -8,32 +11,34 @@ import { AppError } from '@presentation/http/error/app.error';
 import expressAsyncHandler from 'express-async-handler';
 import { registerSchema } from '@presentation/validators/schemas/auth/register.schema';
 import { sendVerificationCodeSchema } from '@presentation/validators/schemas/auth/sendVerificationCode.schema';
-import { ISendVerificationCodeUsecase } from '@application/interfaces/usecases/ISendVerificationCodeUsecase';
 import { verifyCredentialsSchema } from '@presentation/validators/schemas/auth/verifyCredentials.schema';
-import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/IVerifyCredentialsUseCase';
-import { ILoginUseCase } from '@application/interfaces/usecases/ILoginUsecase';
+import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/auth/IVerifyCredentialsUseCase';
+import { ILoginUseCase } from '@application/interfaces/usecases/auth/ILoginUsecase';
 import { loginSchema } from '@presentation/validators/schemas/auth/login.schema';
-import { IGetUserUsecase } from '@application/interfaces/usecases/IGetUserUsecase';
+import { IGetUserUsecase } from '@application/interfaces/usecases/auth/IGetUserUsecase';
 import passport, { Profile } from 'passport';
-import { IGoogleAuthUsecase } from '@application/interfaces/usecases/IGoogleAuthUsecase';
+import { IGoogleAuthUsecase } from '@application/interfaces/usecases/auth/IGoogleAuthUsecase';
 import { GoogleUserDto } from '@application/dtos/auth/googleUser.dto';
 import { completeProfileSchema } from '@presentation/validators/schemas/auth/completeProfile.schema';
-import { ICompleteProfileUsecase } from '@application/interfaces/usecases/ICompleteProfileUsecase';
+import { ICompleteProfileUsecase } from '@application/interfaces/usecases/auth/ICompleteProfileUsecase';
 import { CompleteProfileInput } from '@application/dtos/auth/completeProfile.dto';
 import { forgottenPasswordSchema } from '@presentation/validators/schemas/auth/forgottenPassword.schema';
-import { IForgotPasswordUsecase } from '@application/interfaces/usecases/IForgotPasswordUsecase';
-import { IChangePasswordUsecase } from '@application/interfaces/usecases/IChangePasswordUsecase';
+import { IForgotPasswordUsecase } from '@application/interfaces/usecases/auth/IForgotPasswordUsecase';
+import { IChangePasswordUsecase } from '@application/interfaces/usecases/auth/IChangePasswordUsecase';
 import { changePasswordSchema } from '@presentation/validators/schemas/auth/changePassword.schema';
 import { ChangePasswordInput } from '@application/dtos/auth/changePassword.dto';
 import { JWT_CONSTANTS } from '@presentation/constants/jwt/jwt.constants';
+import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
+import { SendOtpInput } from '@application/dtos/otp/SendOtp.dto';
+import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
 
 @injectable()
 export class AuthController {
   constructor(
     @inject(TYPES.IRegisterUseCase)
     private readonly _registerUseCase: IRegisterUseCase,
-    @inject(TYPES.ISendVerificationCodeUsecase)
-    private readonly _sendVerificationCodeUseCase: ISendVerificationCodeUsecase,
+    @inject(TYPES.ISendOtpUsecase)
+    private readonly _sendOtpUsecase: ISendOtpUsecase,
     @inject(TYPES.IVerifyCredentialsUseCase)
     private readonly _verifyCredentialsUseCase: IVerifyCredentialsUseCase,
     @inject(TYPES.ILoginUseCase)
@@ -99,9 +104,13 @@ export class AuthController {
         );
       }
 
-      const { email } = validationResult.data;
+      const sendOtpInput: SendOtpInput = {
+        email: validationResult.data.email,
+        purpose: OtpPurpose.VERIFY_EMAIL,
+        channel: OtpChannel.EMAIL,
+      };
 
-      const result = await this._sendVerificationCodeUseCase.execute(email);
+      const result = await this._sendOtpUsecase.execute(sendOtpInput);
 
       if (result.isFailure) {
         console.log('error');
@@ -195,13 +204,16 @@ export class AuthController {
 
   getUser = expressAsyncHandler(async (req: Request, res: Response) => {
     console.log('getUser controller called');
-    const userId = req.user;
 
-    if (!userId) {
-      throw new AppError('User not found', AUTH_CONSTANTS.CODES.BAD_REQUEST);
+    if (!req.user) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_NOT_FOUND,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
     }
+    const userId = req.user.id;
 
-    const result = await this._getUserUseCase.execute(userId as string);
+    const result = await this._getUserUseCase.execute(userId);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
@@ -286,8 +298,16 @@ export class AuthController {
 
     const { phone, address } = validationResult.data;
 
+    if (!req.user) {
+      throw new AppError(
+        AUTH_MESSAGES.USER_NOT_FOUND,
+        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+    const userId = req.user.id;
+
     const completeProfileInput: CompleteProfileInput = {
-      userId: req.user as string,
+      userId,
       phone,
       address,
     };
