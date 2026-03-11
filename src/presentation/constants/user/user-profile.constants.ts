@@ -7,6 +7,9 @@ export const USER_PROFILE_MESSAGES = {
     'Profile change password email sent successfully',
   EDIT_PROFILE_SEND_OTP_SUCCESSFULLY: 'Edit profile send otp successfully',
   EDIT_PROFILE_SUCCESSFULLY: 'Edit profile successfully',
+  GENERATE_AVATAR_UPLOAD_URL_SUCCESSFULLY:
+    'Generate avatar upload url successfully',
+  UPDATE_AVATAR_URL_SUCCESSFULLY: 'Update avatar url successfully',
 };
 
 export const USER_PROFILE_CONSTANTS = {

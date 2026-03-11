@@ -41,6 +41,20 @@ export class UserRoutes {
       this._userController.editProfile,
     );
 
+    this._router.post(
+      '/generate-avatar-upload-url',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._userController.generateAvatarUploadUrl,
+    );
+
+    this._router.put(
+      '/update-avatar-url',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._userController.updateAvatarUrl,
+    );
+
     return this._router;
   }
 }

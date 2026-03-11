@@ -30,4 +30,10 @@ export const TYPES = {
   IEditProfileUsecase: Symbol.for('IEditProfileUsecase'),
   ISendOtpUsecase: Symbol.for('ISendOtpUsecase'),
   OtpPolicyService: Symbol.for('OtpPolicyService'),
+  IStorageService: Symbol.for('IStorageService'),
+  S3Client: Symbol.for('S3Client'),
+  IGenerateAvatarUploadUrlUsecase: Symbol.for(
+    'IGenerateAvatarUploadUrlUsecase',
+  ),
+  IUpdateAvatarUrlUsecase: Symbol.for('IUpdateAvatarUrlUsecase'),
 };
