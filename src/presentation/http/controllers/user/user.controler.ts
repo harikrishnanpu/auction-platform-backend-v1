@@ -13,6 +13,12 @@ import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
 import { EditProfileInput } from '@application/dtos/user/editProfile.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
 import { editProfileSchema } from '@presentation/validators/schemas/user/editProfile.schema';
+import { AvatarUploadUrlRequestDto } from '@application/dtos/user/avatarUploadUrl.dto';
+import { IGenerateAvatarUploadUrlUsecase } from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
+import { generateUploadUrlSchema } from '@presentation/validators/schemas/user/generate-upload-url.schema';
+import { updateAvatarUrlSchema } from '@presentation/validators/schemas/user/update-avatar-url.schema';
+import { UpdateAvatarUrlRequestDto } from '@application/dtos/user/updateAvatar.dto';
+import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
 
 @injectable()
 export class UserController {
@@ -23,6 +29,10 @@ export class UserController {
     private readonly _sendOtpUseCase: ISendOtpUsecase,
     @inject(TYPES.IEditProfileUsecase)
     private readonly _editProfileUseCase: IEditProfileUsecase,
+    @inject(TYPES.IGenerateAvatarUploadUrlUsecase)
+    private readonly _generateAvatarUploadUrlUseCase: IGenerateAvatarUploadUrlUsecase,
+    @inject(TYPES.IUpdateAvatarUrlUsecase)
+    private readonly _updateAvatarUrlUseCase: IUpdateAvatarUrlUsecase,
   ) {}
 
   sendProfileChangePasswordOtp = expressAsyncHandler(
@@ -189,6 +199,95 @@ export class UserController {
       data: result.getValue(),
       success: true,
       message: USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SUCCESSFULLY,
+      status: USER_PROFILE_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  generateAvatarUploadUrl = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const parsedData = generateUploadUrlSchema.safeParse(req.body);
+
+      if (!parsedData.success) {
+        throw new AppError(
+          parsedData.error.issues[0].message,
+          USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      if (!req.user) {
+        throw new AppError(
+          USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+          USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const generateAvatarUploadUrlInput: AvatarUploadUrlRequestDto = {
+        userId: req.user.id,
+        contentType: parsedData.data.contentType,
+        fileName: parsedData.data.fileName,
+        fileSize: parsedData.data.fileSize,
+      };
+
+      const result = await this._generateAvatarUploadUrlUseCase.execute(
+        generateAvatarUploadUrlInput,
+      );
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message:
+          USER_PROFILE_CONSTANTS.MESSAGES
+            .GENERATE_AVATAR_UPLOAD_URL_SUCCESSFULLY,
+        status: USER_PROFILE_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  updateAvatarUrl = expressAsyncHandler(async (req: Request, res: Response) => {
+    const parsedData = updateAvatarUrlSchema.safeParse(req.body);
+
+    if (!parsedData.success) {
+      throw new AppError(
+        parsedData.error.issues[0].message,
+        USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    if (!req.user) {
+      throw new AppError(
+        USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const updateAvatarUrlInput: UpdateAvatarUrlRequestDto = {
+      userId: req.user.id,
+      avatarKey: parsedData.data.fileKey,
+    };
+
+    const result =
+      await this._updateAvatarUrlUseCase.execute(updateAvatarUrlInput);
+
+    if (result.isFailure) {
+      throw new AppError(
+        result.getError(),
+        USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: USER_PROFILE_CONSTANTS.MESSAGES.UPDATE_AVATAR_URL_SUCCESSFULLY,
       status: USER_PROFILE_CONSTANTS.CODES.OK,
       error: null,
     });
