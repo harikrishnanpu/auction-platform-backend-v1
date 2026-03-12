@@ -9,11 +9,11 @@ import { inject, injectable } from 'inversify';
 export class PrismaOtpRepo implements IOtpRepository {
   constructor(
     @inject(TYPES.PrismaClient)
-    private readonly prisma: PrismaClient,
+    private readonly _prisma: PrismaClient,
   ) {}
 
   async save(otp: Otp): Promise<void> {
-    await this.prisma.otp.create({
+    await this._prisma.otp.create({
       data: {
         id: otp.getId(),
         userId: otp.getUserId(),
@@ -27,7 +27,7 @@ export class PrismaOtpRepo implements IOtpRepository {
   }
 
   async update(otp: Otp): Promise<void> {
-    await this.prisma.otp.update({
+    await this._prisma.otp.update({
       where: {
         id: otp.getId(),
       },
@@ -42,7 +42,7 @@ export class PrismaOtpRepo implements IOtpRepository {
     userId: string,
     purpose: OtpPurpose,
   ): Promise<Otp | null> {
-    const otp = await this.prisma.otp.findFirst({
+    const otp = await this._prisma.otp.findFirst({
       where: {
         userId,
         purpose: purpose,
@@ -69,7 +69,7 @@ export class PrismaOtpRepo implements IOtpRepository {
     userId: string,
     otpPurpose: OtpPurpose,
   ): Promise<Otp[] | []> {
-    const otps = await this.prisma.otp.findMany({
+    const otps = await this._prisma.otp.findMany({
       where: {
         userId,
         purpose: otpPurpose,

@@ -12,11 +12,11 @@ import { Result } from '@domain/shared/result';
 export class PrismaUserRepo implements IUserRepository {
   constructor(
     @inject(TYPES.PrismaClient)
-    private readonly prisma: PrismaClient,
+    private readonly _prisma: PrismaClient,
   ) {}
 
   async findById(userId: string): Promise<Result<User>> {
-    const dbUser = await this.prisma.user.findUnique({
+    const dbUser = await this._prisma.user.findUnique({
       where: {
         id: userId,
       },
@@ -34,7 +34,7 @@ export class PrismaUserRepo implements IUserRepository {
   }
 
   async findByEmail(email: Email): Promise<Result<User>> {
-    const dbUser = await this.prisma.user.findUnique({
+    const dbUser = await this._prisma.user.findUnique({
       where: {
         email: email.getValue(),
       },
@@ -52,7 +52,7 @@ export class PrismaUserRepo implements IUserRepository {
   }
 
   async findByPhone(phone: Phone): Promise<Result<User>> {
-    const dbUser = await this.prisma.user.findUnique({
+    const dbUser = await this._prisma.user.findUnique({
       where: {
         phone: phone.getValue(),
       },
@@ -74,7 +74,7 @@ export class PrismaUserRepo implements IUserRepository {
   async save(user: User): Promise<void> {
     const persistantUser = UserMapper.toPersistence(user);
 
-    await this.prisma.user.upsert({
+    await this._prisma.user.upsert({
       where: {
         id: user.getId(),
       },

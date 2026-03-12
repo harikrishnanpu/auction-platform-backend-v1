@@ -1,0 +1,57 @@
+
+
+
+enum KycStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+enum DocumentType {
+    NATIONAL_ID
+    PASSPORT
+    DRIVING_LICENSE
+    VOTER_ID
+    OTHER
+}
+
+enum KycFor{
+    SELLER
+    MODERATOR
+}
+
+model Kyc {
+    id String @id @default(uuid())
+    userId String
+    status KycStatus
+    for KycFor
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    documents KycDocument[]
+    user User @relation(fields: [userId], references: [id])
+    @@unique([userId, for])
+}
+
+enum DocumentSide {
+    FRONT
+    BACK
+}
+
+enum DocumentStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+model KycDocument {
+    id String @id @default(uuid())
+    kycId String
+    documentId String
+    documentType DocumentType
+    side DocumentSide
+    documentUrl String
+    status DocumentStatus
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    kyc Kyc @relation(fields: [kycId], references: [id])
+}

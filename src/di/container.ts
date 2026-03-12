@@ -7,15 +7,18 @@ import { AuthenticateMiddleware } from '@presentation/http/middlewares/authentic
 import { AuthorizeMiddleware } from '@presentation/http/middlewares/authorize.middleware';
 import { UserController } from '@presentation/http/controllers/user/user.controler';
 import { userContainer } from './modules/user.container';
+import { kycContainer } from './modules/kyc.container';
+import { KycController } from '@presentation/http/controllers/kyc/kyc.controller';
 
 const container = new Container();
 
 console.log('Initializing Global Container...');
 container.load(authContainer);
 container.load(userContainer);
-
+container.load(kycContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
+container.bind<KycController>(TYPES.KycController).to(KycController);
 
 container
   .bind<AuthenticateMiddleware>(TYPES.AuthenticateMiddleware)

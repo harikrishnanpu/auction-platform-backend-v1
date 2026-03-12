@@ -32,6 +32,7 @@ model User {
     updatedAt          DateTime     @updatedAt
     roles              UserRole[]
     otps               Otp[]
+    kyc                Kyc[]
 }
 
 model UserRole {
