@@ -17,7 +17,10 @@ import { IBlockUserInput } from '@application/dtos/admin/blockuser.dto';
 import { IBlockUserUsecase } from '@application/interfaces/usecases/admin/IBlockUserUsecase';
 import { IGetUserInput } from '@application/dtos/admin/getUser.dto';
 import { IGetAdminUserUsecase } from '@application/interfaces/usecases/admin/IGetAdminUserUsecase';
+import { IGetAllSellersUsecase } from '@application/interfaces/usecases/admin/IGetAllSellersUsecase';
+import { IGetAllSellersInput } from '@application/dtos/admin/getSellers.dto';
 import { getAdminUserSchema } from '@presentation/validators/schemas/admin/getAdminUser.schema';
+import { getAllSellersSchema } from '@presentation/validators/schemas/admin/getSellers.schema';
 
 @injectable()
 export class AdminController {
@@ -28,6 +31,8 @@ export class AdminController {
     private readonly _blockUserUsecase: IBlockUserUsecase,
     @inject(TYPES.IGetAdminUserUsecase)
     private readonly _getAdminUserUsecase: IGetAdminUserUsecase,
+    @inject(TYPES.IGetAllSellersUsecase)
+    private readonly _getAllSellersUsecase: IGetAllSellersUsecase,
   ) {}
 
   getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -148,6 +153,43 @@ export class AdminController {
       data: getAdminUserResult.getValue(),
       success: true,
       message: ADMIN_CONSTANTS.MESSAGES.GET_USER_SUCCESSFULLY,
+      status: ADMIN_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  getAllSellers = expressAsyncHandler(async (req: Request, res: Response) => {
+    const validationResult = getAllSellersSchema.safeParse(req.query);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const { page, limit, pendingOnly } = validationResult.data;
+
+    const getAllSellersInput: IGetAllSellersInput = {
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+      pendingOnly: pendingOnly ?? false,
+    };
+
+    const getAllSellersResult =
+      await this._getAllSellersUsecase.execute(getAllSellersInput);
+
+    if (getAllSellersResult.isFailure) {
+      throw new AppError(
+        getAllSellersResult.getError(),
+        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    res.status(ADMIN_CONSTANTS.CODES.OK).json({
+      data: getAllSellersResult.getValue(),
+      success: true,
+      message: ADMIN_CONSTANTS.MESSAGES.GET_ALL_SELLERS_SUCCESSFULLY,
       status: ADMIN_CONSTANTS.CODES.OK,
       error: null,
     });

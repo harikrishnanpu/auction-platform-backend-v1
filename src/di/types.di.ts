@@ -48,4 +48,5 @@ export const TYPES = {
   AdminRoutes: Symbol.for('AdminRoutes'),
   IBlockUserUsecase: Symbol.for('IBlockUserUsecase'),
   IGetAdminUserUsecase: Symbol.for('IGetAdminUserUsecase'),
+  IGetAllSellersUsecase: Symbol.for('IGetAllSellersUsecase'),
 };

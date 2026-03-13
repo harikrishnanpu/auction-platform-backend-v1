@@ -27,6 +27,12 @@ export class AdminRoutes {
       this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
       this._adminController.getAllUsers,
     );
+    this._router.get(
+      '/sellers',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllSellers,
+    );
     this._router.patch(
       '/users/block/:id',
       this._authenticateMiddleware.authenticate,
