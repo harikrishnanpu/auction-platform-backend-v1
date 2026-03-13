@@ -20,11 +20,13 @@ export class AuthRouterFactory {
     const authorizeMiddleware = container.get<AuthorizeMiddleware>(
       TYPES.AuthorizeMiddleware,
     );
+
     const authRoutes = new AuthRoutes(
       authController,
       authenticateMiddleware,
       authorizeMiddleware,
     );
+
     return authRoutes.register();
   }
 }

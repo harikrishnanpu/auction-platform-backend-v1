@@ -43,4 +43,9 @@ export const TYPES = {
   IKycDocumentRepository: Symbol.for('IKycDocumentRepository'),
   IUpdateKycUsecase: Symbol.for('IUpdateKycUsecase'),
   ISubmitKycUsecase: Symbol.for('ISubmitKycUsecase'),
+  IGetAllUsersUseCase: Symbol.for('IGetAllUsersUseCase'),
+  AdminController: Symbol.for('AdminController'),
+  AdminRoutes: Symbol.for('AdminRoutes'),
+  IBlockUserUsecase: Symbol.for('IBlockUserUsecase'),
+  IGetAdminUserUsecase: Symbol.for('IGetAdminUserUsecase'),
 };

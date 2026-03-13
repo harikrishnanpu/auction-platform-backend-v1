@@ -208,4 +208,8 @@ export class User {
   public setEmail(email: Email) {
     this.email = email;
   }
+
+  public setStatus(status: UserStatus) {
+    this.status = status;
+  }
 }
