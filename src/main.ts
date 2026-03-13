@@ -11,6 +11,7 @@ import passport from 'passport';
 import { configureGoogleStrategy } from '@infrastructure/passport/passport.config';
 import { UserRouterFactory } from '@presentation/http/factories/user.router.factory';
 import { KycRouterFactory } from '@presentation/http/factories/kyc.router.factory';
+import { AdminRouterFactory } from '@presentation/http/factories/admin.router.factory';
 
 export const app = express();
 
@@ -32,5 +33,6 @@ new EmailWorker(new TemplateService());
 app.use('/api/v1/auth', AuthRouterFactory.authRouter(container));
 app.use('/api/v1/user', UserRouterFactory.userRouter(container));
 app.use('/api/v1/kyc', KycRouterFactory.kycRouter(container));
+app.use('/api/v1/admin', AdminRouterFactory.adminRouter(container));
 
 app.use(errorMiddleware);

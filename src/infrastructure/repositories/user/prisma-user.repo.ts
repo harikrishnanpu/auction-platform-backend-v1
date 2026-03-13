@@ -7,6 +7,7 @@ import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
 import { TYPES } from 'di/types.di';
 import { Result } from '@domain/shared/result';
+import { IFindAllUsersInput } from '@domain/types/userRepo.types';
 
 @injectable()
 export class PrismaUserRepo implements IUserRepository {
@@ -92,5 +93,33 @@ export class PrismaUserRepo implements IUserRepository {
         },
       },
     });
+  }
+
+  async findAll(input: IFindAllUsersInput): Promise<Result<User[]>> {
+    const { page, limit, search, sort, order, role, status, authProvider } =
+      input;
+
+    const users = await this._prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } },
+        ],
+        roles: { some: { role: role === 'ALL' ? undefined : role } },
+        status: status === 'ALL' ? undefined : status,
+        authProvider: authProvider === 'ALL' ? undefined : authProvider,
+      },
+      orderBy: {
+        [sort]: order,
+      },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        roles: true,
+      },
+    });
+
+    return Result.ok(users.map((user) => UserMapper.toDomain(user).getValue()));
   }
 }
