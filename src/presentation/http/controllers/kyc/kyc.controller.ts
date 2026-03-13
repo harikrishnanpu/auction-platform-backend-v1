@@ -13,6 +13,9 @@ import { IGetKycUploadUrlUsecase } from '@application/interfaces/usecases/kyc/IG
 import { updateKycSchema } from '@presentation/validators/schemas/kyc/updateKyc.schema';
 import { IUpdateKycInput } from '@application/dtos/kyc/update-kyc.dto';
 import { IUpdateKycUsecase } from '@application/interfaces/usecases/kyc/IUpdateKyc';
+import { submitKycSchema } from '@presentation/validators/schemas/kyc/submitKyc.schema';
+import { ISubmitKycUsecase } from '@application/interfaces/usecases/kyc/ISubmitKycUsecase';
+import { ISubmitKycInput } from '@application/dtos/kyc/submit-kyc.dto';
 
 @injectable()
 export class KycController {
@@ -23,6 +26,8 @@ export class KycController {
     private readonly _getKycStatusUsecase: IGetKycStatusUsecase,
     @inject(TYPES.IUpdateKycUsecase)
     private readonly _updateKycUsecase: IUpdateKycUsecase,
+    @inject(TYPES.ISubmitKycUsecase)
+    private readonly _submitKycUsecase: ISubmitKycUsecase,
   ) {}
 
   getKycUploadUrl = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -137,6 +142,43 @@ export class KycController {
       data: result.getValue(),
       success: true,
       message: KYC_CONSTANTS.MESSAGES.KYC_UPDATED_SUCCESSFULLY,
+      status: KYC_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  submitKyc = expressAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(
+        KYC_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        KYC_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const validationResult = submitKycSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        KYC_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const submitKycInput: ISubmitKycInput = {
+      userId: req.user.id,
+      kycFor: validationResult.data.kycFor,
+    };
+
+    const result = await this._submitKycUsecase.execute(submitKycInput);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), KYC_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(KYC_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: KYC_CONSTANTS.MESSAGES.KYC_SUBMITTED_SUCCESSFULLY,
       status: KYC_CONSTANTS.CODES.OK,
       error: null,
     });

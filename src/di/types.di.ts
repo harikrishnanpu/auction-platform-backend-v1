@@ -42,4 +42,5 @@ export const TYPES = {
   IGetKycStatusUsecase: Symbol.for('IGetKycStatusUsecase'),
   IKycDocumentRepository: Symbol.for('IKycDocumentRepository'),
   IUpdateKycUsecase: Symbol.for('IUpdateKycUsecase'),
+  ISubmitKycUsecase: Symbol.for('ISubmitKycUsecase'),
 };

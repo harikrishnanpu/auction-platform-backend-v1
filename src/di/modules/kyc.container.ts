@@ -1,8 +1,10 @@
 import { IGetKycStatusUsecase } from '@application/interfaces/usecases/kyc/IGetKycStatusUsecase';
 import { IGetKycUploadUrlUsecase } from '@application/interfaces/usecases/kyc/IGetKycUploadUrlUsecase';
+import { ISubmitKycUsecase } from '@application/interfaces/usecases/kyc/ISubmitKycUsecase';
 import { IUpdateKycUsecase } from '@application/interfaces/usecases/kyc/IUpdateKyc';
 import { GetKycStatusUseCase } from '@application/usecases/kyc/getKycStatus.usecase';
 import { GetKycUploadUrlUseCase } from '@application/usecases/kyc/getKycUploadUrl.usecase';
+import { SubmitKycUsecase } from '@application/usecases/kyc/submitKyc.usecase';
 import { UpdateKycUseCase } from '@application/usecases/kyc/updateKyc.usecase';
 import { TYPES } from '@di/types.di';
 import { IKycDocumentRepository } from '@domain/repositories/IKycDocumentRepository';
@@ -23,4 +25,5 @@ export const kycContainer = new ContainerModule(({ bind }) => {
   bind<IKycDocumentRepository>(TYPES.IKycDocumentRepository).to(
     PrismaKycDocumentRepo,
   );
+  bind<ISubmitKycUsecase>(TYPES.ISubmitKycUsecase).to(SubmitKycUsecase);
 });

@@ -1,13 +1,15 @@
-import { IKycDocumentResponseDto } from '@application/dtos/kyc/kyc.response.dto';
 import {
   IUpdateKycInput,
   IUpdateKycOutput,
 } from '@application/dtos/kyc/update-kyc.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { IStorageService } from '@application/interfaces/services/IStorageService';
 import { IUpdateKycUsecase } from '@application/interfaces/usecases/kyc/IUpdateKyc';
 import { TYPES } from '@di/types.di';
 import {
+  DocumentSide,
   DocumentStatus,
+  DocumentType,
   KycDocument,
 } from '@domain/entities/kyc/kyc-document.entity';
 import { Kyc, KycStatus } from '@domain/entities/kyc/kyc.entity';
@@ -25,6 +27,8 @@ export class UpdateKycUseCase implements IUpdateKycUsecase {
     private readonly _idGeneratingService: IIdGeneratingService,
     @inject(TYPES.IKycDocumentRepository)
     private readonly _kycDocumentRepository: IKycDocumentRepository,
+    @inject(TYPES.IStorageService)
+    private readonly _storageService: IStorageService,
   ) {}
 
   async execute(data: IUpdateKycInput): Promise<Result<IUpdateKycOutput>> {
@@ -70,29 +74,48 @@ export class UpdateKycUseCase implements IUpdateKycUsecase {
 
         await this._kycDocumentRepository.save(documentEntity.getValue());
 
-        const kycDocuments: IKycDocumentResponseDto[] = newKyc
-          .getValue()
-          .getDocuments()
-          .map((document) => {
-            return {
-              id: document.getId(),
-              kycId: document.getKycId(),
-              documentType: document.getDocumentType(),
-              side: document.getSide(),
-              documentUrl: document.getDocumentUrl(),
-              documentStatus: document.getDocumentStatus(),
-            };
-          });
+        const updatedKyc = await this._kycRepository.findByUserIdAndFor(
+          data.userId,
+          data.kycFor,
+        );
+
+        if (updatedKyc.isFailure) {
+          return Result.fail('error with the updated kyc entity');
+        }
+
+        const kycDocuments = await Promise.all(
+          updatedKyc
+            .getValue()
+            .getDocuments()
+            .map(async (document) => {
+              let docUrl = '';
+              const docUrlResult =
+                await this._storageService.generateDownloadUrl({
+                  fileKey: document.getDocumentUrl(),
+                });
+              if (docUrlResult.isSuccess) {
+                docUrl = docUrlResult.getValue();
+              }
+              return {
+                id: document.getId(),
+                kycId: document.getKycId(),
+                documentType: document.getDocumentType() as DocumentType,
+                side: document.getSide() as DocumentSide,
+                documentUrl: docUrl,
+                documentStatus: document.getDocumentStatus() as DocumentStatus,
+              };
+            }),
+        );
 
         const kycUpdateReponse: IUpdateKycOutput = {
           kyc: {
-            id: newKyc.getValue().getId(),
-            userId: newKyc.getValue().getUserId(),
-            status: newKyc.getValue().getStatus(),
-            for: newKyc.getValue().getFor(),
+            id: updatedKyc.getValue().getId(),
+            userId: updatedKyc.getValue().getUserId(),
+            status: updatedKyc.getValue().getStatus(),
+            for: updatedKyc.getValue().getFor(),
             documents: kycDocuments,
           },
-          status: newKyc.getValue().getStatus(),
+          status: updatedKyc.getValue().getStatus(),
         };
 
         return Result.ok(kycUpdateReponse);
@@ -118,28 +141,47 @@ export class UpdateKycUseCase implements IUpdateKycUsecase {
 
       await this._kycDocumentRepository.save(documentEntity.getValue());
 
-      const kycDocuments: IKycDocumentResponseDto[] = kyc
-        .getDocuments()
-        .map((document) => {
-          return {
-            id: document.getId(),
-            kycId: document.getKycId(),
-            documentType: document.getDocumentType(),
-            side: document.getSide(),
-            documentUrl: document.getDocumentUrl(),
-            documentStatus: document.getDocumentStatus(),
-          };
-        });
+      const updatedKyc = await this._kycRepository.findByUserIdAndFor(
+        data.userId,
+        data.kycFor,
+      );
+
+      if (updatedKyc.isFailure) {
+        return Result.fail('error with the updated kyc entity');
+      }
+
+      const kycDocuments = await Promise.all(
+        updatedKyc
+          .getValue()
+          .getDocuments()
+          .map(async (document) => {
+            let docUrl = '';
+            const docUrlResult = await this._storageService.generateDownloadUrl(
+              { fileKey: document.getDocumentUrl() },
+            );
+            if (docUrlResult.isSuccess) {
+              docUrl = docUrlResult.getValue();
+            }
+            return {
+              id: document.getId(),
+              kycId: document.getKycId(),
+              documentType: document.getDocumentType() as DocumentType,
+              side: document.getSide() as DocumentSide,
+              documentUrl: docUrl,
+              documentStatus: document.getDocumentStatus() as DocumentStatus,
+            };
+          }),
+      );
 
       const kycUpdateReponse: IUpdateKycOutput = {
         kyc: {
-          id: kyc.getId(),
-          userId: kyc.getUserId(),
-          status: kyc.getStatus(),
-          for: kyc.getFor(),
+          id: updatedKyc.getValue().getId(),
+          userId: updatedKyc.getValue().getUserId(),
+          status: updatedKyc.getValue().getStatus(),
+          for: updatedKyc.getValue().getFor(),
           documents: kycDocuments,
         },
-        status: kyc.getStatus(),
+        status: updatedKyc.getValue().getStatus(),
       };
 
       return Result.ok(kycUpdateReponse);

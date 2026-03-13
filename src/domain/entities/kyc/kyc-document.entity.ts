@@ -7,6 +7,7 @@ export enum DocumentType {
   VOTER_ID = 'VOTER_ID',
   PAN_CARD = 'PAN_CARD',
   KYC_ID = 'KYC_ID',
+  ADDRESS_PROOF = 'ADDRESS_PROOF',
 }
 
 export enum DocumentSide {

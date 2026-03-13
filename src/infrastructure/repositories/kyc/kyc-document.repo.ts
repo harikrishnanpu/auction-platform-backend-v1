@@ -14,7 +14,11 @@ export class PrismaKycDocumentRepo implements IKycDocumentRepository {
   async save(kycDocument: KycDocument): Promise<void> {
     await this._prisma.kycDocument.upsert({
       where: {
-        id: kycDocument.getId(),
+        kycId_documentType_side: {
+          kycId: kycDocument.getKycId(),
+          documentType: kycDocument.getDocumentType() as DocumentType,
+          side: kycDocument.getSide(),
+        },
       },
       create: {
         id: kycDocument.getId(),

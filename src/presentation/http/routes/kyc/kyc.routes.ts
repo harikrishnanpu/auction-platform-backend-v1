@@ -43,6 +43,13 @@ export class KycRoutes {
       this._kycController.updateKyc,
     );
 
+    this._router.post(
+      '/submit-kyc',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._kycController.submitKyc,
+    );
+
     return this._router;
   }
 }

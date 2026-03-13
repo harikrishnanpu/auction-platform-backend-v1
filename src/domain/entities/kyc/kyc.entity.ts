@@ -17,7 +17,7 @@ export class Kyc {
   constructor(
     private readonly id: string,
     private readonly userId: string,
-    private readonly kycStatus: KycStatus,
+    private kycStatus: KycStatus,
     private readonly kycFor: KycFor,
     private readonly documents?: KycDocument[],
   ) {}
@@ -56,5 +56,24 @@ export class Kyc {
 
   public getDocuments(): KycDocument[] {
     return this.documents ?? [];
+  }
+
+  public submitKyc(): Result<void> {
+    if (this.kycStatus == KycStatus.PENDING) {
+      return Result.fail('KYC is already pending');
+    }
+    if (this.kycStatus == KycStatus.APPROVED) {
+      return Result.fail('KYC is already approved');
+    }
+    if (this.kycStatus == KycStatus.REJECTED) {
+      return Result.fail('KYC is already rejected');
+    }
+
+    this.kycStatus = KycStatus.PENDING;
+    return Result.ok();
+  }
+
+  public getKycStatus(): KycStatus {
+    return this.kycStatus;
   }
 }
