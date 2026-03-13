@@ -1,3 +1,4 @@
+import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IOtpService } from '@application/interfaces/services/IOtpService';
@@ -77,7 +78,12 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
 
       await this._otpRepository.save(otpEntity.getValue());
 
-      await this._emailService.sendVerificationEmail(emailVo.getValue(), otp);
+      await this._emailService.sendOtpEmail(
+        emailVo.getValue(),
+        otp,
+        OtpPurpose.VERIFY_EMAIL,
+        EMAIL_TEMPLATES.VERIFY_EMAIL,
+      );
 
       return Result.ok();
     } catch (error) {

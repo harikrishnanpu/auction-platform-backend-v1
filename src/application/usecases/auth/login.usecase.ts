@@ -8,7 +8,10 @@ import { IPasswordService } from '@application/interfaces/services/IPasswordServ
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { ILoginUseCase } from '@application/interfaces/usecases/auth/ILoginUsecase';
 import { TYPES } from '@di/types.di';
-import { AuthProviderType } from '@domain/entities/user/user.entity';
+import {
+  AuthProviderType,
+  UserStatus,
+} from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
@@ -66,28 +69,32 @@ export class LoginUseCase implements ILoginUseCase {
         return Result.fail('Invalid password');
       }
 
+      const user = userEntity.getValue();
+      if (user.getStatus() === UserStatus.BLOCKED) {
+        return Result.fail(
+          'Your account has been blocked. Please contact support for assistance.',
+        );
+      }
+
       const accessToken = this._tokenGeneratorService.generateAccessToken(
-        userEntity.getValue().getId(),
+        user.getId(),
       );
       const refreshToken = this._tokenGeneratorService.generateRefreshToken(
-        userEntity.getValue().getId(),
+        user.getId(),
       );
 
       const userResponseDto: userResponseDto = {
-        id: userEntity.getValue().getId(),
-        name: userEntity.getValue().getName(),
-        email: userEntity.getValue().getEmail().getValue(),
-        phone: userEntity.getValue().getPhone()?.getValue() ?? '',
-        address: userEntity.getValue().getAddress() ?? '',
-        avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
-        authProvider: userEntity.getValue().getAuthProvider().getType(),
-        isProfileCompleted: userEntity.getValue().isProfileCompleted(),
-        isVerified: userEntity.getValue().getIsVerified(),
-        status: userEntity.getValue().getStatus(),
-        roles: userEntity
-          .getValue()
-          .getRoles()
-          .map((role) => role.getValue() as UserRoleType),
+        id: user.getId(),
+        name: user.getName(),
+        email: user.getEmail().getValue(),
+        phone: user.getPhone()?.getValue() ?? '',
+        address: user.getAddress() ?? '',
+        avatar_url: user.getAvatarUrl() ?? '',
+        authProvider: user.getAuthProvider().getType(),
+        isProfileCompleted: user.isProfileCompleted(),
+        isVerified: user.getIsVerified(),
+        status: user.getStatus(),
+        roles: user.getRoles().map((role) => role.getValue() as UserRoleType),
       };
 
       return Result.ok({

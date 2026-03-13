@@ -48,4 +48,8 @@ export const TYPES = {
   AdminRoutes: Symbol.for('AdminRoutes'),
   IBlockUserUsecase: Symbol.for('IBlockUserUsecase'),
   IGetAdminUserUsecase: Symbol.for('IGetAdminUserUsecase'),
+  IGetAllSellersUsecase: Symbol.for('IGetAllSellersUsecase'),
+  IGetAdminSellerUsecase: Symbol.for('IGetAdminSellerUsecase'),
+  IApproveSellerKycUsecase: Symbol.for('IApproveSellerKycUsecase'),
+  IRejectSellerKycUsecase: Symbol.for('IRejectSellerKycUsecase'),
 };

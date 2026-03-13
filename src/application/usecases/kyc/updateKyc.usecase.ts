@@ -121,6 +121,14 @@ export class UpdateKycUseCase implements IUpdateKycUsecase {
         return Result.ok(kycUpdateReponse);
       }
 
+      if (kyc.getStatus() === KycStatus.REJECTED) {
+        const reset = kyc.resetForResubmission();
+        if (reset.isFailure) {
+          return Result.fail(reset.getError());
+        }
+        await this._kycRepository.save(kyc);
+      }
+
       const documentEntity = KycDocument.create({
         id: this._idGeneratingService.generateId(),
         kycId: kyc.getId(),
@@ -130,10 +138,6 @@ export class UpdateKycUseCase implements IUpdateKycUsecase {
         documentUrl: data.documentUrl,
         documentStatus: DocumentStatus.PENDING,
       });
-
-      if (documentEntity.isFailure) {
-        return Result.fail('error with the document entity');
-      }
 
       if (documentEntity.isFailure) {
         return Result.fail('error with the document entity');

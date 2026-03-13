@@ -77,6 +77,7 @@ export class GetKycStatusUseCase implements IGetKycStatusUsecase {
       userId: kyc.getUserId(),
       status: kyc.getStatus(),
       for: kyc.getFor(),
+      rejectionReason: kyc.getRejectionReason(),
       documents: documents,
     };
 

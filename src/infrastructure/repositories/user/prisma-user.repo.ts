@@ -34,6 +34,23 @@ export class PrismaUserRepo implements IUserRepository {
     return Result.ok(userResult.getValue());
   }
 
+  async findManyByIds(ids: string[]): Promise<Result<User[]>> {
+    if (ids.length === 0) return Result.ok([]);
+
+    const dbUsers = await this._prisma.user.findMany({
+      where: { id: { in: ids } },
+      include: { roles: true },
+    });
+
+    const users: User[] = [];
+    for (const dbUser of dbUsers) {
+      const userResult = UserMapper.toDomain(dbUser);
+      if (userResult.isFailure) return Result.fail(userResult.getError());
+      users.push(userResult.getValue());
+    }
+    return Result.ok(users);
+  }
+
   async findByEmail(email: Email): Promise<Result<User>> {
     const dbUser = await this._prisma.user.findUnique({
       where: {

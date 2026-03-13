@@ -45,6 +45,12 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
     if (userEntity.isSuccess) {
       const user = userEntity.getValue();
 
+      if (user.getStatus() === UserStatus.BLOCKED) {
+        return Result.fail(
+          'Your account has been blocked. Please contact support for assistance.',
+        );
+      }
+
       const userResponseDto: userResponseDto = {
         id: user.getId(),
         name: user.getName(),

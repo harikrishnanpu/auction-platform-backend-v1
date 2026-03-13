@@ -29,6 +29,8 @@ export class KycMapper {
       }).getValue(),
     );
 
+    const rejectionReason = kyc.rejectionReason ?? undefined;
+
     return Result.ok(
       new Kyc(
         kyc.id,
@@ -36,6 +38,7 @@ export class KycMapper {
         kyc.status as KycStatus,
         kyc.for as KycFor,
         documents,
+        rejectionReason,
       ),
     );
   }
@@ -46,6 +49,7 @@ export class KycMapper {
       userId: kyc.getUserId(),
       status: kyc.getStatus(),
       for: kyc.getFor(),
+      rejectionReason: kyc.getRejectionReason(),
     };
   }
 }

@@ -1,3 +1,4 @@
+import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
@@ -65,7 +66,12 @@ export class ForgotPasswordUsecase implements IForgotPasswordUsecase {
     await this._otpRepository.save(otpEntity.getValue());
 
     const url = `${process.env.FRONTEND_URL}/reset/password/change?token=${token}`;
-    await this._emailService.sendForgotPasswordEmail(emailVo.getValue(), url);
+    await this._emailService.sendOtpEmail(
+      emailVo.getValue(),
+      url,
+      OtpPurpose.RESET_PASSWORD,
+      EMAIL_TEMPLATES.RESET_PASSWORD,
+    );
 
     return Result.ok();
   }
