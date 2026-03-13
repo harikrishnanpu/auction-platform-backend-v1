@@ -23,16 +23,24 @@ export class KycRoutes {
 
   register(): Router {
     this._router.post(
-      '/get-upload-kyc-url',
+      '/get-kyc-upload-url',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.USER]),
-      this._kycController.uploadKycUrl,
+      this._kycController.getKycUploadUrl,
     );
+
     this._router.post(
       '/get-kyc-status',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.USER]),
       this._kycController.getKycStatus,
+    );
+
+    this._router.put(
+      '/update-kyc',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._kycController.updateKyc,
     );
 
     return this._router;

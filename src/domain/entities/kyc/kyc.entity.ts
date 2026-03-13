@@ -5,6 +5,7 @@ export enum KycStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
   REJECTED = 'REJECTED',
+  NOT_SUBMITTED = 'NOT_SUBMITTED',
 }
 
 export enum KycFor {
@@ -18,7 +19,7 @@ export class Kyc {
     private readonly userId: string,
     private readonly kycStatus: KycStatus,
     private readonly kycFor: KycFor,
-    private readonly documents: KycDocument[],
+    private readonly documents?: KycDocument[],
   ) {}
 
   public static create({
@@ -26,13 +27,13 @@ export class Kyc {
     userId,
     kycStatus,
     kycFor,
-    documents,
+    documents = [],
   }: {
     id: string;
     userId: string;
     kycStatus: KycStatus;
     kycFor: KycFor;
-    documents: KycDocument[];
+    documents?: KycDocument[];
   }): Result<Kyc> {
     return Result.ok<Kyc>(new Kyc(id, userId, kycStatus, kycFor, documents));
   }
@@ -54,6 +55,6 @@ export class Kyc {
   }
 
   public getDocuments(): KycDocument[] {
-    return this.documents;
+    return this.documents ?? [];
   }
 }

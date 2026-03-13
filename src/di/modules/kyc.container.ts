@@ -1,10 +1,26 @@
-import { IUploadKycGetUrlUsecase } from '@application/interfaces/usecases/kyc/IUploadKycGetUrlUsecase';
-import { UploadKycUrlUseCase } from '@application/usecases/kyc/uploadKycUrl.usecase';
+import { IGetKycStatusUsecase } from '@application/interfaces/usecases/kyc/IGetKycStatusUsecase';
+import { IGetKycUploadUrlUsecase } from '@application/interfaces/usecases/kyc/IGetKycUploadUrlUsecase';
+import { IUpdateKycUsecase } from '@application/interfaces/usecases/kyc/IUpdateKyc';
+import { GetKycStatusUseCase } from '@application/usecases/kyc/getKycStatus.usecase';
+import { GetKycUploadUrlUseCase } from '@application/usecases/kyc/getKycUploadUrl.usecase';
+import { UpdateKycUseCase } from '@application/usecases/kyc/updateKyc.usecase';
 import { TYPES } from '@di/types.di';
+import { IKycDocumentRepository } from '@domain/repositories/IKycDocumentRepository';
+import { IKycRepository } from '@domain/repositories/IKycRespository';
+import { PrismaKycDocumentRepo } from '@infrastructure/repositories/kyc/kyc-document.repo';
+import { PrismaKycRepo } from '@infrastructure/repositories/kyc/kyc.repo';
 import { ContainerModule } from 'inversify';
 
 export const kycContainer = new ContainerModule(({ bind }) => {
-  bind<IUploadKycGetUrlUsecase>(TYPES.IUploadKycGetUrlUsecase).to(
-    UploadKycUrlUseCase,
+  bind<IGetKycUploadUrlUsecase>(TYPES.IGetKycUploadUrlUsecase).to(
+    GetKycUploadUrlUseCase,
+  );
+  bind<IGetKycStatusUsecase>(TYPES.IGetKycStatusUsecase).to(
+    GetKycStatusUseCase,
+  );
+  bind<IKycRepository>(TYPES.IKycRepository).to(PrismaKycRepo);
+  bind<IUpdateKycUsecase>(TYPES.IUpdateKycUsecase).to(UpdateKycUseCase);
+  bind<IKycDocumentRepository>(TYPES.IKycDocumentRepository).to(
+    PrismaKycDocumentRepo,
   );
 });

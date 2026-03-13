@@ -6,21 +6,26 @@ import { KYC_CONSTANTS } from '@presentation/constants/kyc/kyc.constants';
 import { UploadKycGetUrlInput } from '@application/dtos/kyc/upload-kyc.dto';
 import { inject, injectable } from 'inversify';
 import { TYPES } from '@di/types.di';
-import { IUploadKycGetUrlUsecase } from '@application/interfaces/usecases/kyc/IUploadKycGetUrlUsecase';
 import { IGetKycStatusInput } from '@application/dtos/kyc/get-kyc-status.usecase';
 import { IGetKycStatusUsecase } from '@application/interfaces/usecases/kyc/IGetKycStatusUsecase';
 import { getKycStatusSchema } from '@presentation/validators/schemas/kyc/getKycStatus.schema';
+import { IGetKycUploadUrlUsecase } from '@application/interfaces/usecases/kyc/IGetKycUploadUrlUsecase';
+import { updateKycSchema } from '@presentation/validators/schemas/kyc/updateKyc.schema';
+import { IUpdateKycInput } from '@application/dtos/kyc/update-kyc.dto';
+import { IUpdateKycUsecase } from '@application/interfaces/usecases/kyc/IUpdateKyc';
 
 @injectable()
 export class KycController {
   constructor(
-    @inject(TYPES.IUploadKycGetUrlUsecase)
-    private readonly _uploadKycUrlUsecase: IUploadKycGetUrlUsecase,
+    @inject(TYPES.IGetKycUploadUrlUsecase)
+    private readonly _getKycUploadUrlUsecase: IGetKycUploadUrlUsecase,
     @inject(TYPES.IGetKycStatusUsecase)
     private readonly _getKycStatusUsecase: IGetKycStatusUsecase,
+    @inject(TYPES.IUpdateKycUsecase)
+    private readonly _updateKycUsecase: IUpdateKycUsecase,
   ) {}
 
-  uploadKycUrl = expressAsyncHandler(async (req: Request, res: Response) => {
+  getKycUploadUrl = expressAsyncHandler(async (req: Request, res: Response) => {
     const validationResult = uploadKycUrlSchema.safeParse(req.body);
 
     if (!validationResult.success) {
@@ -37,7 +42,8 @@ export class KycController {
       fileSize: validationResult.data.fileSize,
     };
 
-    const result = await this._uploadKycUrlUsecase.execute(uploadKycUrlInput);
+    const result =
+      await this._getKycUploadUrlUsecase.execute(uploadKycUrlInput);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), KYC_CONSTANTS.CODES.BAD_REQUEST);
@@ -53,6 +59,8 @@ export class KycController {
   });
 
   getKycStatus = expressAsyncHandler(async (req: Request, res: Response) => {
+    console.log('getKycStatus controller called');
+
     const validationResult = getKycStatusSchema.safeParse(req.body);
 
     if (!req.user) {
@@ -77,13 +85,58 @@ export class KycController {
     const result = await this._getKycStatusUsecase.execute(getKycStatusInput);
 
     if (result.isFailure) {
+      console.log('error', result.getError());
+      throw new AppError(result.getError(), KYC_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    console.log('KYC STATUS RESPONSE:', result.getValue());
+
+    res.status(KYC_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: KYC_CONSTANTS.MESSAGES.KYC_STATUS_FETCHED_SUCCESSFULLY,
+      status: KYC_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  updateKyc = expressAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(
+        KYC_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        KYC_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    console.log(req.body);
+
+    const validationResult = updateKycSchema.safeParse(req.body);
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        KYC_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const updateKycInput: IUpdateKycInput = {
+      userId: req.user.id,
+      kycFor: validationResult.data.kycFor,
+      documentType: validationResult.data.documentType,
+      side: validationResult.data.side,
+      documentUrl: validationResult.data.fileKey,
+    };
+
+    const result = await this._updateKycUsecase.execute(updateKycInput);
+
+    if (result.isFailure) {
       throw new AppError(result.getError(), KYC_CONSTANTS.CODES.BAD_REQUEST);
     }
 
     res.status(KYC_CONSTANTS.CODES.OK).json({
       data: result.getValue(),
       success: true,
-      message: KYC_CONSTANTS.MESSAGES.KYC_STATUS_FETCHED_SUCCESSFULLY,
+      message: KYC_CONSTANTS.MESSAGES.KYC_UPDATED_SUCCESSFULLY,
       status: KYC_CONSTANTS.CODES.OK,
       error: null,
     });

@@ -4,13 +4,13 @@ import {
 } from '@application/dtos/kyc/upload-kyc.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IStorageService } from '@application/interfaces/services/IStorageService';
-import { IUploadKycGetUrlUsecase } from '@application/interfaces/usecases/kyc/IUploadKycGetUrlUsecase';
+import { IGetKycUploadUrlUsecase } from '@application/interfaces/usecases/kyc/IGetKycUploadUrlUsecase';
 import { TYPES } from '@di/types.di';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
 @injectable()
-export class UploadKycUrlUseCase implements IUploadKycGetUrlUsecase {
+export class GetKycUploadUrlUseCase implements IGetKycUploadUrlUsecase {
   constructor(
     @inject(TYPES.IStorageService)
     private readonly _storageService: IStorageService,

@@ -29,7 +29,7 @@ export class PrismaKycRepo implements IKycRepository {
       },
     });
 
-    if (!kyc) return Result.fail('Kyc not found');
+    if (!kyc) return Result.ok();
 
     const kycResult = KycMapper.toDomain(kyc);
 

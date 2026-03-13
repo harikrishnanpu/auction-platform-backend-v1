@@ -23,6 +23,8 @@ export class AuthenticateMiddleware {
     async (req: Request, res: Response, next: NextFunction) => {
       const token = req.cookies?.accessToken;
 
+      console.log('token TEST --', token);
+
       if (!token) {
         throw new AppError(
           AUTH_MESSAGES.UNAUTHORIZED,
@@ -41,6 +43,8 @@ export class AuthenticateMiddleware {
       }
 
       const userEntity = await this._getUserUseCase.execute(decoded);
+
+      console.log('userEntity TEST --', userEntity);
 
       if (userEntity.isFailure) {
         throw new AppError(

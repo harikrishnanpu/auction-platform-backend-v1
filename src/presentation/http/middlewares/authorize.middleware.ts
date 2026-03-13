@@ -10,6 +10,7 @@ export class AuthorizeMiddleware {
     expressAsyncHandler(
       async (req: Request, res: Response, next: NextFunction) => {
         const user = req.user;
+        console.log('user TEST --', user);
 
         if (!user) {
           throw new AppError(

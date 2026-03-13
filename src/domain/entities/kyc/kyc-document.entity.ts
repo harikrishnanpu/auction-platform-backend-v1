@@ -6,6 +6,7 @@ export enum DocumentType {
   DRIVING_LICENSE = 'DRIVING_LICENSE',
   VOTER_ID = 'VOTER_ID',
   PAN_CARD = 'PAN_CARD',
+  KYC_ID = 'KYC_ID',
 }
 
 export enum DocumentSide {
@@ -23,6 +24,7 @@ export class KycDocument {
   constructor(
     private readonly id: string,
     private readonly kycId: string,
+    private readonly documentId: string,
     private readonly documentType: DocumentType,
     private readonly side: DocumentSide,
     private readonly documentUrl: string,
@@ -32,6 +34,7 @@ export class KycDocument {
   public static create({
     id,
     kycId,
+    documentId,
     documentType,
     side,
     documentUrl,
@@ -39,6 +42,7 @@ export class KycDocument {
   }: {
     id: string;
     kycId: string;
+    documentId: string;
     documentType: DocumentType;
     side: DocumentSide;
     documentUrl: string;
@@ -48,6 +52,7 @@ export class KycDocument {
       new KycDocument(
         id,
         kycId,
+        documentId,
         documentType,
         side,
         documentUrl,

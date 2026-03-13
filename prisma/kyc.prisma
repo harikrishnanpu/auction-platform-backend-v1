@@ -5,6 +5,7 @@ enum KycStatus {
     PENDING
     APPROVED
     REJECTED
+    NOT_SUBMITTED
 }
 
 enum DocumentType {
@@ -12,7 +13,7 @@ enum DocumentType {
     PASSPORT
     DRIVING_LICENSE
     VOTER_ID
-    OTHER
+    KYC_ID
 }
 
 enum KycFor{
@@ -46,7 +47,7 @@ enum DocumentStatus {
 model KycDocument {
     id String @id @default(uuid())
     kycId String
-    documentId String
+    documentId String @unique
     documentType DocumentType
     side DocumentSide
     documentUrl String

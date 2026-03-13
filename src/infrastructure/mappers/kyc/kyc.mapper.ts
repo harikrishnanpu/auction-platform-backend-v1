@@ -21,6 +21,7 @@ export class KycMapper {
       KycDocument.create({
         id: document.id,
         kycId: document.kycId,
+        documentId: document.documentId,
         documentType: document.documentType as DocumentType,
         side: document.side as DocumentSide,
         documentUrl: document.documentUrl,
@@ -40,14 +41,11 @@ export class KycMapper {
   }
 
   static toPersistence(kyc: Kyc) {
-    const documents = kyc.getDocuments().map((document) => document);
-
     return {
       id: kyc.getId(),
       userId: kyc.getUserId(),
       status: kyc.getStatus(),
       for: kyc.getFor(),
-      documents: documents,
     };
   }
 }

@@ -3,6 +3,7 @@ export const KYC_MESSAGES = {
   KYC_URL_UPLOAD_FAILED: 'Kyc url upload failed',
   USER_NOT_FOUND: 'User not found',
   KYC_STATUS_FETCHED_SUCCESSFULLY: 'Kyc status fetched successfully',
+  KYC_UPDATED_SUCCESSFULLY: 'Kyc updated successfully',
 };
 
 const CODES = {
