@@ -34,6 +34,24 @@ export class AdminRoutes {
       this._adminController.getAllSellers,
     );
     this._router.patch(
+      '/sellers/:id/kyc/approve',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.approveSellerKyc,
+    );
+    this._router.patch(
+      '/sellers/:id/kyc/reject',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.rejectSellerKyc,
+    );
+    this._router.get(
+      '/sellers/:id',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getSeller,
+    );
+    this._router.patch(
       '/users/block/:id',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),

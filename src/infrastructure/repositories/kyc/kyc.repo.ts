@@ -87,11 +87,13 @@ export class PrismaKycRepo implements IKycRepository {
         userId: kycPersistence.userId,
         for: kycPersistence.for,
         status: kycPersistence.status,
+        rejectionReason: kycPersistence.rejectionReason ?? undefined,
       },
       update: {
         status: kycPersistence.status,
         userId: kycPersistence.userId,
         for: kycPersistence.for,
+        rejectionReason: kycPersistence.rejectionReason ?? undefined,
       },
     });
   }

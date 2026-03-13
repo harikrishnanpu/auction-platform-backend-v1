@@ -19,5 +19,6 @@ export interface IKycResponseDto {
   userId: string;
   status: KycStatus;
   for: KycFor;
+  rejectionReason?: string;
   documents: IKycDocumentResponseDto[];
 }

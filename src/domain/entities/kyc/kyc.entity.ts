@@ -19,7 +19,8 @@ export class Kyc {
     private readonly userId: string,
     private kycStatus: KycStatus,
     private readonly kycFor: KycFor,
-    private readonly documents?: KycDocument[],
+    private documents?: KycDocument[],
+    private rejectionReason?: string,
   ) {}
 
   public static create({
@@ -28,14 +29,18 @@ export class Kyc {
     kycStatus,
     kycFor,
     documents = [],
+    rejectionReason,
   }: {
     id: string;
     userId: string;
     kycStatus: KycStatus;
     kycFor: KycFor;
     documents?: KycDocument[];
+    rejectionReason?: string;
   }): Result<Kyc> {
-    return Result.ok<Kyc>(new Kyc(id, userId, kycStatus, kycFor, documents));
+    return Result.ok<Kyc>(
+      new Kyc(id, userId, kycStatus, kycFor, documents, rejectionReason),
+    );
   }
 
   public getId(): string {
@@ -75,5 +80,35 @@ export class Kyc {
 
   public getKycStatus(): KycStatus {
     return this.kycStatus;
+  }
+
+  public approveKyc(): Result<void> {
+    if (this.kycStatus !== KycStatus.PENDING) {
+      return Result.fail('Only PENDING KYC can be approved');
+    }
+    this.kycStatus = KycStatus.APPROVED;
+    return Result.ok();
+  }
+
+  public rejectKyc(reason?: string): Result<void> {
+    if (this.kycStatus !== KycStatus.PENDING) {
+      return Result.fail('Only PENDING KYC can be rejected');
+    }
+    this.kycStatus = KycStatus.REJECTED;
+    this.rejectionReason = reason ?? undefined;
+    return Result.ok();
+  }
+
+  public getRejectionReason(): string | undefined {
+    return this.rejectionReason;
+  }
+
+  public resetForResubmission(): Result<void> {
+    if (this.kycStatus !== KycStatus.REJECTED) {
+      return Result.fail('Only REJECTED KYC can be reset for resubmission');
+    }
+    this.kycStatus = KycStatus.NOT_SUBMITTED;
+    this.rejectionReason = undefined;
+    return Result.ok();
   }
 }

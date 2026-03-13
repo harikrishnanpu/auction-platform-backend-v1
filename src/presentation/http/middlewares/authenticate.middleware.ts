@@ -9,6 +9,7 @@ import { TYPES } from '@di/types.di';
 import { AuthUser } from '@presentation/types/auth.user';
 import { IGetUserUsecase } from '@application/interfaces/usecases/auth/IGetUserUsecase';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
+import { UserStatus } from '@domain/entities/user/user.entity';
 
 @injectable()
 export class AuthenticateMiddleware {
@@ -53,7 +54,12 @@ export class AuthenticateMiddleware {
         );
       }
 
-      if (!userEntity.getValue().roles.includes(UserRoleType.USER)) {
+      const userDto = userEntity.getValue();
+      if (userDto.status === UserStatus.BLOCKED) {
+        throw new AppError('ACCOUNT_BLOCKED', STATUS_CODES.FORBIDDEN);
+      }
+
+      if (!userDto.roles.includes(UserRoleType.USER)) {
         throw new AppError(
           AUTH_MESSAGES.UNAUTHORIZED,
           STATUS_CODES.UNAUTHORIZED,
@@ -61,17 +67,17 @@ export class AuthenticateMiddleware {
       }
 
       const authUser: AuthUser = {
-        id: userEntity.getValue().id,
-        name: userEntity.getValue().name,
-        email: userEntity.getValue().email,
-        phone: userEntity.getValue().phone,
-        address: userEntity.getValue().address,
-        avatar_url: userEntity.getValue().avatar_url,
-        isProfileCompleted: userEntity.getValue().isProfileCompleted,
-        isVerified: userEntity.getValue().isVerified,
-        status: userEntity.getValue().status,
-        authProvider: userEntity.getValue().authProvider,
-        roles: userEntity.getValue().roles,
+        id: userDto.id,
+        name: userDto.name,
+        email: userDto.email,
+        phone: userDto.phone,
+        address: userDto.address,
+        avatar_url: userDto.avatar_url,
+        isProfileCompleted: userDto.isProfileCompleted,
+        isVerified: userDto.isVerified,
+        status: userDto.status,
+        authProvider: userDto.authProvider,
+        roles: userDto.roles,
       };
 
       req.user = authUser;
