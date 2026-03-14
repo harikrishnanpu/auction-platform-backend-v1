@@ -30,15 +30,17 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
     input: ICreateAuctionInput,
   ): Promise<Result<ICreateAuctionOutput>> {
     const auctionId = this._idGeneratingService.generateId();
-    const assets = (input.assets ?? []).map((a, index) =>
-      AuctionAsset.create({
+
+    const assets = (input.assets ?? []).map((a, index) => {
+      return AuctionAsset.create({
         id: this._idGeneratingService.generateId(),
         auctionId,
         fileKey: a.fileKey,
         position: a.position ?? index,
         assetType: a.assetType ?? AuctionAssetType.IMAGE,
-      }),
-    );
+      });
+    });
+
     const auctionResult = Auction.create({
       id: auctionId,
       sellerId: input.userId,
@@ -57,11 +59,15 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
       bidCooldownSeconds: input.bidCooldownSeconds,
       assets,
     });
+
     if (auctionResult.isFailure) return Result.fail(auctionResult.getError());
     const auction = auctionResult.getValue();
+
     const saveResult = await this._auctionRepository.save(auction);
     if (saveResult.isFailure) return Result.fail(saveResult.getError());
+
     const saved = saveResult.getValue();
+
     const output: ICreateAuctionOutput = {
       id: saved.getId(),
       sellerId: saved.getSellerId(),
@@ -77,6 +83,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
       status: saved.getStatus(),
       assetCount: saved.getAssets().length,
     };
+
     return Result.ok(output);
   }
 }

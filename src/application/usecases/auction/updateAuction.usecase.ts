@@ -23,14 +23,21 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
     input: IUpdateAuctionInput,
   ): Promise<Result<IUpdateAuctionOutput>> {
     const existing = await this._auctionRepository.findById(input.auctionId);
-    if (existing.isFailure) return Result.fail(existing.getError());
+
+    if (existing.isFailure) {
+      return Result.fail(existing.getError());
+    }
+
     const auction = existing.getValue();
+
     if (auction.getSellerId() !== input.userId) {
       return Result.fail('Not authorized to update this auction');
     }
+
     if (auction.getStatus() !== AuctionStatus.DRAFT) {
       return Result.fail('Only draft auctions can be updated');
     }
+
     const updatedResult = Auction.create({
       id: auction.getId(),
       sellerId: auction.getSellerId(),
@@ -53,11 +60,19 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
       winnerId: auction.getWinnerId(),
       assets: auction.getAssets(),
     });
-    if (updatedResult.isFailure) return Result.fail(updatedResult.getError());
+
+    if (updatedResult.isFailure) {
+      return Result.fail(updatedResult.getError());
+    }
+
     const updated = updatedResult.getValue();
+
     const updateResult = await this._auctionRepository.update(updated);
+
     if (updateResult.isFailure) return Result.fail(updateResult.getError());
+
     const saved = updateResult.getValue();
+
     const output: IUpdateAuctionOutput = {
       id: saved.getId(),
       sellerId: saved.getSellerId(),
@@ -77,6 +92,7 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
       bidCooldownSeconds: saved.getBidCooldownSeconds(),
       winnerId: saved.getWinnerId(),
     };
+
     return Result.ok(output);
   }
 }

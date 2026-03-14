@@ -20,9 +20,13 @@ export class GetSellerAuctionsUsecase implements IGetSellerAuctionsUsecase {
     input: IGetSellerAuctionsInput,
   ): Promise<Result<IGetSellerAuctionsOutput>> {
     const result = await this._auctionRepository.findBySellerId(input.sellerId);
-    if (result.isFailure) return Result.fail(result.getError());
+
+    if (result.isFailure) {
+      return Result.fail(result.getError());
+    }
 
     const auctions = result.getValue();
+
     const dtos: IAuctionListItemDto[] = auctions.map((a) => {
       const assets = a.getAssets();
       const primary = assets.sort(

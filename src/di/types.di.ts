@@ -62,6 +62,11 @@ export const TYPES = {
   IUpdateAuctionUsecase: Symbol.for('IUpdateAuctionUsecase'),
   IGetBrowseAuctionsUsecase: Symbol.for('IGetBrowseAuctionsUsecase'),
   IPublishAuctionUsecase: Symbol.for('IPublishAuctionUsecase'),
+  IEndAuctionUsecase: Symbol.for('IEndAuctionUsecase'),
   AuctionController: Symbol.for('AuctionController'),
   AuctionRoutes: Symbol.for('AuctionRoutes'),
+  IBidRepository: Symbol.for('IBidRepository'),
+  IAuctionParticipantRepository: Symbol.for('IAuctionParticipantRepository'),
+  IPlaceBidUsecase: Symbol.for('IPlaceBidUsecase'),
+  IGetAuctionRoomUsecase: Symbol.for('IGetAuctionRoomUsecase'),
 };

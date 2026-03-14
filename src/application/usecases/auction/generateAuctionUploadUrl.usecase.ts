@@ -22,12 +22,15 @@ export class GenerateAuctionUploadUrlUsecase implements IGenerateAuctionUploadUr
     input: IGenerateAuctionUploadUrlInput,
   ): Promise<Result<IGenerateAuctionUploadUrlOutput>> {
     const key = `auctions/${input.userId}/${this._idGeneratingService.generateId()}-${input.fileName}`;
+
     const result = await this._storageService.generateUploadUrl({
       fileName: key,
       contentType: input.contentType,
       fileSize: input.fileSize,
     });
+
     if (result.isFailure) return Result.fail(result.getError());
+
     return Result.ok({
       uploadUrl: result.getValue(),
       fileKey: key,

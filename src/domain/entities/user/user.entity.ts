@@ -90,14 +90,6 @@ export class User {
   }
 
   public addRole(role: UserRole) {
-    if (role.equals(UserRole.SELLER)) {
-      if (!this.kyc || !this.kyc.isVerified()) {
-        return Result.fail(
-          'invalid role assignment: kyc verification required',
-        );
-      }
-    }
-
     this.roles.add(role);
   }
 

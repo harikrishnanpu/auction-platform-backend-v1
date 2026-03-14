@@ -5,6 +5,7 @@ import {
 } from '@application/dtos/auction/get-auction-by-id.dto';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { TYPES } from '@di/types.di';
+import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
@@ -20,8 +21,34 @@ export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {
     input: IGetAuctionByIdInput,
   ): Promise<Result<IGetAuctionByIdOutput>> {
     const result = await this._auctionRepository.findById(input.auctionId);
-    if (result.isFailure) return Result.fail(result.getError());
+
+    if (result.isFailure) {
+      return Result.fail(result.getError());
+    }
+
     const auction = result.getValue();
+
+    const isSellerViewingOwn =
+      input.userId && auction.getSellerId() === input.userId;
+
+    if (!isSellerViewingOwn) {
+      if (auction.getStatus() === AuctionStatus.DRAFT) {
+        return Result.fail('Auction is not active');
+      }
+      if (
+        auction.getStatus() === AuctionStatus.ENDED ||
+        auction.getStatus() === AuctionStatus.CANCELLED
+      ) {
+        return Result.fail('Auction is ended');
+      }
+      if (auction.getStartAt() > new Date()) {
+        return Result.fail('Auction is not started');
+      }
+      if (auction.getEndAt() < new Date()) {
+        return Result.fail('Auction is ended');
+      }
+    }
+
     const assets: IAuctionAssetDto[] = auction.getAssets().map((a) => ({
       id: a.getId(),
       auctionId: a.getAuctionId(),
@@ -29,6 +56,7 @@ export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {
       position: a.getPosition(),
       assetType: a.getAssetType(),
     }));
+
     const output: IGetAuctionByIdOutput = {
       id: auction.getId(),
       sellerId: auction.getSellerId(),
@@ -49,6 +77,7 @@ export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {
       bidCooldownSeconds: auction.getBidCooldownSeconds(),
       winnerId: auction.getWinnerId(),
     };
+
     return Result.ok(output);
   }
 }

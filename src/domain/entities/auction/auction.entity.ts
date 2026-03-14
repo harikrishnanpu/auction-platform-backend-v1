@@ -76,22 +76,38 @@ export class Auction {
     winnerId?: string | null;
     assets?: AuctionAsset[];
   }): Result<Auction> {
-    if (startPrice < 0) return Result.fail('Start price must be non-negative');
-    if (minIncrement < 0)
+    if (startPrice < 0) {
+      return Result.fail('Start price must be non-negative');
+    }
+
+    if (minIncrement < 0) {
       return Result.fail('Min increment must be non-negative');
-    if (endAt <= startAt)
+    }
+
+    if (endAt <= startAt) {
       return Result.fail('End time must be after start time');
-    if (antiSnipSeconds < 0)
+    }
+
+    if (antiSnipSeconds < 0) {
       return Result.fail('Anti-snip seconds must be non-negative');
-    if (extensionCount < 0)
+    }
+
+    if (extensionCount < 0) {
       return Result.fail('Extension count must be non-negative');
-    if (maxExtensionCount < 0)
+    }
+
+    if (maxExtensionCount < 0) {
       return Result.fail('Max extension count must be non-negative');
-    if (bidCooldownSeconds < 0)
+    }
+
+    if (bidCooldownSeconds < 0) {
       return Result.fail('Bid cooldown seconds must be non-negative');
+    }
+
     if (extensionCount > maxExtensionCount) {
       return Result.fail('Extension count cannot exceed max extension count');
     }
+
     return Result.ok(
       new Auction(
         id,

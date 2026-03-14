@@ -18,9 +18,9 @@ enum AuctionAssetType {
 }
 
 model Auction {
-  id                 String         @id @default(uuid())
+  id                 String                @id @default(uuid())
   sellerId           String
-  auctionType        AuctionType    @default(LONG)
+  auctionType        AuctionType           @default(LONG)
   title              String
   description        String
   category           String
@@ -29,17 +29,19 @@ model Auction {
   minIncrement       Float
   startAt            DateTime
   endAt              DateTime
-  status             AuctionStatus  @default(DRAFT)
-  antiSnipSeconds    Int            @default(60)
-  extensionCount     Int            @default(0)
-  maxExtensionCount  Int            @default(3)
-  bidCooldownSeconds Int            @default(10)
+  status             AuctionStatus         @default(DRAFT)
+  antiSnipSeconds    Int                   @default(60)
+  extensionCount     Int                   @default(0)
+  maxExtensionCount  Int                   @default(3)
+  bidCooldownSeconds Int                   @default(10)
   winnerId           String?
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  seller             User           @relation("SellerAuctions", fields: [sellerId], references: [id])
-  winner             User?          @relation("WonAuctions", fields: [winnerId], references: [id])
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  seller             User                  @relation("SellerAuctions", fields: [sellerId], references: [id])
+  winner             User?                 @relation("WonAuctions", fields: [winnerId], references: [id])
   assets             AuctionAsset[]
+  bids               Bid[]
+  participants       AuctionParticipant[]
 }
 
 model AuctionAsset {
@@ -51,4 +53,25 @@ model AuctionAsset {
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   auction   Auction         @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  auctionId String
+  userId    String
+  amount    Float
+  createdAt DateTime @default(now())
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AuctionParticipant {
+  id        String   @id @default(uuid())
+  auctionId String
+  userId    String
+  userName  String
+  joinedAt  DateTime @default(now())
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  @@unique([auctionId, userId])
 }

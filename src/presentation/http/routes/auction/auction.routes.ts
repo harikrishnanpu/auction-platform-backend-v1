@@ -50,9 +50,23 @@ export class AuctionRoutes {
     );
 
     this._router.get(
-      '/:id',
+      '/seller/:id',
       this._authenticateMiddleware.authenticate,
-      this._auctionController.getAuctionById,
+      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+      this._auctionController.getAuctionForSeller,
+    );
+
+    this._router.get(
+      '/user/:id',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._auctionController.getAuctionForUser,
+    );
+
+    this._router.post(
+      '/:id/bid',
+      this._authenticateMiddleware.authenticate,
+      this._auctionController.placeBid,
     );
 
     this._router.put(
@@ -67,6 +81,13 @@ export class AuctionRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.publishAuction,
+    );
+
+    this._router.post(
+      '/:id/end',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+      this._auctionController.endAuction,
     );
 
     return this._router;
