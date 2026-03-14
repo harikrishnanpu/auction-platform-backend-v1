@@ -1,0 +1,63 @@
+import {
+  IGetBrowseAuctionsInput,
+  IGetBrowseAuctionsOutput,
+  IBrowseAuctionListItemDto,
+} from '@application/dtos/auction/get-browse-auctions.dto';
+import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { TYPES } from '@di/types.di';
+import { AuctionType } from '@domain/entities/auction/auction.entity';
+import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { Result } from '@domain/shared/result';
+import { inject, injectable } from 'inversify';
+
+@injectable()
+export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
+  constructor(
+    @inject(TYPES.IAuctionRepository)
+    private readonly _auctionRepository: IAuctionRepository,
+  ) {}
+
+  async execute(
+    input: IGetBrowseAuctionsInput,
+  ): Promise<Result<IGetBrowseAuctionsOutput>> {
+    const result = await this._auctionRepository.findForBrowse({
+      category: input.category,
+      auctionType: input.auctionType as AuctionType | 'ALL',
+    });
+
+    if (result.isFailure) return Result.fail(result.getError());
+
+    const auctions = result.getValue();
+
+    const auctionResults: IBrowseAuctionListItemDto[] = auctions.map((a) => {
+      const assets = a.getAssets();
+      const primary = assets.sort(
+        (x, y) => x.getPosition() - y.getPosition(),
+      )[0];
+
+      return {
+        id: a.getId(),
+        sellerId: a.getSellerId(),
+        auctionType: a.getAuctionType(),
+        title: a.getTitle(),
+        description: a.getDescription(),
+        category: a.getCategory(),
+        condition: a.getCondition(),
+        startPrice: a.getStartPrice(),
+        minIncrement: a.getMinIncrement(),
+        startAt: a.getStartAt().toISOString(),
+        endAt: a.getEndAt().toISOString(),
+        status: a.getStatus(),
+        assetCount: assets.length,
+        primaryImageKey: primary?.getFileKey(),
+        antiSnipSeconds: a.getAntiSnipSeconds(),
+        extensionCount: a.getExtensionCount(),
+        maxExtensionCount: a.getMaxExtensionCount(),
+        bidCooldownSeconds: a.getBidCooldownSeconds(),
+        winnerId: a.getWinnerId(),
+      };
+    });
+
+    return Result.ok({ auctions: auctionResults });
+  }
+}

@@ -11,18 +11,23 @@ import { kycContainer } from './modules/kyc.container';
 import { KycController } from '@presentation/http/controllers/kyc/kyc.controller';
 import { AdminController } from '@presentation/http/controllers/admin/admin.controller';
 import { adminContainer } from './modules/admin.container';
+import { auctionContainer } from './modules/auction.container';
+import { AuctionController } from '@presentation/http/controllers/auction/auction.controller';
 
 const container = new Container();
 
-console.log('Initializing Global Container...');
 container.load(authContainer);
 container.load(userContainer);
 container.load(kycContainer);
 container.load(adminContainer);
+container.load(auctionContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
+container
+  .bind<AuctionController>(TYPES.AuctionController)
+  .to(AuctionController);
 
 container
   .bind<AuthenticateMiddleware>(TYPES.AuthenticateMiddleware)

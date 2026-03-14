@@ -1,0 +1,77 @@
+enum AuctionStatus {
+  DRAFT
+  ACTIVE
+  ENDED
+  SOLD
+  CANCELLED
+}
+
+enum AuctionType {
+  LONG
+  LIVE
+  SEALED
+}
+
+enum AuctionAssetType {
+  IMAGE
+  VIDEO
+}
+
+model Auction {
+  id                 String                @id @default(uuid())
+  sellerId           String
+  auctionType        AuctionType           @default(LONG)
+  title              String
+  description        String
+  category           String
+  condition          String
+  startPrice         Float
+  minIncrement       Float
+  startAt            DateTime
+  endAt              DateTime
+  status             AuctionStatus         @default(DRAFT)
+  antiSnipSeconds    Int                   @default(60)
+  extensionCount     Int                   @default(0)
+  maxExtensionCount  Int                   @default(3)
+  bidCooldownSeconds Int                   @default(10)
+  winnerId           String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  seller             User                  @relation("SellerAuctions", fields: [sellerId], references: [id])
+  winner             User?                 @relation("WonAuctions", fields: [winnerId], references: [id])
+  assets             AuctionAsset[]
+  bids               Bid[]
+  participants       AuctionParticipant[]
+}
+
+model AuctionAsset {
+  id        String          @id @default(uuid())
+  auctionId String
+  fileKey   String
+  position  Int             @default(0)
+  assetType AuctionAssetType @default(IMAGE)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  auction   Auction         @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+}
+
+model Bid {
+  id        String   @id @default(uuid())
+  auctionId String
+  userId    String
+  amount    Float
+  createdAt DateTime @default(now())
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AuctionParticipant {
+  id        String   @id @default(uuid())
+  auctionId String
+  userId    String
+  userName  String
+  joinedAt  DateTime @default(now())
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  @@unique([auctionId, userId])
+}

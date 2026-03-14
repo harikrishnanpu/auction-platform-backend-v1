@@ -8,7 +8,6 @@ const PORT = process.env.PORT || 4000;
 const startServer = async () => {
   try {
     const httpServer = createServer(app);
-
     httpServer.listen(PORT, () => {
       console.log(`Server started on ${PORT}`);
     });

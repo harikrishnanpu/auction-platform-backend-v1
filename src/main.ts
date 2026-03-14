@@ -12,6 +12,7 @@ import { configureGoogleStrategy } from '@infrastructure/passport/passport.confi
 import { UserRouterFactory } from '@presentation/http/factories/user.router.factory';
 import { KycRouterFactory } from '@presentation/http/factories/kyc.router.factory';
 import { AdminRouterFactory } from '@presentation/http/factories/admin.router.factory';
+import { AuctionRouterFactory } from '@presentation/http/factories/auction.router.factory';
 
 export const app = express();
 
@@ -34,5 +35,6 @@ app.use('/api/v1/auth', AuthRouterFactory.authRouter(container));
 app.use('/api/v1/user', UserRouterFactory.userRouter(container));
 app.use('/api/v1/kyc', KycRouterFactory.kycRouter(container));
 app.use('/api/v1/admin', AdminRouterFactory.adminRouter(container));
+app.use('/api/v1/auction', AuctionRouterFactory.auctionRouter(container));
 
 app.use(errorMiddleware);
