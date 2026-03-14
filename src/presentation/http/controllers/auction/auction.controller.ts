@@ -18,6 +18,8 @@ import { createAuctionSchema } from '@presentation/validators/schemas/auction/cr
 import expressAsyncHandler from 'express-async-handler';
 import { Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
+import { browseAuctionSchema } from '@presentation/validators/schemas/auction/browseAuction.schema';
+import { IGetBrowseAuctionsInput } from '@application/dtos/auction/get-browse-auctions.dto';
 
 @injectable()
 export class AuctionController {
@@ -46,12 +48,14 @@ export class AuctionController {
       );
     }
     const parsed = createAuctionSchema.safeParse(req.body);
+
     if (!parsed.success) {
       throw new AppError(
         parsed.error.issues[0].message,
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     const input: ICreateAuctionInput = {
       userId: req.user.id,
       auctionType: parsed.data.auctionType as AuctionType,
@@ -72,13 +76,16 @@ export class AuctionController {
         assetType: a.assetType as AuctionAssetType | undefined,
       })),
     };
+
     const result = await this._createAuctionUsecase.execute(input);
+
     if (result.isFailure) {
       throw new AppError(
         result.getError(),
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     res.status(AUCTION_CONSTANTS.CODES.OK).json({
       data: result.getValue(),
       success: true,
@@ -96,43 +103,18 @@ export class AuctionController {
           AUCTION_CONSTANTS.CODES.BAD_REQUEST,
         );
       }
+
       const result = await this._getSellerAuctionsUsecase.execute({
         sellerId: req.user.id,
       });
-      if (result.isFailure) {
-        throw new AppError(
-          result.getError(),
-          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
-        );
-      }
-      res.status(AUCTION_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        status: AUCTION_CONSTANTS.CODES.OK,
-        error: null,
-      });
-    },
-  );
 
-  getBrowseAuctions = expressAsyncHandler(
-    async (req: Request, res: Response) => {
-      const category =
-        typeof req.query.category === 'string' ? req.query.category : undefined;
-      const auctionType =
-        typeof req.query.auctionType === 'string' &&
-        ['LONG', 'LIVE', 'SEALED'].includes(req.query.auctionType)
-          ? (req.query.auctionType as AuctionType)
-          : undefined;
-      const result = await this._getBrowseAuctionsUsecase.execute({
-        category,
-        auctionType,
-      });
       if (result.isFailure) {
         throw new AppError(
           result.getError(),
           AUCTION_CONSTANTS.CODES.BAD_REQUEST,
         );
       }
+
       res.status(AUCTION_CONSTANTS.CODES.OK).json({
         data: result.getValue(),
         success: true,
@@ -143,20 +125,24 @@ export class AuctionController {
   );
 
   getAuctionById = expressAsyncHandler(async (req: Request, res: Response) => {
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const id = req.params.id;
+
     if (!id) {
       throw new AppError(
         AUCTION_CONSTANTS.MESSAGES.AUCTION_NOT_FOUND,
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     const result = await this._getAuctionByIdUsecase.execute({
-      auctionId: id,
+      auctionId: id as string,
       userId: req.user?.id,
     });
+
     if (result.isFailure) {
       throw new AppError(result.getError(), AUCTION_CONSTANTS.CODES.NOT_FOUND);
     }
+
     res.status(AUCTION_CONSTANTS.CODES.OK).json({
       data: result.getValue(),
       success: true,
@@ -218,23 +204,27 @@ export class AuctionController {
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+    const id = req.params.id;
+
     if (!id) {
       throw new AppError(
         AUCTION_CONSTANTS.MESSAGES.AUCTION_NOT_FOUND,
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     const parsed = updateAuctionSchema.safeParse(req.body);
+
     if (!parsed.success) {
-      const first = parsed.error.issues[0];
-      const message = first.path?.length
-        ? `${first.path.join('.')}: ${first.message}`
-        : first.message;
-      throw new AppError(message, AUCTION_CONSTANTS.CODES.BAD_REQUEST);
+      throw new AppError(
+        parsed.error.issues[0].message,
+        AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+      );
     }
+
     const input: IUpdateAuctionInput = {
-      auctionId: id,
+      auctionId: id as string,
       userId: req.user.id,
       auctionType: parsed.data.auctionType as AuctionType | undefined,
       title: parsed.data.title,
@@ -249,13 +239,16 @@ export class AuctionController {
       maxExtensionCount: parsed.data.maxExtensionCount,
       bidCooldownSeconds: parsed.data.bidCooldownSeconds,
     };
+
     const result = await this._updateAuctionUsecase.execute(input);
+
     if (result.isFailure) {
       throw new AppError(
         result.getError(),
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     res.status(AUCTION_CONSTANTS.CODES.OK).json({
       data: result.getValue(),
       success: true,
@@ -272,23 +265,29 @@ export class AuctionController {
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
-    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
+    const id = req.params.id;
+
     if (!id) {
       throw new AppError(
         AUCTION_CONSTANTS.MESSAGES.AUCTION_NOT_FOUND,
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     const result = await this._publishAuctionUsecase.execute({
-      auctionId: id,
+      auctionId: id as string,
       userId: req.user.id,
     });
+
     if (result.isFailure) {
       throw new AppError(
         result.getError(),
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
+    console.log(result.getValue());
     res.status(AUCTION_CONSTANTS.CODES.OK).json({
       data: result.getValue(),
       success: true,
@@ -297,4 +296,41 @@ export class AuctionController {
       error: null,
     });
   });
+
+  getBrowseAuctions = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const validated = browseAuctionSchema.safeParse(req.query);
+      if (!validated.success) {
+        console.log(validated.error.issues);
+        throw new AppError(
+          validated.error.issues[0].message,
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const input: IGetBrowseAuctionsInput = {
+        category: validated.data.category,
+        auctionType:
+          (validated.data.auctionType as AuctionType | 'ALL') ?? 'ALL',
+      };
+
+      const result = await this._getBrowseAuctionsUsecase.execute(input);
+
+      if (result.isFailure) {
+        console.log(result.getError());
+        throw new AppError(
+          result.getError(),
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      console.log(result.getValue());
+      res.status(AUCTION_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        status: AUCTION_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
 }

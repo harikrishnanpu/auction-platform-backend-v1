@@ -9,7 +9,7 @@ import {
   AuctionMapper,
   PrismaAuctionWithAssets,
 } from '@infrastructure/mappers/auction/auction.mapper';
-import { PrismaClient } from '@prisma/client';
+import { AuctionType, PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -21,6 +21,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
 
   async save(auction: Auction): Promise<Result<Auction>> {
     const data = AuctionMapper.toPersistence(auction);
+
     await this._prisma.auction.create({
       data: {
         id: data.id,
@@ -50,11 +51,13 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         },
       },
     });
+
     return Result.ok(auction);
   }
 
   async update(auction: Auction): Promise<Result<Auction>> {
     const data = AuctionMapper.toPersistence(auction);
+
     await this._prisma.auction.update({
       where: { id: data.id },
       data: {
@@ -75,6 +78,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         winnerId: data.winnerId,
       },
     });
+
     return Result.ok(auction);
   }
 
@@ -93,7 +97,9 @@ export class PrismaAuctionRepo implements IAuctionRepository {
       include: { assets: true },
       orderBy: { createdAt: 'desc' },
     });
+
     const result: Auction[] = [];
+
     for (const raw of list as PrismaAuctionWithAssets[]) {
       const r = AuctionMapper.toDomain(raw);
       if (r.isFailure) return Result.fail(r.getError());
@@ -112,13 +118,20 @@ export class PrismaAuctionRepo implements IAuctionRepository {
     } = {
       status: 'ACTIVE',
     };
+
     if (filters.category) where.category = filters.category;
-    if (filters.auctionType) where.auctionType = filters.auctionType;
+    if (filters.auctionType)
+      where.auctionType =
+        (filters.auctionType as AuctionType | 'ALL') === 'ALL'
+          ? undefined
+          : (filters.auctionType as AuctionType);
+
     const list = await this._prisma.auction.findMany({
       where,
       include: { assets: true },
       orderBy: { startAt: 'desc' },
     });
+
     const result: Auction[] = [];
     for (const raw of list as PrismaAuctionWithAssets[]) {
       const r = AuctionMapper.toDomain(raw);

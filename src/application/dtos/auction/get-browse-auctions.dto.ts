@@ -27,7 +27,7 @@ export interface IBrowseAuctionListItemDto {
 
 export interface IGetBrowseAuctionsInput {
   category?: string;
-  auctionType?: AuctionType;
+  auctionType?: AuctionType | 'ALL';
 }
 
 export interface IGetBrowseAuctionsOutput {

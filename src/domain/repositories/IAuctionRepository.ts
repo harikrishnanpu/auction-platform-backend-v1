@@ -3,7 +3,7 @@ import { Result } from '@domain/shared/result';
 
 export interface IFindForBrowseFilters {
   category?: string;
-  auctionType?: AuctionType;
+  auctionType?: AuctionType | 'ALL';
 }
 
 export interface IAuctionRepository {

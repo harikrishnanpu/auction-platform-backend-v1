@@ -5,6 +5,7 @@ import {
 } from '@application/dtos/auction/get-browse-auctions.dto';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { TYPES } from '@di/types.di';
+import { AuctionType } from '@domain/entities/auction/auction.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
@@ -21,15 +22,19 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
   ): Promise<Result<IGetBrowseAuctionsOutput>> {
     const result = await this._auctionRepository.findForBrowse({
       category: input.category,
-      auctionType: input.auctionType,
+      auctionType: input.auctionType as AuctionType | 'ALL',
     });
+
     if (result.isFailure) return Result.fail(result.getError());
+
     const auctions = result.getValue();
-    const dtos: IBrowseAuctionListItemDto[] = auctions.map((a) => {
+
+    const auctionResults: IBrowseAuctionListItemDto[] = auctions.map((a) => {
       const assets = a.getAssets();
       const primary = assets.sort(
         (x, y) => x.getPosition() - y.getPosition(),
       )[0];
+
       return {
         id: a.getId(),
         sellerId: a.getSellerId(),
@@ -52,6 +57,7 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
         winnerId: a.getWinnerId(),
       };
     });
-    return Result.ok({ auctions: dtos });
+
+    return Result.ok({ auctions: auctionResults });
   }
 }

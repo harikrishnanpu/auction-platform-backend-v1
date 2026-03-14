@@ -28,36 +28,47 @@ export class AuctionRoutes {
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.createAuction,
     );
+
     this._router.post(
       '/upload-url',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.generateUploadUrl,
     );
+
     this._router.get(
       '/',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.getSellerAuctions,
     );
-    this._router.get('/browse', this._auctionController.getBrowseAuctions);
+
+    this._router.get(
+      '/browse',
+      this._authenticateMiddleware.authenticate,
+      this._auctionController.getBrowseAuctions,
+    );
+
     this._router.get(
       '/:id',
       this._authenticateMiddleware.authenticate,
       this._auctionController.getAuctionById,
     );
+
     this._router.put(
       '/:id',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.updateAuction,
     );
+
     this._router.post(
       '/:id/publish',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.publishAuction,
     );
+
     return this._router;
   }
 }
