@@ -1,3 +1,4 @@
+import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
   IPlaceBidInput,
   IPlaceBidOutput,
@@ -34,11 +35,11 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
     const auction = auctionResult.getValue();
 
     if (auction.getStatus() !== AuctionStatus.ACTIVE) {
-      return Result.fail('Auction is not active');
+      return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
     }
 
     if (auction.getSellerId() === input.userId) {
-      return Result.fail('Seller cannot place bid');
+      return Result.fail(AUCTION_MESSAGES.SELLER_CANNOT_PLACE_BID);
     }
 
     const latestResult = await this._bidRepo.findLatestByAuctionId(
@@ -51,7 +52,7 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
     if (latest !== null) {
       if (latest.getAmount() >= input.amount) {
-        return Result.fail('Bid amount must be greater than the latest bid');
+        return Result.fail(AUCTION_MESSAGES.BID_BELOW_LATEST);
       }
     }
 
@@ -62,7 +63,7 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
     if (input.amount < currentMin) {
       return Result.fail(
-        `Bid must be at least ${currentMin} (min increment ${auction.getMinIncrement()})`,
+        AUCTION_MESSAGES.BID_BELOW_MIN(currentMin, auction.getMinIncrement()),
       );
     }
 
@@ -79,7 +80,9 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
       const elapsedSec = (Date.now() - lastBidTime.getTime()) / 1000;
       if (elapsedSec < auction.getBidCooldownSeconds())
         return Result.fail(
-          `Wait ${Math.ceil(auction.getBidCooldownSeconds() - elapsedSec)}s before next bid`,
+          AUCTION_MESSAGES.COOLDOWN_WAIT(
+            Math.ceil(auction.getBidCooldownSeconds() - elapsedSec),
+          ),
         );
     }
 

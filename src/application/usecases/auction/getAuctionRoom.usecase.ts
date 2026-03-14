@@ -1,3 +1,4 @@
+import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
   IGetAuctionRoomInput,
   IGetAuctionRoomOutput,
@@ -37,19 +38,19 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
 
     if (!isSellerViewingOwn) {
       if (auction.getStatus() === AuctionStatus.DRAFT) {
-        return Result.fail('Auction is not active');
+        return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
       }
       if (
         auction.getStatus() === AuctionStatus.ENDED ||
         auction.getStatus() === AuctionStatus.CANCELLED
       ) {
-        return Result.fail('Auction is ended');
+        return Result.fail(AUCTION_MESSAGES.AUCTION_ENDED);
       }
       if (auction.getStartAt() > new Date()) {
-        return Result.fail('Auction is not started');
+        return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_STARTED);
       }
       if (auction.getEndAt() < new Date()) {
-        return Result.fail('Auction is ended');
+        return Result.fail(AUCTION_MESSAGES.AUCTION_ENDED);
       }
     }
 

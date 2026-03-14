@@ -1,3 +1,4 @@
+import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
   IUpdateAuctionInput,
   IUpdateAuctionOutput,
@@ -31,11 +32,11 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
     const auction = existing.getValue();
 
     if (auction.getSellerId() !== input.userId) {
-      return Result.fail('Not authorized to update this auction');
+      return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_UPDATE);
     }
 
     if (auction.getStatus() !== AuctionStatus.DRAFT) {
-      return Result.fail('Only draft auctions can be updated');
+      return Result.fail(AUCTION_MESSAGES.ONLY_DRAFT_CAN_BE_UPDATED);
     }
 
     const updatedResult = Auction.create({

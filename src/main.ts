@@ -3,7 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import { AuthRouterFactory } from '@presentation/http/factories/auth.router.factory';
 import { container } from '@di/container';
+import { TYPES } from '@di/types.di';
+import type { ILogger } from '@application/interfaces/services/ILogger';
 import { errorMiddleware } from '@presentation/http/middlewares/error.middleware';
+import { logMiddleware } from '@presentation/http/middlewares/log.middleware';
 import { EmailWorker } from '@infrastructure/workers/email.worker';
 import { TemplateService } from '@infrastructure/services/template/template.service';
 import cookieParser from 'cookie-parser';
@@ -16,6 +19,8 @@ import { AuctionRouterFactory } from '@presentation/http/factories/auction.route
 
 export const app = express();
 
+const logger = container.get<ILogger>(TYPES.ILogger);
+
 app.use(
   cors({
     credentials: true,
@@ -24,6 +29,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use(logMiddleware(logger));
 
 app.use(cookieParser());
 app.use(passport.initialize());

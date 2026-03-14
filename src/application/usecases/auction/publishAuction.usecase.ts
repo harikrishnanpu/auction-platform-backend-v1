@@ -1,3 +1,4 @@
+import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
   IPublishAuctionInput,
   IPublishAuctionOutput,
@@ -31,16 +32,16 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
     const auction = existing.getValue();
 
     if (auction.getSellerId() !== input.userId) {
-      return Result.fail('Not authorized to publish this auction');
+      return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_PUBLISH);
     }
 
     if (auction.getStatus() !== AuctionStatus.DRAFT) {
-      return Result.fail('Only draft auctions can be published');
+      return Result.fail(AUCTION_MESSAGES.ONLY_DRAFT_CAN_BE_PUBLISHED);
     }
 
     const now = new Date();
     if (auction.getEndAt() <= now) {
-      return Result.fail('Cannot publish auction: end time has already passed');
+      return Result.fail(AUCTION_MESSAGES.END_TIME_ALREADY_PASSED);
     }
 
     const draftForValidation = {

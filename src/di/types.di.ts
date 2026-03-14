@@ -1,4 +1,5 @@
 export const TYPES = {
+  ILogger: Symbol.for('ILogger'),
   IUserRepository: Symbol.for('IUserRepository'),
   IEmailService: Symbol.for('IEmailService'),
   IPasswordService: Symbol.for('IPasswordService'),

@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { Container } from 'inversify';
+import { loggerContainer } from './modules/logger.container';
 import { authContainer } from './modules/auth.container';
 import { AuthController } from '@presentation/http/controllers/auth/auth.controller';
 import { TYPES } from './types.di';
@@ -16,6 +17,7 @@ import { AuctionController } from '@presentation/http/controllers/auction/auctio
 
 const container = new Container();
 
+container.load(loggerContainer);
 container.load(authContainer);
 container.load(userContainer);
 container.load(kycContainer);
