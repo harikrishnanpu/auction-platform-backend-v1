@@ -33,6 +33,8 @@ model User {
     roles              UserRole[]
     otps               Otp[]
     kyc                Kyc[]
+    auctions           Auction[]     @relation("SellerAuctions")
+    wonAuctions        Auction[]     @relation("WonAuctions")
 }
 
 model UserRole {

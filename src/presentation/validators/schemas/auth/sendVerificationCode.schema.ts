@@ -5,7 +5,7 @@ export const sendVerificationCodeSchema = z.object({
     .string()
     .trim()
     .email('Invalid email')
-    .max(30, 'Email cannot exceed 30 characters'),
+    .max(50, 'Email cannot exceed 50 characters'),
 });
 
 export type SendVerificationCodeInput = z.infer<

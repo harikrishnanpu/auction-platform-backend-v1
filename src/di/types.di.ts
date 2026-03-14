@@ -52,4 +52,16 @@ export const TYPES = {
   IGetAdminSellerUsecase: Symbol.for('IGetAdminSellerUsecase'),
   IApproveSellerKycUsecase: Symbol.for('IApproveSellerKycUsecase'),
   IRejectSellerKycUsecase: Symbol.for('IRejectSellerKycUsecase'),
+  IAuctionRepository: Symbol.for('IAuctionRepository'),
+  ICreateAuctionUsecase: Symbol.for('ICreateAuctionUsecase'),
+  IGetSellerAuctionsUsecase: Symbol.for('IGetSellerAuctionsUsecase'),
+  IGetAuctionByIdUsecase: Symbol.for('IGetAuctionByIdUsecase'),
+  IGenerateAuctionUploadUrlUsecase: Symbol.for(
+    'IGenerateAuctionUploadUrlUsecase',
+  ),
+  IUpdateAuctionUsecase: Symbol.for('IUpdateAuctionUsecase'),
+  IGetBrowseAuctionsUsecase: Symbol.for('IGetBrowseAuctionsUsecase'),
+  IPublishAuctionUsecase: Symbol.for('IPublishAuctionUsecase'),
+  AuctionController: Symbol.for('AuctionController'),
+  AuctionRoutes: Symbol.for('AuctionRoutes'),
 };
