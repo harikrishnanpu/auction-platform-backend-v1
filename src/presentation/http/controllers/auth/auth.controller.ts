@@ -1,4 +1,3 @@
-import { RegisterUserInput } from '@application/dtos/auth/registerUser.dto';
 import { IRegisterUseCase } from '@application/interfaces/usecases/auth/IRegisterUsecase';
 import {
   AUTH_CONSTANTS,
@@ -29,8 +28,11 @@ import { changePasswordSchema } from '@presentation/validators/schemas/auth/chan
 import { ChangePasswordInput } from '@application/dtos/auth/changePassword.dto';
 import { JWT_CONSTANTS } from '@presentation/constants/jwt/jwt.constants';
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
-import { SendOtpInput } from '@application/dtos/otp/SendOtp.dto';
-import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
+import { ResponseHelper } from '@presentation/http/helpers/response.helper';
+import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
+import { RegisterUserMapper } from '@application/mappers/auth/register.mapper';
+import { RegisterUserOutputDto } from '@application/dtos/auth/registerUser.dto';
+import { SendEmailVerificationCodeMapper } from '@application/mappers/auth/sendOtp.mapper';
 
 @injectable()
 export class AuthController {
@@ -55,6 +57,11 @@ export class AuthController {
     private readonly _changePasswordUseCase: IChangePasswordUsecase,
   ) {}
 
+  /**
+   * @description Register a new user
+   * @returns ApiResponse<RegisterUserOutput>
+   */
+
   register = expressAsyncHandler(async (req: Request, res: Response) => {
     const validationResult = registerSchema.safeParse(req.body);
 
@@ -65,32 +72,26 @@ export class AuthController {
       );
     }
 
-    const { firstName, lastName, email, phone, password, address } =
-      validationResult.data;
-
-    const registerUserDto: RegisterUserInput = {
-      name: `${firstName} ${lastName}`,
-      email,
-      phone,
-      password,
-      address,
-    };
-
-    const result = await this._registerUseCase.execute(registerUserDto);
+    const dto = RegisterUserMapper.toDto(validationResult.data);
+    const result = await this._registerUseCase.execute(dto);
 
     if (result.isFailure) {
       console.log('error');
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(AUTH_CONSTANTS.CODES.CREATED).json({
-      data: result.getValue(),
-      success: true,
-      message: AUTH_CONSTANTS.MESSAGES.USER_REGISTERED_SUCCESSFULLY,
-      status: AUTH_CONSTANTS.CODES.CREATED,
-      error: null,
-    });
+    const response = ResponseHelper.success<RegisterUserOutputDto>(
+      result.getValue(),
+      AUTH_CONSTANTS.MESSAGES.USER_REGISTERED_SUCCESSFULLY,
+      AUTH_CONSTANTS.CODES.CREATED,
+    );
+    res.status(AUTH_CONSTANTS.CODES.CREATED).json(response);
   });
+
+  /**
+   * @description Send a verification code to the user's email
+   * @returns ApiResponse<void>
+   */
 
   sendVerificationCode = expressAsyncHandler(
     async (req: Request, res: Response) => {
@@ -104,28 +105,29 @@ export class AuthController {
         );
       }
 
-      const sendOtpInput: SendOtpInput = {
-        email: validationResult.data.email,
-        purpose: OtpPurpose.VERIFY_EMAIL,
-        channel: OtpChannel.EMAIL,
-      };
+      const dto = SendEmailVerificationCodeMapper.toDto(validationResult.data);
 
-      const result = await this._sendOtpUsecase.execute(sendOtpInput);
+      const result = await this._sendOtpUsecase.execute(dto);
 
       if (result.isFailure) {
         console.log('error');
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
-      res.status(AUTH_CONSTANTS.CODES.OK).json({
-        data: null,
-        success: true,
-        message: AUTH_CONSTANTS.MESSAGES.VERIFICATION_CODE_SENT_SUCCESSFULLY,
-        status: AUTH_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      const response = ResponseHelper.success<null>(
+        null,
+        AUTH_CONSTANTS.MESSAGES.VERIFICATION_CODE_SENT_SUCCESSFULLY,
+        AUTH_CONSTANTS.CODES.OK,
+      );
+
+      res.status(AUTH_CONSTANTS.CODES.OK).json(response);
     },
   );
+
+  /**
+   * @description Verify the user's credentials
+   * @returns ApiResponse<VerifyCredentialsOutput>
+   */
 
   verifyCredentials = expressAsyncHandler(
     async (req: Request, res: Response) => {
@@ -156,17 +158,12 @@ export class AuthController {
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
-      res.status(AUTH_CONSTANTS.CODES.OK).json({
-        data: {
-          user: result.getValue().user,
-          accessToken: result.getValue().accessToken,
-          refreshToken: result.getValue().refreshToken,
-        },
-        success: true,
-        message: AUTH_CONSTANTS.MESSAGES.EMAIL_VERIFIED_SUCCESSFULLY,
-        status: AUTH_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      const response = ResponseHelper.success<verifyCredentialsOutput>(
+        result.getValue(),
+        AUTH_CONSTANTS.MESSAGES.EMAIL_VERIFIED_SUCCESSFULLY,
+        AUTH_CONSTANTS.CODES.OK,
+      );
+      res.status(AUTH_CONSTANTS.CODES.OK).json(response);
     },
   );
 

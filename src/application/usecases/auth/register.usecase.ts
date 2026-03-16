@@ -1,7 +1,7 @@
 import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
 import {
-  RegisterUserInput,
-  RegisterUserOutput,
+  RegisterUserInputDto,
+  RegisterUserOutputDto,
 } from '@application/dtos/auth/registerUser.dto';
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
@@ -46,7 +46,9 @@ export class RegisterUseCase implements IRegisterUseCase {
     this.userRepository = userRepo;
   }
 
-  async execute(dto: RegisterUserInput): Promise<Result<RegisterUserOutput>> {
+  async execute(
+    dto: RegisterUserInputDto,
+  ): Promise<Result<RegisterUserOutputDto>> {
     try {
       const { name, email, phone, password, address } = dto;
 
@@ -121,7 +123,7 @@ export class RegisterUseCase implements IRegisterUseCase {
         EMAIL_TEMPLATES.VERIFY_EMAIL,
       );
 
-      return Result.ok<RegisterUserOutput>({
+      return Result.ok<RegisterUserOutputDto>({
         userId: userEntity.getValue().getId(),
       });
     } catch (err) {
