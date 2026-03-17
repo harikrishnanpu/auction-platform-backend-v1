@@ -30,37 +30,22 @@ export class AuctionRoutes {
     );
 
     this._router.post(
+      '/request',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+      this._auctionController.requestAuctionCategory,
+    );
+
+    this._router.get(
+      '/categories',
+      this._auctionController.getAllAuctionCategories,
+    );
+
+    this._router.post(
       '/upload-url',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
       this._auctionController.generateUploadUrl,
-    );
-
-    this._router.get(
-      '/',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.getSellerAuctions,
-    );
-
-    this._router.get(
-      '/browse',
-      this._authenticateMiddleware.authenticate,
-      this._auctionController.getBrowseAuctions,
-    );
-
-    this._router.get(
-      '/seller/:id',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.getAuctionForSeller,
-    );
-
-    this._router.get(
-      '/user/:id',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.USER]),
-      this._auctionController.getAuctionForUser,
     );
 
     this._router.post(

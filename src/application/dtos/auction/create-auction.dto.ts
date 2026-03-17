@@ -4,7 +4,7 @@ import {
 } from '@domain/entities/auction/auction.entity';
 import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity';
 
-export interface ICreateAuctionInput {
+export interface ICreateAuctionInputDto {
   userId: string;
   auctionType: AuctionType;
   title: string;
@@ -25,7 +25,7 @@ export interface ICreateAuctionInput {
   }[];
 }
 
-export interface ICreateAuctionOutput {
+export interface ICreateAuctionOutputDto {
   id: string;
   sellerId: string;
   auctionType: AuctionType;

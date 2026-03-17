@@ -70,4 +70,10 @@ export const TYPES = {
   IAuctionParticipantRepository: Symbol.for('IAuctionParticipantRepository'),
   IPlaceBidUsecase: Symbol.for('IPlaceBidUsecase'),
   IGetAuctionRoomUsecase: Symbol.for('IGetAuctionRoomUsecase'),
+  IAuctionCategoryRepository: Symbol.for('IAuctionCategoryRepositoy'),
+  IRequestAuctionCategoryUsecase: Symbol.for('IRequestAuctionCategoryUsecase'),
+  ISlugGeneratorService: Symbol.for('ISlugGeneratorService'),
+  IGetAllAuctionCategoriesUsecase: Symbol.for(
+    'IGetAllAuctionCategoriesUsecase',
+  ),
 };
