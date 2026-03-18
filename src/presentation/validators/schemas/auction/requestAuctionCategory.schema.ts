@@ -5,7 +5,7 @@ export const requestAuctionCategorySchema = z.object({
     .string()
     .trim()
     .min(3, 'Category name must be at least 3 characters long'),
-  parentId: z.string().optional(),
+  parentId: z.string().optional().nullable(),
 });
 
 export type RequestAuctionCategoryInput = z.infer<

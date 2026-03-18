@@ -25,12 +25,14 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
         slug: category.getSlug().getValue(),
         isVerified: category.getIsVerified(),
         isActive: category.getIsActive(),
+        status: category.getStatus(),
       },
       update: {
         name: category.getName(),
         slug: category.getSlug().getValue(),
         isVerified: category.getIsVerified(),
         isActive: category.getIsActive(),
+        status: category.getStatus(),
       },
     });
 
@@ -54,8 +56,19 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
     return Result.ok<AuctionCategory>(result.getValue());
   }
 
-  async findAll(): Promise<Result<AuctionCategory[]>> {
-    const auctionCategories = await this._prisma.auctionCategory.findMany();
+  async findAll({
+    isVerified,
+    isActive,
+  }: {
+    isVerified: boolean | undefined;
+    isActive: boolean | undefined;
+  }): Promise<Result<AuctionCategory[]>> {
+    const auctionCategories = await this._prisma.auctionCategory.findMany({
+      where: {
+        isVerified: isVerified,
+        isActive: isActive,
+      },
+    });
 
     const result = auctionCategories.map((category) => {
       const result = AuctionCategoryMapper.toDomain(category);
@@ -63,5 +76,19 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
     });
 
     return Result.ok<AuctionCategory[]>(result);
+  }
+
+  async findById(id: string): Promise<Result<AuctionCategory | null>> {
+    const auctionCategory = await this._prisma.auctionCategory.findUnique({
+      where: { id },
+    });
+
+    if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
+
+    const result = AuctionCategoryMapper.toDomain(auctionCategory);
+
+    if (result.isFailure) return Result.fail(result.getError());
+
+    return Result.ok<AuctionCategory | null>(result.getValue());
   }
 }

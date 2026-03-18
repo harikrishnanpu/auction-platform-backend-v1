@@ -27,6 +27,16 @@ import { getAdminUserSchema } from '@presentation/validators/schemas/admin/getAd
 import { getAdminSellerSchema } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
 import { getAllSellersSchema } from '@presentation/validators/schemas/admin/getSellers.schema';
 import { rejectSellerKycSchema } from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
+import { IGetAllCategoryRequestUsecase } from '@application/interfaces/usecases/admin/IGetAllCategoryrequestusecase';
+import { approveAuctionCategorySchema } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { IApproveAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IApproveAuctioncategoryUsecasse';
+import { changeAuctionCategoryStatusSchema } from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
+import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
+import { IChangeAuctionCategoryStatusUsecase } from '@application/interfaces/usecases/admin/IChangeAuctionCategoyUsecase';
+import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/usecases/admin/IGetAllAuctionCategoriesUsecase';
+import { UpdateAuctionCategorySchema } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
 
 @injectable()
 export class AdminController {
@@ -45,6 +55,16 @@ export class AdminController {
     private readonly _approveSellerKycUsecase: IApproveSellerKycUsecase,
     @inject(TYPES.IRejectSellerKycUsecase)
     private readonly _rejectSellerKycUsecase: IRejectSellerKycUsecase,
+    @inject(TYPES.IGetAllCategoryRequestUsecase)
+    private readonly _getAllCategoryRequestUsecase: IGetAllCategoryRequestUsecase,
+    @inject(TYPES.IApproveAuctionCategoryUsecase)
+    private readonly _approveAuctionCategoryUsecase: IApproveAuctionCategoryUsecase,
+    @inject(TYPES.IChangeAuctionCategoryStatusUsecase)
+    private readonly _changeAuctionCategoryStatusUsecase: IChangeAuctionCategoryStatusUsecase,
+    @inject(TYPES.IGetAllAdminAuctionCategoriesUsecase)
+    private readonly _getAllAdminAuctionCategoriesUsecase: IGetAllAdminAuctionCategoriesUsecase,
+    @inject(TYPES.IUpdateAuctionCategoryUsecase)
+    private readonly _updateAuctionCategoryUsecase: IUpdateAuctionCategoryUsecase,
   ) {}
 
   getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -308,4 +328,161 @@ export class AdminController {
       error: null,
     });
   });
+
+  getAllCategoryRequest = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const result = await this._getAllCategoryRequestUsecase.execute();
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: ADMIN_CONSTANTS.MESSAGES.GET_ALL_CATEGORY_REQUEST_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  approveAuctionCategory = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const validationResult = approveAuctionCategorySchema.safeParse({
+        categoryId: req.params.id,
+      });
+
+      if (!validationResult.success) {
+        throw new AppError(
+          validationResult.error.issues[0].message,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const input = AuctionMapperProrfile.toApproveAuctionCategoryInputDto(
+        validationResult.data,
+      );
+
+      const result = await this._approveAuctionCategoryUsecase.execute(input);
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: ADMIN_CONSTANTS.MESSAGES.APPROVE_AUCTION_CATEGORY_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  changeAuctionCategoryStatus = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const validationResult = changeAuctionCategoryStatusSchema.safeParse({
+        categoryId: req.params.id,
+        status: req.body.status,
+      });
+
+      if (!validationResult.success) {
+        throw new AppError(
+          validationResult.error.issues[0].message,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const inuput: IChangeAuctionCategoryStatusInputDto = {
+        categoryId: validationResult.data.categoryId.trim(),
+        status: validationResult.data.status,
+      };
+
+      const result =
+        await this._changeAuctionCategoryStatusUsecase.execute(inuput);
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message:
+          ADMIN_CONSTANTS.MESSAGES.CHANGE_AUCTION_CATEGORY_STATUS_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  getAllAdminAuctionCategories = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const result = await this._getAllAdminAuctionCategoriesUsecase.execute();
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message:
+          ADMIN_CONSTANTS.MESSAGES.GET_ALL_AUCTION_CATEGORIES_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  updateAuctionCategory = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const validationResult = UpdateAuctionCategorySchema.safeParse({
+        categoryId: req.params.id,
+        name: req.body.name,
+        parentId: req.body.parentId,
+      });
+
+      if (!validationResult.success) {
+        throw new AppError(
+          validationResult.error.issues[0].message,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const input = AuctionMapperProrfile.toUpdateAuctionCategoryInputDto(
+        validationResult.data,
+      );
+
+      const result = await this._updateAuctionCategoryUsecase.execute(input);
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: ADMIN_CONSTANTS.MESSAGES.UPDATE_AUCTION_CATEGORY_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
 }

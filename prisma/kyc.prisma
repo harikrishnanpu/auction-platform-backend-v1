@@ -23,6 +23,7 @@ model KycDocument {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   kyc          Kyc            @relation(fields: [kycId], references: [id])
+  @@unique([kycId, documentType, side])
 }
 
 enum KycStatus {
@@ -38,6 +39,7 @@ enum DocumentType {
   DRIVING_LICENSE
   VOTER_ID
   KYC_ID
+  ADDRESS_PROOF
 }
 
 enum KycFor {

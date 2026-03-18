@@ -1,5 +1,5 @@
-import { AuctionCategoryDto } from './auction.dto';
+import { IAuctionCategoryDto } from './auction.dto';
 
-export interface GetAllAuctionDto {
-  categories: AuctionCategoryDto[];
+export interface GetAllAuctionCategoryDto {
+  categories: IAuctionCategoryDto[];
 }

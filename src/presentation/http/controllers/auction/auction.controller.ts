@@ -132,11 +132,14 @@ export class AuctionController {
       const result = await this._getAllAuctionCategoryUsecase.execute();
 
       if (result.isFailure) {
+        console.log(result.getError());
         throw new AppError(
           result.getError(),
           AUCTION_CONSTANTS.CODES.BAD_REQUEST,
         );
       }
+
+      console.log(result.getValue());
 
       res.status(AUCTION_CONSTANTS.CODES.OK).json({
         data: result.getValue(),

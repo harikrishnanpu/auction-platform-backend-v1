@@ -45,6 +45,12 @@ model Auction {
   category           AuctionCategory      @relation(fields: [categoryId], references: [id])
 }
 
+enum AuctionCategoryStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model AuctionCategory {
   id         String    @id @default(uuid())
   name       String    @unique
@@ -52,6 +58,7 @@ model AuctionCategory {
   parentId   String?
   isVerified Boolean   @default(false)
   isActive   Boolean   @default(true)
+  status     AuctionCategoryStatus @default(PENDING)
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   auctions   Auction[]

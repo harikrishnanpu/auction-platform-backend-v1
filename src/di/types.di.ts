@@ -76,4 +76,13 @@ export const TYPES = {
   IGetAllAuctionCategoriesUsecase: Symbol.for(
     'IGetAllAuctionCategoriesUsecase',
   ),
+  IGetAllCategoryRequestUsecase: Symbol.for('IGetAllCategoryRequestUsecase'),
+  IApproveAuctionCategoryUsecase: Symbol.for('IApproveAuctionCategoryUsecase'),
+  IChangeAuctionCategoryStatusUsecase: Symbol.for(
+    'IChangeAuctionCategoryStatusUsecase',
+  ),
+  IGetAllAdminAuctionCategoriesUsecase: Symbol.for(
+    'IGetAllAdminAuctionCategoriesUsecase',
+  ),
+  IUpdateAuctionCategoryUsecase: Symbol.for('IUpdateAuctionCategoryUsecase'),
 };

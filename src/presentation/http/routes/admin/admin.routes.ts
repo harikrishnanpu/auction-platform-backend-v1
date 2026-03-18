@@ -63,6 +63,42 @@ export class AdminRoutes {
       this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
       this._adminController.getUser,
     );
+
+    this._router.get(
+      '/category-requests',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllCategoryRequest,
+    );
+
+    this._router.patch(
+      '/auction-categories/:id/approve',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.approveAuctionCategory,
+    );
+
+    this._router.patch(
+      '/auction-categories/:id/status',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.changeAuctionCategoryStatus,
+    );
+
+    this._router.get(
+      '/auction-categories',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllAdminAuctionCategories,
+    );
+
+    this._router.put(
+      '/auction-categories/:id',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.updateAuctionCategory,
+    );
+
     return this._router;
   }
 }

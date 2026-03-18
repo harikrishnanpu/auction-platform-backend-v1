@@ -7,5 +7,12 @@ export interface IAuctionCategoryRepository {
   findBySlug(
     slug: AuctionCategorySlug,
   ): Promise<Result<AuctionCategory | null>>;
-  findAll(): Promise<Result<AuctionCategory[]>>;
+  findAll({
+    isVerified,
+    isActive,
+  }: {
+    isVerified: boolean | undefined;
+    isActive: boolean | undefined;
+  }): Promise<Result<AuctionCategory[]>>;
+  findById(id: string): Promise<Result<AuctionCategory | null>>;
 }

@@ -1,7 +1,7 @@
 import {
   IRequestAuctionCategoryInputDto,
   IRequestAuctionCategoryOutputDto,
-} from '@application/dtos/auction/request-auction-category.dto';
+} from '@application/dtos/admin/request-auction-category.dto';
 import { Result } from '@domain/shared/result';
 
 export interface IRequestAuctionCategoryUsecase {

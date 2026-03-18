@@ -1,14 +1,21 @@
 import { Result } from '@domain/shared/result';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
 
+export enum AuctionCategoryStatus {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+}
+
 export class AuctionCategory {
   constructor(
     private readonly id: string,
-    private readonly name: string,
+    private name: string,
     private readonly slug: AuctionCategorySlug,
-    private readonly parentId: string | null,
-    private readonly isVerified: boolean,
-    private readonly isActive: boolean,
+    private parentId: string | null,
+    private isVerified: boolean,
+    private isActive: boolean,
+    private status: AuctionCategoryStatus,
   ) {}
 
   static create({
@@ -18,16 +25,26 @@ export class AuctionCategory {
     parentId = null,
     isVerified = false,
     isActive = true,
+    status = AuctionCategoryStatus.PENDING,
   }: {
     id: string;
     name: string;
     slug: AuctionCategorySlug;
     parentId: string | null;
-    isVerified: boolean;
-    isActive: boolean;
+    isVerified?: boolean;
+    isActive?: boolean;
+    status?: AuctionCategoryStatus;
   }): Result<AuctionCategory> {
     return Result.ok(
-      new AuctionCategory(id, name, slug, parentId, isVerified, isActive),
+      new AuctionCategory(
+        id,
+        name,
+        slug,
+        parentId,
+        isVerified,
+        isActive,
+        status,
+      ),
     );
   }
 
@@ -53,5 +70,42 @@ export class AuctionCategory {
 
   getParentId(): string | null {
     return this.parentId;
+  }
+
+  getStatus(): AuctionCategoryStatus {
+    return this.status;
+  }
+
+  approveAuctionCategory(): Result<void> {
+    if (this.status !== AuctionCategoryStatus.PENDING) {
+      return Result.fail('Only PENDING auction category can be approved');
+    }
+
+    this.status = AuctionCategoryStatus.APPROVED;
+    return Result.ok();
+  }
+
+  verifyAuctionCategory(): Result<void> {
+    if (this.status !== AuctionCategoryStatus.APPROVED) {
+      return Result.fail('Auction category is not approved');
+    }
+
+    this.isVerified = true;
+    return Result.ok();
+  }
+
+  changeActiveStatus(status: boolean): Result<void> {
+    this.isActive = status;
+    return Result.ok();
+  }
+
+  setName(name: string): Result<void> {
+    this.name = name;
+    return Result.ok();
+  }
+
+  setParentId(parentId: string | null): Result<void> {
+    this.parentId = parentId;
+    return Result.ok();
   }
 }

@@ -1,4 +1,7 @@
-import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
+import {
+  AuctionCategory,
+  AuctionCategoryStatus,
+} from '@domain/entities/auction/auction-category.entity';
 import { Result } from '@domain/shared/result';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
 import { AuctionCategory as PrismaAuctionCategory } from '@prisma/client';
@@ -15,6 +18,7 @@ export class AuctionCategoryMapper {
       parentId: raw.parentId,
       isVerified: raw.isVerified,
       isActive: raw.isActive,
+      status: raw.status as AuctionCategoryStatus,
     });
 
     return Result.ok(auctionCategoryEntity.getValue());
