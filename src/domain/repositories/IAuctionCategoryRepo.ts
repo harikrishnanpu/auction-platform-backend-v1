@@ -10,9 +10,11 @@ export interface IAuctionCategoryRepository {
   findAll({
     isVerified,
     isActive,
+    submittedBy,
   }: {
     isVerified: boolean | undefined;
     isActive: boolean | undefined;
+    submittedBy: string | undefined;
   }): Promise<Result<AuctionCategory[]>>;
   findById(id: string): Promise<Result<AuctionCategory | null>>;
 }

@@ -37,6 +37,11 @@ import { IChangeAuctionCategoryStatusUsecase } from '@application/interfaces/use
 import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/usecases/admin/IGetAllAuctionCategoriesUsecase';
 import { UpdateAuctionCategorySchema } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
+import { viewKycSchema } from '@presentation/validators/schemas/admin/viewKyc.schema';
+import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKycUsecase';
+import { IViewKycInputDto } from '@application/dtos/admin/viewKyc.dto';
+import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
+import { rejectAuctionCategorySchema } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 
 @injectable()
 export class AdminController {
@@ -65,6 +70,10 @@ export class AdminController {
     private readonly _getAllAdminAuctionCategoriesUsecase: IGetAllAdminAuctionCategoriesUsecase,
     @inject(TYPES.IUpdateAuctionCategoryUsecase)
     private readonly _updateAuctionCategoryUsecase: IUpdateAuctionCategoryUsecase,
+    @inject(TYPES.IViewKycUsecase)
+    private readonly _viewKycUsecase: IViewKycUsecase,
+    @inject(TYPES.IRejectAuctionCategoryUsecase)
+    private readonly _rejectAuctionCategoryUsecase: IRejectAuctionCategoryrequestUsecase,
   ) {}
 
   getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -386,6 +395,43 @@ export class AdminController {
     },
   );
 
+  rejectAuctionCategory = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const validationResult = rejectAuctionCategorySchema.safeParse({
+        categoryId: req.params.id,
+        reason: req.body.reason,
+      });
+
+      if (!validationResult.success) {
+        throw new AppError(
+          validationResult.error.issues[0].message,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const input = AuctionMapperProrfile.toRejectAuctionCategoryInputDto(
+        validationResult.data,
+      );
+
+      const result = await this._rejectAuctionCategoryUsecase.execute(input);
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: ADMIN_CONSTANTS.MESSAGES.REJECT_AUCTION_CATEGORY_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
   changeAuctionCategoryStatus = expressAsyncHandler(
     async (req: Request, res: Response) => {
       const validationResult = changeAuctionCategoryStatusSchema.safeParse({
@@ -450,6 +496,13 @@ export class AdminController {
 
   updateAuctionCategory = expressAsyncHandler(
     async (req: Request, res: Response) => {
+      if (!req.user) {
+        throw new AppError(
+          ADMIN_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
       const validationResult = UpdateAuctionCategorySchema.safeParse({
         categoryId: req.params.id,
         name: req.body.name,
@@ -485,4 +538,37 @@ export class AdminController {
       });
     },
   );
+
+  viewKyc = expressAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(
+        ADMIN_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const validationResult = viewKycSchema.safeParse({
+      documentId: req.params.id,
+    });
+
+    if (!validationResult.success) {
+      throw new AppError(
+        validationResult.error.issues[0].message,
+        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const viewKycInput: IViewKycInputDto = {
+      userId: req.user.id,
+      documentId: validationResult.data.documentId,
+    };
+
+    const result = await this._viewKycUsecase.execute(viewKycInput);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), ADMIN_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    result.getValue().stream.pipe(res);
+  });
 }

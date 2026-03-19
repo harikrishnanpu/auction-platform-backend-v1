@@ -7,8 +7,9 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
-import { inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class ApproveAuctionCategoryUsecase implements IApproveAuctionCategoryUsecase {
   constructor(
     @inject(TYPES.IAuctionCategoryRepository)

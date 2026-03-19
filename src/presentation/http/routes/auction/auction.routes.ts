@@ -29,13 +29,6 @@ export class AuctionRoutes {
       this._auctionController.createAuction,
     );
 
-    this._router.post(
-      '/request',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.requestAuctionCategory,
-    );
-
     this._router.get(
       '/categories',
       this._auctionController.getAllAuctionCategories,

@@ -14,6 +14,8 @@ import { AdminController } from '@presentation/http/controllers/admin/admin.cont
 import { adminContainer } from './modules/admin.container';
 import { auctionContainer } from './modules/auction.container';
 import { AuctionController } from '@presentation/http/controllers/auction/auction.controller';
+import { sellerContainer } from './modules/seller.container';
+import { SellerController } from '@presentation/http/controllers/seller/seller.controller';
 
 const container = new Container();
 
@@ -23,10 +25,13 @@ container.load(userContainer);
 container.load(kycContainer);
 container.load(adminContainer);
 container.load(auctionContainer);
+container.load(sellerContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
+container.bind<SellerController>(TYPES.SellerController).to(SellerController);
+
 container
   .bind<AuctionController>(TYPES.AuctionController)
   .to(AuctionController);

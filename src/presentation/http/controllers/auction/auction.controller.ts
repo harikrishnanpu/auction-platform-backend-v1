@@ -19,8 +19,6 @@ import { placeBidSchema } from '@presentation/validators/schemas/auction/placeBi
 import { publishAuctionParamsSchema } from '@presentation/validators/schemas/auction/publishAuction.schema';
 import { IPlaceBidInput } from '@application/dtos/auction/place-bid.dto';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
-import { requestAuctionCategorySchema } from '@presentation/validators/schemas/auction/requestAuctionCategory.schema';
-import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/auction/IRequestAuctionCategory.usecase';
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 
 @injectable()
@@ -38,8 +36,6 @@ export class AuctionController {
     private readonly _endAuctionUsecase: IEndAuctionUsecase,
     @inject(TYPES.IPlaceBidUsecase)
     private readonly _placeBidUsecase: IPlaceBidUsecase,
-    @inject(TYPES.IRequestAuctionCategoryUsecase)
-    private readonly _requestAuctionCategoryUsecase: IRequestAuctionCategoryUsecase,
     @inject(TYPES.IGetAllAuctionCategoriesUsecase)
     private readonly _getAllAuctionCategoryUsecase: IGetAllAuctionCategoriesUsecase,
   ) {}
@@ -82,50 +78,6 @@ export class AuctionController {
       error: null,
     });
   });
-
-  requestAuctionCategory = expressAsyncHandler(
-    async (req: Request, res: Response) => {
-      if (!req.user) {
-        throw new AppError(
-          AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
-          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
-        );
-      }
-
-      const parsedResult = requestAuctionCategorySchema.safeParse(req.body);
-
-      if (!parsedResult.success) {
-        throw new AppError(
-          parsedResult.error.issues[0].message,
-          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
-        );
-      }
-
-      const inputDto = AuctionMapperProrfile.toRequestAuctionCategoryDto(
-        parsedResult.data,
-        req.user.id,
-      );
-
-      const result =
-        await this._requestAuctionCategoryUsecase.execute(inputDto);
-
-      if (result.isFailure) {
-        throw new AppError(
-          result.getError(),
-          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
-        );
-      }
-
-      res.status(AUCTION_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message:
-          AUCTION_CONSTANTS.MESSAGES.ACTION_CATEGORY_REQUESTED_SUCCESSFULLY,
-        status: AUCTION_CONSTANTS.CODES.OK,
-        error: null,
-      });
-    },
-  );
 
   getAllAuctionCategories = expressAsyncHandler(
     async (req: Request, res: Response) => {

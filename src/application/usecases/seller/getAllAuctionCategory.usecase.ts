@@ -1,23 +1,29 @@
-import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
-import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/usecases/admin/IGetAllAuctionCategoriesUsecase';
+import {
+  IGetAllAuctionCategoryRequestInputDto,
+  IGetAllAuctionCategoryRequestOutputDto,
+} from '@application/dtos/seller/getAllAuctionCategoryRequest.dto';
+import { IGetAllSellerAuctionCategoryRequestUsecase } from '@application/interfaces/usecases/seller/IGetAllAuctioncategoryRequestUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
-import { inject, injectable } from 'inversify';
+import { inject } from 'inversify';
 
-@injectable()
-export class GetAllAdminAuctionCategoriesUsecase implements IGetAllAdminAuctionCategoriesUsecase {
+export class GetAllSellerAuctionCategoryRequestUsecase implements IGetAllSellerAuctionCategoryRequestUsecase {
   constructor(
     @inject(TYPES.IAuctionCategoryRepository)
     private readonly _auctionCategoryRepository: IAuctionCategoryRepository,
   ) {}
 
-  async execute(): Promise<Result<GetAllAuctionCategoryDto>> {
+  async execute(
+    input: IGetAllAuctionCategoryRequestInputDto,
+  ): Promise<Result<IGetAllAuctionCategoryRequestOutputDto>> {
     const categories = await this._auctionCategoryRepository.findAll({
-      isVerified: true,
-      isActive: undefined,
+      isVerified: false,
+      isActive: true,
+      submittedBy: input.userId,
     });
+
     if (categories.isFailure) {
       return Result.fail(categories.getError());
     }

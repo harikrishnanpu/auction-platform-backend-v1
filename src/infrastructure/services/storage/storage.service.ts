@@ -13,6 +13,7 @@ import { TYPES } from '@di/types.di';
 import { Result } from '@domain/shared/result';
 import { S3_CONSTANTS } from '@infrastructure/constants/storage/s3.constants';
 import { inject, injectable } from 'inversify';
+import { Readable } from 'node:stream';
 
 @injectable()
 export class S3StorageService implements IStorageService {
@@ -67,6 +68,30 @@ export class S3StorageService implements IStorageService {
     } catch (error) {
       console.log(error);
       return Result.fail('UNEXPECTED ERROR FROM GENERATE DOWNLOAD URL');
+    }
+  }
+
+  async streamFile(data: {
+    fileKey: string;
+  }): Promise<Result<{ stream: Readable; contentType: string }>> {
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this._bucketName,
+        Key: data.fileKey,
+      });
+
+      const { Body, ContentType } = await this._s3Client.send(command);
+
+      if (!Body || !(Body instanceof Readable)) {
+        return Result.fail('Failed to retrieve a readable stream from S3.');
+      }
+
+      return Result.ok<{ stream: Readable; contentType: string }>({
+        stream: Body as Readable,
+        contentType: ContentType as string,
+      });
+    } catch {
+      return Result.fail('UNEXPECTED ERROR FROM STREAM FILE');
     }
   }
 }

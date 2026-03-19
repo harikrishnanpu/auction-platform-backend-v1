@@ -34,7 +34,7 @@ export class AuctionMapper {
       auctionType: (raw.auctionType as AuctionType) ?? AuctionType.LONG,
       title: raw.title,
       description: raw.description,
-      category: raw.category,
+      category: raw.categoryId,
       condition: raw.condition,
       startPrice: raw.startPrice,
       minIncrement: raw.minIncrement,

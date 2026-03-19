@@ -16,6 +16,8 @@ export class AuctionCategory {
     private isVerified: boolean,
     private isActive: boolean,
     private status: AuctionCategoryStatus,
+    private readonly submittedBy: string,
+    private rejectionReason?: string | null,
   ) {}
 
   static create({
@@ -26,6 +28,8 @@ export class AuctionCategory {
     isVerified = false,
     isActive = true,
     status = AuctionCategoryStatus.PENDING,
+    rejectionReason = null,
+    submittedBy,
   }: {
     id: string;
     name: string;
@@ -34,6 +38,8 @@ export class AuctionCategory {
     isVerified?: boolean;
     isActive?: boolean;
     status?: AuctionCategoryStatus;
+    rejectionReason?: string | null;
+    submittedBy: string;
   }): Result<AuctionCategory> {
     return Result.ok(
       new AuctionCategory(
@@ -44,6 +50,8 @@ export class AuctionCategory {
         isVerified,
         isActive,
         status,
+        submittedBy,
+        rejectionReason,
       ),
     );
   }
@@ -106,6 +114,24 @@ export class AuctionCategory {
 
   setParentId(parentId: string | null): Result<void> {
     this.parentId = parentId;
+    return Result.ok();
+  }
+
+  getRejectionReason(): string | null {
+    return this.rejectionReason ?? null;
+  }
+
+  getSubmittedBy(): string {
+    return this.submittedBy;
+  }
+
+  rejectAuctionCategory(reason: string): Result<void> {
+    if (this.status !== AuctionCategoryStatus.PENDING) {
+      return Result.fail('Only PENDING auction category can be rejected');
+    }
+
+    this.status = AuctionCategoryStatus.REJECTED;
+    this.rejectionReason = reason;
     return Result.ok();
   }
 }

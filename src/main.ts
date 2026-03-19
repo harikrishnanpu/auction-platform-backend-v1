@@ -16,6 +16,7 @@ import { UserRouterFactory } from '@presentation/http/factories/user.router.fact
 import { KycRouterFactory } from '@presentation/http/factories/kyc.router.factory';
 import { AdminRouterFactory } from '@presentation/http/factories/admin.router.factory';
 import { AuctionRouterFactory } from '@presentation/http/factories/auction.router.factory';
+import { SellerRouterFactory } from '@presentation/http/factories/seller.router.factory';
 
 export const app = express();
 
@@ -42,5 +43,6 @@ app.use('/api/v1/user', UserRouterFactory.userRouter(container));
 app.use('/api/v1/kyc', KycRouterFactory.kycRouter(container));
 app.use('/api/v1/admin', AdminRouterFactory.adminRouter(container));
 app.use('/api/v1/auction', AuctionRouterFactory.auctionRouter(container));
+app.use('/api/v1/seller', SellerRouterFactory.sellerRouter(container));
 
 app.use(errorMiddleware);

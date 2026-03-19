@@ -19,6 +19,8 @@ export class AuctionCategoryMapper {
       isVerified: raw.isVerified,
       isActive: raw.isActive,
       status: raw.status as AuctionCategoryStatus,
+      rejectionReason: raw.rejectionReason,
+      submittedBy: raw.submittedBy,
     });
 
     return Result.ok(auctionCategoryEntity.getValue());

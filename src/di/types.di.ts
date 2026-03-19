@@ -85,4 +85,10 @@ export const TYPES = {
     'IGetAllAdminAuctionCategoriesUsecase',
   ),
   IUpdateAuctionCategoryUsecase: Symbol.for('IUpdateAuctionCategoryUsecase'),
+  IViewKycUsecase: Symbol.for('IViewKycUsecase'),
+  IGetAllSellerAuctionCategoryRequestUsecase: Symbol.for(
+    'IGetAllSellerAuctionCategoryRequestUsecase',
+  ),
+  SellerController: Symbol.for('SellerController'),
+  IRejectAuctionCategoryUsecase: Symbol.for('IRejectAuctionCategoryUsecase'),
 };

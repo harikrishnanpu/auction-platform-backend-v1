@@ -18,8 +18,6 @@ import { PrismaAuctionRepo } from '@infrastructure/repositories/auction/auction.
 import { PrismaBidRepo } from '@infrastructure/repositories/auction/bid.repo';
 import { PrismaAuctionParticipantRepo } from '@infrastructure/repositories/auction/auction-participant.repo';
 import { ContainerModule } from 'inversify';
-import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/auction/IRequestAuctionCategory.usecase';
-import { RequestAuctionCategoryUsecase } from '@application/usecases/auction/requestAuctionCategory.usecase';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { PrismaAuctionCategoryRepository } from '@infrastructure/repositories/auction/auction-category.repo';
 import { ISlugGeneratorService } from '@application/interfaces/services/ISlugGeneratorService';
@@ -48,9 +46,6 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
   );
   bind<IEndAuctionUsecase>(TYPES.IEndAuctionUsecase).to(EndAuctionUsecase);
   bind<IPlaceBidUsecase>(TYPES.IPlaceBidUsecase).to(PlaceBidUsecase);
-  bind<IRequestAuctionCategoryUsecase>(TYPES.IRequestAuctionCategoryUsecase).to(
-    RequestAuctionCategoryUsecase,
-  );
   bind<IAuctionCategoryRepository>(TYPES.IAuctionCategoryRepository).to(
     PrismaAuctionCategoryRepository,
   );

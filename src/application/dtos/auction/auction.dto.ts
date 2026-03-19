@@ -8,4 +8,6 @@ export interface IAuctionCategoryDto {
   isVerified: boolean;
   isActive: boolean;
   status: AuctionCategoryStatus;
+  submittedBy: string;
+  rejectionReason?: string | null;
 }

@@ -18,6 +18,7 @@ model User {
   wonAuctions         Auction[]            @relation("WonAuctions")
   bids                Bid[]
   auctionParticipants AuctionParticipant[]
+  auctionCategories   AuctionCategory[]
 }
 
 model UserRole {

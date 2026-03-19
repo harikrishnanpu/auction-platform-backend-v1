@@ -26,6 +26,8 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
         isVerified: category.getIsVerified(),
         isActive: category.getIsActive(),
         status: category.getStatus(),
+        rejectionReason: category.getRejectionReason(),
+        submittedBy: category.getSubmittedBy(),
       },
       update: {
         name: category.getName(),
@@ -33,6 +35,7 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
         isVerified: category.getIsVerified(),
         isActive: category.getIsActive(),
         status: category.getStatus(),
+        rejectionReason: category.getRejectionReason(),
       },
     });
 
@@ -59,14 +62,17 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
   async findAll({
     isVerified,
     isActive,
+    submittedBy,
   }: {
     isVerified: boolean | undefined;
     isActive: boolean | undefined;
+    submittedBy: string | undefined;
   }): Promise<Result<AuctionCategory[]>> {
     const auctionCategories = await this._prisma.auctionCategory.findMany({
       where: {
         isVerified: isVerified,
         isActive: isActive,
+        submittedBy: submittedBy,
       },
     });
 

@@ -4,7 +4,7 @@ import {
 } from '@application/dtos/admin/request-auction-category.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ISlugGeneratorService } from '@application/interfaces/services/ISlugGeneratorService';
-import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/auction/IRequestAuctionCategory.usecase';
+import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/seller/IRequestAuctionCategory.usecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
@@ -51,6 +51,7 @@ export class RequestAuctionCategoryUsecase implements IRequestAuctionCategoryUse
       name: input.name,
       slug: slug,
       parentId: null,
+      submittedBy: input.userId,
     });
 
     if (newAuctionCatEntity.isFailure) {

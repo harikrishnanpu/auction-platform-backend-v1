@@ -23,6 +23,7 @@ model KycDocument {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   kyc          Kyc            @relation(fields: [kycId], references: [id])
+
   @@unique([kycId, documentType, side])
 }
 

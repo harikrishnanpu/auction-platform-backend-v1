@@ -79,6 +79,13 @@ export class AdminRoutes {
     );
 
     this._router.patch(
+      '/auction-categories/:id/reject',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.rejectAuctionCategory,
+    );
+
+    this._router.patch(
       '/auction-categories/:id/status',
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
@@ -97,6 +104,13 @@ export class AdminRoutes {
       this._authenticateMiddleware.authenticate,
       this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
       this._adminController.updateAuctionCategory,
+    );
+
+    this._router.get(
+      '/kyc/:id/view',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.viewKyc,
     );
 
     return this._router;

@@ -52,16 +52,21 @@ enum AuctionCategoryStatus {
 }
 
 model AuctionCategory {
-  id         String    @id @default(uuid())
-  name       String    @unique
-  slug       String    @unique
-  parentId   String?
-  isVerified Boolean   @default(false)
-  isActive   Boolean   @default(true)
-  status     AuctionCategoryStatus @default(PENDING)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  auctions   Auction[]
+  id                String                @id @default(uuid())
+  name              String                @unique
+  slug              String                @unique
+  parentId          String?
+  isVerified        Boolean               @default(false)
+  isActive          Boolean               @default(true)
+  status            AuctionCategoryStatus @default(PENDING)
+  submittedBy       String
+  rejectionReason   String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  auctions          Auction[]
+  submittedByUser   User                  @relation(fields: [submittedBy], references: [id])
+  parent            AuctionCategory?      @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  auctionCategories AuctionCategory[]     @relation("CategoryHierarchy")
 }
 
 model AuctionAsset {

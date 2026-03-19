@@ -6,7 +6,7 @@ import {
 import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
 import { AuctionType } from '@domain/entities/auction/auction.entity';
 import { CreateAuctionInput } from '@presentation/validators/schemas/auction/createAuction.schema';
-import { RequestAuctionCategoryInput } from '@presentation/validators/schemas/auction/requestAuctionCategory.schema';
+import { RequestAuctionCategoryInput } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import {
   IApproveAuctionCategoryInputDto,
   IApproveAuctionCategoryOutputDto,
@@ -18,6 +18,10 @@ import {
   IUpdateAuctionCategoryOutputDto,
 } from '@application/dtos/admin/updateAuctionCategory.dto';
 import { UpdateAuctionCategoryInput } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import {
+  IRejectAuctionCategoryrequestInputDto,
+  IRejectAuctionCategoryrequestOutputDto,
+} from '@application/dtos/admin/rejectAuctionCategory.dto';
 
 export class AuctionMapperProrfile {
   public static toCreateAuctionDto(
@@ -82,6 +86,8 @@ export class AuctionMapperProrfile {
         isVerified: category.getIsVerified(),
         isActive: category.getIsActive(),
         status: category.getStatus(),
+        submittedBy: category.getSubmittedBy(),
+        rejectionReason: category.getRejectionReason(),
       })),
     };
   }
@@ -103,6 +109,15 @@ export class AuctionMapperProrfile {
     };
   }
 
+  public static toRejectAuctionCategoryInputDto(
+    data: IRejectAuctionCategoryrequestInputDto,
+  ): IRejectAuctionCategoryrequestInputDto {
+    return {
+      categoryId: data.categoryId.trim(),
+      reason: data.reason,
+    };
+  }
+
   public static toUpdateAuctionCategoryInputDto(
     data: UpdateAuctionCategoryInput,
   ): IUpdateAuctionCategoryInputDto {
@@ -120,6 +135,15 @@ export class AuctionMapperProrfile {
       categoryId: data.getId(),
       name: data.getName(),
       parentId: data.getParentId() || null,
+    };
+  }
+
+  public static toRejectAuctionCategoryResponseDto(
+    data: AuctionCategory,
+  ): IRejectAuctionCategoryrequestOutputDto {
+    return {
+      categoryId: data.getId(),
+      status: data.getStatus(),
     };
   }
 }
