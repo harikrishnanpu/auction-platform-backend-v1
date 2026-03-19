@@ -50,7 +50,7 @@ export class RequestAuctionCategoryUsecase implements IRequestAuctionCategoryUse
       id: this._idGeneratingService.generateId(),
       name: input.name,
       slug: slug,
-      parentId: null,
+      parentId: input.parentId || null,
       submittedBy: input.userId,
     });
 

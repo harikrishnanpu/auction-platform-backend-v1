@@ -24,6 +24,7 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
         name: category.getName(),
         slug: category.getSlug().getValue(),
         isVerified: category.getIsVerified(),
+        parentId: category.getParentId(),
         isActive: category.getIsActive(),
         status: category.getStatus(),
         rejectionReason: category.getRejectionReason(),
@@ -35,6 +36,7 @@ export class PrismaAuctionCategoryRepository implements IAuctionCategoryReposito
         isVerified: category.getIsVerified(),
         isActive: category.getIsActive(),
         status: category.getStatus(),
+        parentId: category.getParentId(),
         rejectionReason: category.getRejectionReason(),
       },
     });

@@ -17,7 +17,9 @@ export class GetAllAdminAuctionCategoriesUsecase implements IGetAllAdminAuctionC
     const categories = await this._auctionCategoryRepository.findAll({
       isVerified: true,
       isActive: undefined,
+      submittedBy: undefined,
     });
+
     if (categories.isFailure) {
       return Result.fail(categories.getError());
     }
