@@ -9,6 +9,8 @@ import { IGetAllAuctionCategoryRequestInputDto } from '@application/dtos/seller/
 import { requestAuctionCategorySchema } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/seller/IRequestAuctionCategory.usecase';
+import { IGetAllSellerAuctionsUsecase } from '@application/interfaces/usecases/seller/IGetallAuctionsUsecase';
+import { IGetAllAuctionsInputDto } from '@application/dtos/auction/getAllAuction.dto';
 
 @injectable()
 export class SellerController {
@@ -17,6 +19,8 @@ export class SellerController {
     private readonly _getAllSellerAuctionCategoryRequestUsecase: IGetAllSellerAuctionCategoryRequestUsecase,
     @inject(TYPES.IRequestAuctionCategoryUsecase)
     private readonly _requestAuctionCategoryUsecase: IRequestAuctionCategoryUsecase,
+    @inject(TYPES.IGetAllSellerAuctionsUsecase)
+    private readonly _getAllAuctionsUsecase: IGetAllSellerAuctionsUsecase,
   ) {}
 
   getAllSellerAuctionCategory = expressAsyncHandler(
@@ -97,4 +101,31 @@ export class SellerController {
       });
     },
   );
+
+  getAllAuctions = expressAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(
+        SELLER_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        SELLER_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const input: IGetAllAuctionsInputDto = {
+      userId: req.user.id,
+    };
+
+    const result = await this._getAllAuctionsUsecase.execute(input);
+
+    if (result.isFailure) {
+      throw new AppError(result.getError(), SELLER_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    res.status(SELLER_CONSTANTS.CODES.OK).json({
+      data: result.getValue(),
+      success: true,
+      message: SELLER_CONSTANTS.MESSAGES.GET_ALL_SELLER_AUCTIONS_SUCCESSFULLY,
+      status: SELLER_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
 }

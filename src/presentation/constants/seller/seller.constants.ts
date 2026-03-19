@@ -8,6 +8,9 @@ export const SELLER_MESSAGES = {
   USER_NOT_FOUND: 'User not found',
   ACTION_CATEGORY_REQUESTED_SUCCESSFULLY:
     'Action category requested successfully',
+  GET_ALL_SELLER_AUCTIONS_SUCCESSFULLY:
+    'All seller auctions fetched successfully',
+  GET_ALL_SELLER_AUCTIONS_FAILED: 'Failed to fetch all seller auctions',
 };
 
 export const SELLER_CONSTANTS = {

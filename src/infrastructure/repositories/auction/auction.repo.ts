@@ -1,10 +1,11 @@
 import { TYPES } from '@di/types.di';
-import { Auction } from '@domain/entities/auction/auction.entity';
 import {
-  IAuctionRepository,
-  IFindForBrowseFilters,
-} from '@domain/repositories/IAuctionRepository';
+  Auction,
+  AuctionStatus,
+} from '@domain/entities/auction/auction.entity';
+import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
+import { IFindAllAuctionsFilters } from '@domain/types/auctionRepo.types';
 import {
   AuctionMapper,
   PrismaAuctionWithAssets,
@@ -29,7 +30,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         auctionType: data.auctionType,
         title: data.title,
         description: data.description,
-        category: data.category,
+        categoryId: data.categoryId,
         condition: data.condition,
         startPrice: data.startPrice,
         minIncrement: data.minIncrement,
@@ -64,7 +65,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         auctionType: data.auctionType,
         title: data.title,
         description: data.description,
-        category: data.category,
+        categoryId: data.categoryId,
         condition: data.condition,
         startPrice: data.startPrice,
         minIncrement: data.minIncrement,
@@ -87,6 +88,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
       where: { id },
       include: { assets: true },
     });
+
     if (!raw) return Result.fail('Auction not found');
     return AuctionMapper.toDomain(raw as PrismaAuctionWithAssets);
   }
@@ -108,18 +110,19 @@ export class PrismaAuctionRepo implements IAuctionRepository {
     return Result.ok(result);
   }
 
-  async findForBrowse(
-    filters: IFindForBrowseFilters,
-  ): Promise<Result<Auction[]>> {
+  async findAll(filters: IFindAllAuctionsFilters): Promise<Result<Auction[]>> {
     const where: {
-      status: 'ACTIVE';
-      category?: string;
+      status: AuctionStatus | undefined;
+      categoryId?: string;
       auctionType?: 'LONG' | 'LIVE' | 'SEALED';
     } = {
-      status: 'ACTIVE',
+      status:
+        filters.status === 'ALL'
+          ? undefined
+          : (filters.status as AuctionStatus),
     };
 
-    if (filters.category) where.category = filters.category;
+    if (filters.categoryId) where.categoryId = filters.categoryId as string;
     if (filters.auctionType)
       where.auctionType =
         (filters.auctionType as AuctionType | 'ALL') === 'ALL'

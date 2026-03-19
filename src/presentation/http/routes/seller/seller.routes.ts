@@ -35,6 +35,13 @@ export class SellerRoutes {
       this._sellerController.getAllSellerAuctionCategory,
     );
 
+    this._router.get(
+      '/auctions',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+      this._sellerController.getAllAuctions,
+    );
+
     return this._router;
   }
 }

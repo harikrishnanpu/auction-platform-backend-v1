@@ -1,7 +1,4 @@
-import {
-  ICreateAuctionInput,
-  ICreateAuctionOutput,
-} from '@application/dtos/auction/create-auction.dto';
+import { ICreateAuctionInputDto } from '@application/dtos/auction/create-auction.dto';
 import { ICreateAuctionUsecase } from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { TYPES } from '@di/types.di';
@@ -16,6 +13,9 @@ import {
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
+import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -24,11 +24,25 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
     private readonly _auctionRepository: IAuctionRepository,
     @inject(TYPES.IIdGeneratingService)
     private readonly _idGeneratingService: IIdGeneratingService,
+    @inject(TYPES.IAuctionCategoryRepository)
+    private readonly _auctionCategoryRepository: IAuctionCategoryRepository,
   ) {}
 
-  async execute(
-    input: ICreateAuctionInput,
-  ): Promise<Result<ICreateAuctionOutput>> {
+  async execute(input: ICreateAuctionInputDto): Promise<Result<IAuctionDto>> {
+    console.log('CREATE AUCTION INPUT: ', input);
+
+    const categoryResult = await this._auctionCategoryRepository.findById(
+      input.categoryId,
+    );
+
+    if (categoryResult.isFailure) return Result.fail(categoryResult.getError());
+
+    const category = categoryResult.getValue();
+
+    if (!category) {
+      return Result.fail('Auction category not found');
+    }
+
     const auctionId = this._idGeneratingService.generateId();
 
     const assets = (input.assets ?? []).map((a, index) => {
@@ -47,7 +61,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
       auctionType: input.auctionType,
       title: input.title,
       description: input.description,
-      category: input.category,
+      categoryId: input.categoryId,
       condition: input.condition,
       startPrice: input.startPrice,
       minIncrement: input.minIncrement,
@@ -57,7 +71,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
       antiSnipSeconds: input.antiSnipSeconds,
       maxExtensionCount: input.maxExtensionCount,
       bidCooldownSeconds: input.bidCooldownSeconds,
-      assets,
+      assets: assets,
     });
 
     if (auctionResult.isFailure) return Result.fail(auctionResult.getError());
@@ -68,21 +82,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
 
     const saved = saveResult.getValue();
 
-    const output: ICreateAuctionOutput = {
-      id: saved.getId(),
-      sellerId: saved.getSellerId(),
-      auctionType: saved.getAuctionType(),
-      title: saved.getTitle(),
-      description: saved.getDescription(),
-      category: saved.getCategory(),
-      condition: saved.getCondition(),
-      startPrice: saved.getStartPrice(),
-      minIncrement: saved.getMinIncrement(),
-      startAt: saved.getStartAt().toISOString(),
-      endAt: saved.getEndAt().toISOString(),
-      status: saved.getStatus(),
-      assetCount: saved.getAssets().length,
-    };
+    const output: IAuctionDto = AuctionMapperProrfile.toAuctionOutputDto(saved);
 
     return Result.ok(output);
   }

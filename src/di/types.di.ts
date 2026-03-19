@@ -91,4 +91,5 @@ export const TYPES = {
   ),
   SellerController: Symbol.for('SellerController'),
   IRejectAuctionCategoryUsecase: Symbol.for('IRejectAuctionCategoryUsecase'),
+  IGetAllSellerAuctionsUsecase: Symbol.for('IGetAllSellerAuctionsUsecase'),
 };

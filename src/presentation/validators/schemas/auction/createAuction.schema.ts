@@ -9,7 +9,7 @@ export const createAuctionSchema = z
     auctionType: z.enum(AuctionType),
     title: z.string().trim().min(1, 'Title is required'),
     description: z.string().trim().optional().default(''),
-    category: z.string().trim().min(1, 'Category is required'),
+    categoryId: z.string().trim().min(1, 'Category ID is required'),
     condition: z.string().trim().min(1, 'Condition is required'),
     startPrice: z.number().min(0, 'Start price must be non-negative'),
     minIncrement: z.number().min(0, 'Min increment must be non-negative'),
@@ -29,7 +29,10 @@ export const createAuctionSchema = z
           assetType: z.enum(AuctionAssetType, 'Asset type is required'),
         }),
       )
-      .min(1, 'At least one image or video is required to create an auction'),
+      .min(1, 'At least one image or video is required to create an auction')
+      .refine((val) => val?.length ?? 0 > 0, {
+        message: 'Assets are required',
+      }),
   })
   .refine((data) => new Date(data.endAt) > new Date(data.startAt), {
     message: 'End time must be after start time',

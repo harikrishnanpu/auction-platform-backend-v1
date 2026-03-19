@@ -1,7 +1,4 @@
-import {
-  AuctionStatus,
-  AuctionType,
-} from '@domain/entities/auction/auction.entity';
+import { AuctionType } from '@domain/entities/auction/auction.entity';
 import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity';
 
 export interface ICreateAuctionInputDto {
@@ -9,7 +6,7 @@ export interface ICreateAuctionInputDto {
   auctionType: AuctionType;
   title: string;
   description: string;
-  category: string;
+  categoryId: string;
   condition: string;
   startPrice: number;
   minIncrement: number;
@@ -23,20 +20,4 @@ export interface ICreateAuctionInputDto {
     position?: number;
     assetType?: AuctionAssetType;
   }[];
-}
-
-export interface ICreateAuctionOutputDto {
-  id: string;
-  sellerId: string;
-  auctionType: AuctionType;
-  title: string;
-  description: string;
-  category: string;
-  condition: string;
-  startPrice: number;
-  minIncrement: number;
-  startAt: string;
-  endAt: string;
-  status: AuctionStatus;
-  assetCount: number;
 }

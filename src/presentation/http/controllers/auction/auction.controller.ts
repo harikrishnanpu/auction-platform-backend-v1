@@ -47,6 +47,9 @@ export class AuctionController {
         AUCTION_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
+    console.log('ETTSTS: ', req.body);
+
     const parsed = createAuctionSchema.safeParse(req.body);
 
     if (!parsed.success) {

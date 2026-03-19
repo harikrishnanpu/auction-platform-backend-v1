@@ -22,7 +22,7 @@ export class Auction {
     private readonly auctionType: AuctionType,
     private readonly title: string,
     private readonly description: string,
-    private readonly category: string,
+    private readonly categoryId: string,
     private readonly condition: string,
     private readonly startPrice: number,
     private readonly minIncrement: number,
@@ -43,7 +43,7 @@ export class Auction {
     auctionType = AuctionType.LONG,
     title,
     description,
-    category,
+    categoryId,
     condition,
     startPrice,
     minIncrement,
@@ -62,7 +62,7 @@ export class Auction {
     auctionType?: AuctionType;
     title: string;
     description: string;
-    category: string;
+    categoryId: string;
     condition: string;
     startPrice: number;
     minIncrement: number;
@@ -76,6 +76,10 @@ export class Auction {
     winnerId?: string | null;
     assets?: AuctionAsset[];
   }): Result<Auction> {
+    if (startPrice < 500) {
+      return Result.fail('Start price must be greater than 500');
+    }
+
     if (maxExtensionCount > 10) {
       return Result.fail('Max extension count must be less than 10');
     }
@@ -95,7 +99,7 @@ export class Auction {
         auctionType,
         title,
         description,
-        category,
+        categoryId,
         condition,
         startPrice,
         minIncrement,
@@ -132,8 +136,8 @@ export class Auction {
     return this.description;
   }
 
-  getCategory(): string {
-    return this.category;
+  getCategoryId(): string {
+    return this.categoryId;
   }
 
   getCondition(): string {
