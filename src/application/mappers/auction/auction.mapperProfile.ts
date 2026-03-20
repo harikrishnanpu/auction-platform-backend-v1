@@ -22,7 +22,10 @@ import {
   IRejectAuctionCategoryrequestInputDto,
   IRejectAuctionCategoryrequestOutputDto,
 } from '@application/dtos/admin/rejectAuctionCategory.dto';
-import { IAuctionDto } from '@application/dtos/auction/auction.dto';
+import {
+  IAuctionCategoryDto,
+  IAuctionDto,
+} from '@application/dtos/auction/auction.dto';
 
 export class AuctionMapperProrfile {
   public static toCreateAuctionDto(
@@ -59,7 +62,17 @@ export class AuctionMapperProrfile {
       auctionType: data.getAuctionType(),
       title: data.getTitle(),
       description: data.getDescription(),
-      categoryId: data.getCategoryId(),
+      category: {
+        id: data.getCategory().getId(),
+        name: data.getCategory().getName(),
+        slug: data.getCategory().getSlug().getValue(),
+        parentId: data.getCategory().getParentId(),
+        isVerified: data.getCategory().getIsVerified(),
+        isActive: data.getCategory().getIsActive(),
+        status: data.getCategory().getStatus(),
+        submittedBy: data.getCategory().getSubmittedBy(),
+        rejectionReason: data.getCategory().getRejectionReason(),
+      } as IAuctionCategoryDto,
       condition: data.getCondition(),
       startPrice: data.getStartPrice(),
       minIncrement: data.getMinIncrement(),

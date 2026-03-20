@@ -8,7 +8,7 @@ import { ChangeProfilePasswordInput } from '@application/dtos/user/userProfile.d
 import { changeProfilePasswordSchema } from '@presentation/validators/schemas/user/change-profile-password.schema';
 import { USER_PROFILE_CONSTANTS } from '@presentation/constants/user/user-profile.constants';
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
-import { SendOtpInput } from '@application/dtos/otp/SendOtp.dto';
+import { SendVerificationCodeInputDto } from '@application/dtos/otp/SendOtp.dto';
 import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
 import { EditProfileInput } from '@application/dtos/user/editProfile.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
@@ -44,7 +44,7 @@ export class UserController {
         );
       }
 
-      const sendOtpInput: SendOtpInput = {
+      const sendOtpInput: SendVerificationCodeInputDto = {
         email: req.user.email,
         purpose: OtpPurpose.CHANGE_PROFILE_PASSWORD,
         channel: OtpChannel.EMAIL,
@@ -133,7 +133,7 @@ export class UserController {
         );
       }
 
-      const sendOtpInput: SendOtpInput = {
+      const sendOtpInput: SendVerificationCodeInputDto = {
         email: req.user.email,
         purpose: OtpPurpose.EDIT_PROFILE,
         channel: OtpChannel.EMAIL,

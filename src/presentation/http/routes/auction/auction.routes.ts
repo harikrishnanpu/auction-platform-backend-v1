@@ -41,6 +41,13 @@ export class AuctionRoutes {
       this._auctionController.generateUploadUrl,
     );
 
+    this._router.get(
+      '/:id',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+      this._auctionController.getAuctionById,
+    );
+
     this._router.post(
       '/:id/bid',
       this._authenticateMiddleware.authenticate,

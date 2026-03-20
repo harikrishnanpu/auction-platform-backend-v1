@@ -68,7 +68,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
     if (endedResult.isFailure) return Result.fail(endedResult.getError());
     const ended = endedResult.getValue();
 
-    const updateResult = await this._auctionRepository.update(ended);
+    const updateResult = await this._auctionRepository.save(ended);
     if (updateResult.isFailure) return Result.fail(updateResult.getError());
 
     const saved = updateResult.getValue();

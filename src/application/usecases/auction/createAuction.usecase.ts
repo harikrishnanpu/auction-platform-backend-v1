@@ -61,7 +61,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
       auctionType: input.auctionType,
       title: input.title,
       description: input.description,
-      categoryId: input.categoryId,
+      category: category,
       condition: input.condition,
       startPrice: input.startPrice,
       minIncrement: input.minIncrement,
@@ -77,10 +77,10 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
     if (auctionResult.isFailure) return Result.fail(auctionResult.getError());
     const auction = auctionResult.getValue();
 
-    const saveResult = await this._auctionRepository.save(auction);
-    if (saveResult.isFailure) return Result.fail(saveResult.getError());
+    const savedResult = await this._auctionRepository.save(auction);
+    if (savedResult.isFailure) return Result.fail(savedResult.getError());
 
-    const saved = saveResult.getValue();
+    const saved = savedResult.getValue();
 
     const output: IAuctionDto = AuctionMapperProrfile.toAuctionOutputDto(saved);
 

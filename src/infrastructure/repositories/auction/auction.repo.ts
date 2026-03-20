@@ -1,16 +1,15 @@
 import { TYPES } from '@di/types.di';
-import {
-  Auction,
-  AuctionStatus,
-} from '@domain/entities/auction/auction.entity';
+import { Auction } from '@domain/entities/auction/auction.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { IFindAllAuctionsFilters } from '@domain/types/auctionRepo.types';
+import { AuctionMapper } from '@infrastructure/mappers/auction/auction.mapper';
 import {
-  AuctionMapper,
-  PrismaAuctionWithAssets,
-} from '@infrastructure/mappers/auction/auction.mapper';
-import { AuctionType, PrismaClient } from '@prisma/client';
+  AuctionStatus as PrismaAuctionStatus,
+  AuctionType,
+  Prisma,
+  PrismaClient,
+} from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -23,8 +22,9 @@ export class PrismaAuctionRepo implements IAuctionRepository {
   async save(auction: Auction): Promise<Result<Auction>> {
     const data = AuctionMapper.toPersistence(auction);
 
-    await this._prisma.auction.create({
-      data: {
+    const raw = await this._prisma.auction.upsert({
+      where: { id: data.id },
+      create: {
         id: data.id,
         sellerId: data.sellerId,
         auctionType: data.auctionType,
@@ -42,26 +42,9 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         maxExtensionCount: data.maxExtensionCount,
         bidCooldownSeconds: data.bidCooldownSeconds,
         winnerId: data.winnerId,
-        assets: {
-          create: data.assets.map((a) => ({
-            id: a.id,
-            fileKey: a.fileKey,
-            position: a.position,
-            assetType: a.assetType,
-          })),
-        },
       },
-    });
-
-    return Result.ok(auction);
-  }
-
-  async update(auction: Auction): Promise<Result<Auction>> {
-    const data = AuctionMapper.toPersistence(auction);
-
-    await this._prisma.auction.update({
-      where: { id: data.id },
-      data: {
+      update: {
+        sellerId: data.sellerId,
         auctionType: data.auctionType,
         title: data.title,
         description: data.description,
@@ -78,69 +61,91 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         bidCooldownSeconds: data.bidCooldownSeconds,
         winnerId: data.winnerId,
       },
+
+      include: { assets: true, category: true },
     });
 
-    return Result.ok(auction);
+    return AuctionMapper.toDomain(raw);
   }
 
   async findById(id: string): Promise<Result<Auction>> {
     const raw = await this._prisma.auction.findUnique({
       where: { id },
-      include: { assets: true },
+      include: { assets: true, category: true },
     });
 
     if (!raw) return Result.fail('Auction not found');
-    return AuctionMapper.toDomain(raw as PrismaAuctionWithAssets);
+
+    return AuctionMapper.toDomain(raw);
   }
 
   async findBySellerId(sellerId: string): Promise<Result<Auction[]>> {
     const list = await this._prisma.auction.findMany({
       where: { sellerId },
-      include: { assets: true },
+      include: { assets: true, category: true },
       orderBy: { createdAt: 'desc' },
     });
 
     const result: Auction[] = [];
 
-    for (const raw of list as PrismaAuctionWithAssets[]) {
+    for (const raw of list) {
       const r = AuctionMapper.toDomain(raw);
       if (r.isFailure) return Result.fail(r.getError());
       result.push(r.getValue());
     }
+
     return Result.ok(result);
   }
 
   async findAll(filters: IFindAllAuctionsFilters): Promise<Result<Auction[]>> {
-    const where: {
-      status: AuctionStatus | undefined;
-      categoryId?: string;
-      auctionType?: 'LONG' | 'LIVE' | 'SEALED';
-    } = {
-      status:
-        filters.status === 'ALL'
-          ? undefined
-          : (filters.status as AuctionStatus),
-    };
+    const where: Prisma.AuctionWhereInput = {};
 
-    if (filters.categoryId) where.categoryId = filters.categoryId as string;
-    if (filters.auctionType)
-      where.auctionType =
-        (filters.auctionType as AuctionType | 'ALL') === 'ALL'
-          ? undefined
-          : (filters.auctionType as AuctionType);
+    if (filters.sellerId) where.sellerId = filters.sellerId;
+
+    if (filters.status && filters.status !== 'ALL') {
+      where.status = filters.status as PrismaAuctionStatus;
+    }
+
+    if (filters.categoryId && filters.categoryId !== 'ALL') {
+      where.categoryId = filters.categoryId;
+    }
+
+    if (filters.auctionType && filters.auctionType !== 'ALL') {
+      where.auctionType = filters.auctionType as AuctionType;
+    }
+
+    if (filters.search?.trim()) {
+      const term = filters.search.trim();
+      where.OR = [
+        { title: { contains: term, mode: 'insensitive' } },
+        { description: { contains: term, mode: 'insensitive' } },
+      ];
+    }
+
+    const sortField =
+      filters.sort === 'startPrice' ||
+      filters.sort === 'startAt' ||
+      filters.sort === 'endAt' ||
+      filters.sort === 'createdAt'
+        ? filters.sort
+        : 'startAt';
+    const sortOrder: Prisma.SortOrder =
+      filters.order === 'asc' ? 'asc' : 'desc';
 
     const list = await this._prisma.auction.findMany({
       where,
-      include: { assets: true },
-      orderBy: { startAt: 'desc' },
+      include: { assets: true, category: true },
+      orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
     });
 
     const result: Auction[] = [];
-    for (const raw of list as PrismaAuctionWithAssets[]) {
+
+    for (const raw of list) {
       const r = AuctionMapper.toDomain(raw);
       if (r.isFailure) return Result.fail(r.getError());
       result.push(r.getValue());
     }
+
     return Result.ok(result);
   }
 }

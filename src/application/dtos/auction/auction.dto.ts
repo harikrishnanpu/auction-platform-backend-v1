@@ -29,7 +29,7 @@ export interface IAuctionDto {
   sellerId: string;
   title: string;
   description: string;
-  categoryId: string;
+  category: IAuctionCategoryDto;
   condition: string;
   startPrice: number;
   minIncrement: number;

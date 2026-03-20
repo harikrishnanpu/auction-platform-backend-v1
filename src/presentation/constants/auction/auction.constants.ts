@@ -1,4 +1,5 @@
 export const AUCTION_MESSAGES = {
+  AUCTION_FETCHED_SUCCESSFULLY: 'Auction fetched successfully',
   AUCTION_CREATED_SUCCESSFULLY: 'Auction created successfully',
   AUCTION_UPDATED_SUCCESSFULLY: 'Auction updated successfully',
   AUCTION_PUBLISHED_SUCCESSFULLY: 'Auction published successfully',

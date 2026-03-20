@@ -4,7 +4,6 @@ import { IFindAllAuctionsFilters } from '@domain/types/auctionRepo.types';
 
 export interface IAuctionRepository {
   save(auction: Auction): Promise<Result<Auction>>;
-  update(auction: Auction): Promise<Result<Auction>>;
   findById(id: string): Promise<Result<Auction>>;
   findBySellerId(sellerId: string): Promise<Result<Auction[]>>;
   findAll(filters: IFindAllAuctionsFilters): Promise<Result<Auction[]>>;

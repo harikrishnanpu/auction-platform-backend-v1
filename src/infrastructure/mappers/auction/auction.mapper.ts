@@ -11,10 +11,13 @@ import { Result } from '@domain/shared/result';
 import {
   Auction as PrismaAuction,
   AuctionAsset as PrismaAuctionAsset,
+  AuctionCategory as PrismaAuctionCategory,
 } from '@prisma/client';
+import { AuctionCategoryMapper } from './auctionCategory.mapper';
 
 export type PrismaAuctionWithAssets = PrismaAuction & {
   assets: PrismaAuctionAsset[];
+  category: PrismaAuctionCategory;
 };
 
 export class AuctionMapper {
@@ -28,13 +31,16 @@ export class AuctionMapper {
         assetType: (a.assetType as AuctionAssetType) ?? AuctionAssetType.IMAGE,
       }),
     );
+
+    const category = AuctionCategoryMapper.toDomain(raw.category);
+
     return Auction.create({
       id: raw.id,
       sellerId: raw.sellerId,
       auctionType: (raw.auctionType as AuctionType) ?? AuctionType.LONG,
       title: raw.title,
       description: raw.description,
-      categoryId: raw.categoryId,
+      category: category.getValue(),
       condition: raw.condition,
       startPrice: raw.startPrice,
       minIncrement: raw.minIncrement,

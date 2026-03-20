@@ -1,5 +1,9 @@
 import { Result } from '@domain/shared/result';
 import { AuctionAsset } from './auction-asset.entity';
+import {
+  AuctionCategory,
+  AuctionCategoryStatus,
+} from './auction-category.entity';
 
 export enum AuctionStatus {
   DRAFT = 'DRAFT',
@@ -22,7 +26,7 @@ export class Auction {
     private readonly auctionType: AuctionType,
     private readonly title: string,
     private readonly description: string,
-    private readonly categoryId: string,
+    private readonly category: AuctionCategory,
     private readonly condition: string,
     private readonly startPrice: number,
     private readonly minIncrement: number,
@@ -43,7 +47,7 @@ export class Auction {
     auctionType = AuctionType.LONG,
     title,
     description,
-    categoryId,
+    category,
     condition,
     startPrice,
     minIncrement,
@@ -62,7 +66,7 @@ export class Auction {
     auctionType?: AuctionType;
     title: string;
     description: string;
-    categoryId: string;
+    category: AuctionCategory;
     condition: string;
     startPrice: number;
     minIncrement: number;
@@ -76,6 +80,10 @@ export class Auction {
     winnerId?: string | null;
     assets?: AuctionAsset[];
   }): Result<Auction> {
+    if (category.getStatus() !== AuctionCategoryStatus.APPROVED) {
+      return Result.fail('Auction category is not approved');
+    }
+
     if (startPrice < 500) {
       return Result.fail('Start price must be greater than 500');
     }
@@ -99,7 +107,7 @@ export class Auction {
         auctionType,
         title,
         description,
-        categoryId,
+        category,
         condition,
         startPrice,
         minIncrement,
@@ -137,7 +145,7 @@ export class Auction {
   }
 
   getCategoryId(): string {
-    return this.categoryId;
+    return this.category.getId();
   }
 
   getCondition(): string {
@@ -186,5 +194,9 @@ export class Auction {
 
   getWinnerId(): string | null {
     return this.winnerId;
+  }
+
+  getCategory(): AuctionCategory {
+    return this.category;
   }
 }

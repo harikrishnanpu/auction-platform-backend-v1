@@ -6,10 +6,12 @@ import { IEndAuctionUsecase } from '@application/interfaces/usecases/auction/IEn
 import { IPlaceBidUsecase } from '@application/interfaces/usecases/auction/IPlaceBidUsecase';
 import { CreateAuctionUsecase } from '@application/usecases/auction/createAuction.usecase';
 import { GenerateAuctionUploadUrlUsecase } from '@application/usecases/auction/generateAuctionUploadUrl.usecase';
+import { GetAuctionByIdUsecase } from '@application/usecases/auction/getAuctionById.usecase';
 import { UpdateAuctionUsecase } from '@application/usecases/auction/updateAuction.usecase';
 import { PublishAuctionUsecase } from '@application/usecases/auction/publishAuction.usecase';
 import { EndAuctionUsecase } from '@application/usecases/auction/endAuction.usecase';
 import { PlaceBidUsecase } from '@application/usecases/auction/placeBid.usecase';
+import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
@@ -46,6 +48,9 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
   );
   bind<IEndAuctionUsecase>(TYPES.IEndAuctionUsecase).to(EndAuctionUsecase);
   bind<IPlaceBidUsecase>(TYPES.IPlaceBidUsecase).to(PlaceBidUsecase);
+  bind<IGetAuctionByIdUsecase>(TYPES.IGetAuctionByIdUsecase).to(
+    GetAuctionByIdUsecase,
+  );
   bind<IAuctionCategoryRepository>(TYPES.IAuctionCategoryRepository).to(
     PrismaAuctionCategoryRepository,
   );

@@ -1,4 +1,6 @@
 import { AuctionType } from '@domain/entities/auction/auction.entity';
+import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity';
+import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
 
 export interface IUpdateAuctionInput {
   auctionId: string;
@@ -15,6 +17,11 @@ export interface IUpdateAuctionInput {
   antiSnipSeconds?: number;
   maxExtensionCount?: number;
   bidCooldownSeconds?: number;
+  assets?: {
+    fileKey: string;
+    position?: number;
+    assetType?: AuctionAssetType;
+  }[];
 }
 
 export interface IUpdateAuctionOutput {
@@ -23,7 +30,7 @@ export interface IUpdateAuctionOutput {
   auctionType: AuctionType;
   title: string;
   description: string;
-  category: string;
+  category: AuctionCategory;
   condition: string;
   startPrice: number;
   minIncrement: number;
