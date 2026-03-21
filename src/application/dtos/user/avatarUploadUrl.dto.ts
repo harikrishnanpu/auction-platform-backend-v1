@@ -1,4 +1,4 @@
-export interface AvatarUploadUrlRequestDto {
+export interface GenerateAvatarUploadUrlInput {
   userId: string;
   contentType: string;
   fileName: string;
