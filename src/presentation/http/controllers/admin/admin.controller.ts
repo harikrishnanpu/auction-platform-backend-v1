@@ -48,6 +48,7 @@ import { IViewKycInputDto } from '@application/dtos/admin/viewKyc.dto';
 import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
 import { rejectAuctionCategorySchema } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 import { AuctionType } from '@domain/entities/auction/auction.entity';
+import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 
 @injectable()
 export class AdminController {
@@ -126,13 +127,12 @@ export class AdminController {
       );
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: getAllUsersResult.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.GET_ALL_USERS_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success(
+      res,
+      getAllUsersResult.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.GET_ALL_USERS_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   blockUser = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -140,6 +140,7 @@ export class AdminController {
       userId: req.params.id,
       block: req.body.block,
     });
+
     if (!validationResult.success) {
       throw new AppError(
         validationResult.error.issues[0].message,

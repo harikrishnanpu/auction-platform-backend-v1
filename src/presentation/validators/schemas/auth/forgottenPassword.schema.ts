@@ -11,3 +11,7 @@ export const forgottenPasswordSchema = z.object({
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
     ),
 });
+
+export type ZodForgottenPasswordInputType = z.infer<
+  typeof forgottenPasswordSchema
+>;
