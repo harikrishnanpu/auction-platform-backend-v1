@@ -33,6 +33,8 @@ import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredential
 import { RegisterUserMapper } from '@application/mappers/auth/register.mapper';
 import { RegisterUserOutputDto } from '@application/dtos/auth/registerUser.dto';
 import { SendEmailVerificationCodeMapper } from '@application/mappers/auth/sendOtp.mapper';
+import { LoginUserOutput } from '@application/dtos/auth/loginUser.dto';
+import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 
 @injectable()
 export class AuthController {
@@ -186,17 +188,13 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(AUTH_CONSTANTS.CODES.OK).json({
-      data: {
-        user: result.getValue().user,
-        accessToken: result.getValue().accessToken,
-        refreshToken: result.getValue().refreshToken,
-      },
-      success: true,
-      message: AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESSFULLY,
-      status: AUTH_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    const response = ResponseHelper.success<LoginUserOutput>(
+      result.getValue(),
+      AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESSFULLY,
+      AUTH_CONSTANTS.CODES.OK,
+    );
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 
   getUser = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -216,13 +214,13 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(AUTH_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: AUTH_CONSTANTS.MESSAGES.USER_FETCHED_SUCCESSFULLY,
-      status: AUTH_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    const response = ResponseHelper.success<userResponseDto>(
+      result.getValue(),
+      AUTH_CONSTANTS.MESSAGES.USER_FETCHED_SUCCESSFULLY,
+      AUTH_CONSTANTS.CODES.OK,
+    );
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 
   googleAuth = expressAsyncHandler(
@@ -345,13 +343,13 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(AUTH_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: AUTH_CONSTANTS.MESSAGES.FORGOT_PASSWORD_SENT_SUCCESSFULLY,
-      status: AUTH_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    const response = ResponseHelper.success<null>(
+      null,
+      AUTH_CONSTANTS.MESSAGES.FORGOT_PASSWORD_SENT_SUCCESSFULLY,
+      AUTH_CONSTANTS.CODES.OK,
+    );
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 
   changePassword = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -378,12 +376,12 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(AUTH_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: AUTH_CONSTANTS.MESSAGES.PASSWORD_CHANGED_SUCCESSFULLY,
-      status: AUTH_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    const response = ResponseHelper.success<null>(
+      null,
+      AUTH_CONSTANTS.MESSAGES.PASSWORD_CHANGED_SUCCESSFULLY,
+      AUTH_CONSTANTS.CODES.OK,
+    );
+
+    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 }

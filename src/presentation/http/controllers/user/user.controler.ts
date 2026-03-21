@@ -10,7 +10,10 @@ import { USER_PROFILE_CONSTANTS } from '@presentation/constants/user/user-profil
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
 import { SendVerificationCodeInputDto } from '@application/dtos/otp/SendOtp.dto';
 import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
-import { EditProfileInput } from '@application/dtos/user/editProfile.dto';
+import {
+  EditProfileInput,
+  EditProfileOutput,
+} from '@application/dtos/user/editProfile.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
 import { editProfileSchema } from '@presentation/validators/schemas/user/editProfile.schema';
 import { AvatarUploadUrlRequestDto } from '@application/dtos/user/avatarUploadUrl.dto';
@@ -19,6 +22,7 @@ import { generateUploadUrlSchema } from '@presentation/validators/schemas/user/g
 import { updateAvatarUrlSchema } from '@presentation/validators/schemas/user/update-avatar-url.schema';
 import { UpdateAvatarUrlRequestDto } from '@application/dtos/user/updateAvatar.dto';
 import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
+import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 
 @injectable()
 export class UserController {
@@ -34,6 +38,11 @@ export class UserController {
     @inject(TYPES.IUpdateAvatarUrlUsecase)
     private readonly _updateAvatarUrlUseCase: IUpdateAvatarUrlUsecase,
   ) {}
+
+  /**
+   * @description Send a profile change password otp to the user's email
+   * @returns ApiResponse<null>
+   */
 
   sendProfileChangePasswordOtp = expressAsyncHandler(
     async (req: Request, res: Response) => {
@@ -59,17 +68,21 @@ export class UserController {
         );
       }
 
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
-        data: null,
-        success: true,
-        message:
-          USER_PROFILE_CONSTANTS.MESSAGES
-            .PROFILE_CHANGE_PASSWORD_EMAIL_SENT_SUCCESSFULLY,
-        status: USER_PROFILE_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      const response = ResponseHelper.success<null>(
+        null,
+        USER_PROFILE_CONSTANTS.MESSAGES
+          .PROFILE_CHANGE_PASSWORD_EMAIL_SENT_SUCCESSFULLY,
+        USER_PROFILE_CONSTANTS.CODES.OK,
+      );
+
+      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
+
+  /**
+   * @description Change the user's profile password
+   * @returns ApiResponse<null>
+   */
 
   changeProfilePassword = expressAsyncHandler(
     async (req: Request, res: Response) => {
@@ -113,16 +126,20 @@ export class UserController {
         );
       }
 
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
-        data: user.getValue(),
-        success: true,
-        message:
-          USER_PROFILE_CONSTANTS.MESSAGES.CHANGE_PROFILE_PASSWORD_SUCCESSFULLY,
-        status: USER_PROFILE_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      const response = ResponseHelper.success<null>(
+        null,
+        USER_PROFILE_CONSTANTS.MESSAGES.CHANGE_PROFILE_PASSWORD_SUCCESSFULLY,
+        USER_PROFILE_CONSTANTS.CODES.OK,
+      );
+
+      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
+
+  /**
+   * @description Send a edit profile otp to the user's email
+   * @returns ApiResponse<null>
+   */
 
   editProfileSendOtp = expressAsyncHandler(
     async (req: Request, res: Response) => {
@@ -148,16 +165,20 @@ export class UserController {
         );
       }
 
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
-        data: null,
-        success: true,
-        message:
-          USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SEND_OTP_SUCCESSFULLY,
-        status: USER_PROFILE_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      const response = ResponseHelper.success<null>(
+        null,
+        USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SEND_OTP_SUCCESSFULLY,
+        USER_PROFILE_CONSTANTS.CODES.OK,
+      );
+
+      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
+
+  /**
+   * @description Edit the user's profile
+   * @returns ApiResponse<EditProfileOutput>
+   */
 
   editProfile = expressAsyncHandler(async (req: Request, res: Response) => {
     console.log('EDIT PROFILE=---', req.body);
@@ -195,13 +216,13 @@ export class UserController {
       );
     }
 
-    res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SUCCESSFULLY,
-      status: USER_PROFILE_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    const response = ResponseHelper.success<EditProfileOutput>(
+      result.getValue(),
+      USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SUCCESSFULLY,
+      USER_PROFILE_CONSTANTS.CODES.OK,
+    );
+
+    res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
   });
 
   generateAvatarUploadUrl = expressAsyncHandler(
@@ -240,15 +261,13 @@ export class UserController {
         );
       }
 
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message:
-          USER_PROFILE_CONSTANTS.MESSAGES
-            .GENERATE_AVATAR_UPLOAD_URL_SUCCESSFULLY,
-        status: USER_PROFILE_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      const response = ResponseHelper.success(
+        result.getValue(),
+        USER_PROFILE_CONSTANTS.MESSAGES.GENERATE_AVATAR_UPLOAD_URL_SUCCESSFULLY,
+        USER_PROFILE_CONSTANTS.CODES.OK,
+      );
+
+      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
 
