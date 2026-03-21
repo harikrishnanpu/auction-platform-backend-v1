@@ -8,6 +8,7 @@ import {
 export enum AuctionStatus {
   DRAFT = 'DRAFT',
   ACTIVE = 'ACTIVE',
+  PAUSED = 'PAUSED',
   ENDED = 'ENDED',
   SOLD = 'SOLD',
   CANCELLED = 'CANCELLED',

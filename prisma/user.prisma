@@ -19,6 +19,7 @@ model User {
   bids                Bid[]
   auctionParticipants AuctionParticipant[]
   auctionCategories   AuctionCategory[]
+  auctionChatMessages AuctionChatMessage[]
 }
 
 model UserRole {

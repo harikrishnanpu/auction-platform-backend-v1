@@ -38,4 +38,12 @@ export class AuctionParticipant {
   getUserId(): string {
     return this.userId;
   }
+
+  getUserName(): string {
+    return this.userName;
+  }
+
+  getJoinedAt(): Date {
+    return this.joinedAt;
+  }
 }

@@ -28,6 +28,8 @@ import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKyc
 import { ViewKycUsecase } from '@application/usecases/admin/viewKycUsecase';
 import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
 import { RejectAuctionCategoryUsecase } from '@application/usecases/admin/rejectAuctionCategory.usecase';
+import { IGetAdminAuctionsUsecase } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
+import { GetAdminAuctionsUsecase } from '@application/usecases/admin/getAdminAuctions.usecase';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
   console.log('Admin container loaded');
@@ -62,6 +64,11 @@ export const adminContainer = new ContainerModule(({ bind }) => {
   bind<IGetAllAdminAuctionCategoriesUsecase>(
     TYPES.IGetAllAdminAuctionCategoriesUsecase,
   ).to(GetAllAdminAuctionCategoriesUsecase);
+
+  bind<IGetAdminAuctionsUsecase>(TYPES.IGetAdminAuctionsUsecase).to(
+    GetAdminAuctionsUsecase,
+  );
+
   bind<IUpdateAuctionCategoryUsecase>(TYPES.IUpdateAuctionCategoryUsecase).to(
     UpdateAuctionCategoryUsecase,
   );

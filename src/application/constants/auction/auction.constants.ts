@@ -9,6 +9,8 @@ export const AUCTION_MESSAGES = {
 
   NOT_AUTHORIZED_TO_END: 'Not authorized to end this auction',
   ONLY_ACTIVE_CAN_BE_ENDED: 'Only active auctions can be ended',
+  ONLY_ACTIVE_CAN_BE_PAUSED: 'Only active auctions can be paused',
+  ONLY_PAUSED_CAN_BE_RESUMED: 'Only paused auctions can be resumed',
 
   AUCTION_NOT_ACTIVE: 'Auction is not active',
   AUCTION_ENDED: 'Auction is ended',

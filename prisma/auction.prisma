@@ -1,6 +1,7 @@
 enum AuctionStatus {
   DRAFT
   ACTIVE
+  PAUSED
   ENDED
   SOLD
   CANCELLED
@@ -42,6 +43,7 @@ model Auction {
   assets             AuctionAsset[]
   bids               Bid[]
   participants       AuctionParticipant[]
+  chatMessages      AuctionChatMessage[]
   category           AuctionCategory      @relation(fields: [categoryId], references: [id])
 }
 
@@ -100,4 +102,16 @@ model AuctionParticipant {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([auctionId, userId])
+}
+
+model AuctionChatMessage {
+  id        String   @id @default(uuid())
+  auctionId String
+  userId    String
+  userName  String
+  message   String
+  createdAt DateTime @default(now())
+
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id])
 }

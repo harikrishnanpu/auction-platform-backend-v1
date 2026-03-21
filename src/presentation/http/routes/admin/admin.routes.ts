@@ -71,6 +71,13 @@ export class AdminRoutes {
       this._adminController.getAllCategoryRequest,
     );
 
+    this._router.get(
+      '/auctions',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllAdminAuctions,
+    );
+
     this._router.patch(
       '/auction-categories/:id/approve',
       this._authenticateMiddleware.authenticate,

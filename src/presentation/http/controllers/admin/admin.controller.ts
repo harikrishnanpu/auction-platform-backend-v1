@@ -35,13 +35,16 @@ import { changeAuctionCategoryStatusSchema } from '@presentation/validators/sche
 import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
 import { IChangeAuctionCategoryStatusUsecase } from '@application/interfaces/usecases/admin/IChangeAuctionCategoyUsecase';
 import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/usecases/admin/IGetAllAuctionCategoriesUsecase';
+import { IGetAdminAuctionsUsecase } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
 import { UpdateAuctionCategorySchema } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
+import { getBrowseAuctionsSchema } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { viewKycSchema } from '@presentation/validators/schemas/admin/viewKyc.schema';
 import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKycUsecase';
 import { IViewKycInputDto } from '@application/dtos/admin/viewKyc.dto';
 import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
 import { rejectAuctionCategorySchema } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
+import { AuctionType } from '@domain/entities/auction/auction.entity';
 
 @injectable()
 export class AdminController {
@@ -68,6 +71,8 @@ export class AdminController {
     private readonly _changeAuctionCategoryStatusUsecase: IChangeAuctionCategoryStatusUsecase,
     @inject(TYPES.IGetAllAdminAuctionCategoriesUsecase)
     private readonly _getAllAdminAuctionCategoriesUsecase: IGetAllAdminAuctionCategoriesUsecase,
+    @inject(TYPES.IGetAdminAuctionsUsecase)
+    private readonly _getAllAdminAuctionsUsecase: IGetAdminAuctionsUsecase,
     @inject(TYPES.IUpdateAuctionCategoryUsecase)
     private readonly _updateAuctionCategoryUsecase: IUpdateAuctionCategoryUsecase,
     @inject(TYPES.IViewKycUsecase)
@@ -488,6 +493,43 @@ export class AdminController {
         success: true,
         message:
           ADMIN_CONSTANTS.MESSAGES.GET_ALL_AUCTION_CATEGORIES_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  getAllAdminAuctions = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      const parsed = getBrowseAuctionsSchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError(
+          parsed.error.issues[0]?.message ?? 'Invalid query',
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const result = await this._getAllAdminAuctionsUsecase.execute({
+        auctionType: parsed.data.auctionType as AuctionType,
+        categoryId: parsed.data.categoryId,
+        page: parsed.data.page,
+        limit: parsed.data.limit,
+        sort: parsed.data.sort,
+        order: parsed.data.order,
+        search: parsed.data.search,
+      });
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: 'All auctions fetched successfully',
         status: ADMIN_CONSTANTS.CODES.OK,
         error: null,
       });

@@ -29,6 +29,21 @@ export class AuctionRoutes {
       this._auctionController.createAuction,
     );
 
+    // User auction browsing (ACTIVE auctions only)
+    this._router.get(
+      '/auctions/latest',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._auctionController.getLatestAuctions,
+    );
+
+    this._router.get(
+      '/auctions',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.USER]),
+      this._auctionController.getBrowseAuctions,
+    );
+
     this._router.get(
       '/categories',
       this._auctionController.getAllAuctionCategories,
@@ -71,8 +86,31 @@ export class AuctionRoutes {
     this._router.post(
       '/:id/end',
       this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+      this._authorizeMiddleware.authorize([
+        UserRoleType.SELLER,
+        UserRoleType.ADMIN,
+      ]),
       this._auctionController.endAuction,
+    );
+
+    this._router.post(
+      '/:id/pause',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([
+        UserRoleType.SELLER,
+        UserRoleType.ADMIN,
+      ]),
+      this._auctionController.pauseAuction,
+    );
+
+    this._router.post(
+      '/:id/resume',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([
+        UserRoleType.SELLER,
+        UserRoleType.ADMIN,
+      ]),
+      this._auctionController.resumeAuction,
     );
 
     return this._router;

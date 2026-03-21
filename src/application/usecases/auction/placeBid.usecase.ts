@@ -12,6 +12,8 @@ import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { Auction } from '@domain/entities/auction/auction.entity';
+import { redis } from '@infrastructure/redis/redis.client';
 
 @injectable()
 export class PlaceBidUsecase implements IPlaceBidUsecase {
@@ -27,98 +29,194 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
   ) {}
 
   async execute(input: IPlaceBidInput): Promise<Result<IPlaceBidOutput>> {
-    const auctionResult = await this._auctionRepo.findById(input.auctionId);
+    const lockKey = `lock:auction:bid:${input.auctionId}`;
+    const lockTtlSeconds = 5;
+    const lockToken = this._idGeneratingService.generateId();
 
-    if (auctionResult.isFailure) {
-      return Result.fail(auctionResult.getError());
-    }
-    const auction = auctionResult.getValue();
-
-    if (auction.getStatus() !== AuctionStatus.ACTIVE) {
-      return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
-    }
-
-    if (auction.getSellerId() === input.userId) {
-      return Result.fail(AUCTION_MESSAGES.SELLER_CANNOT_PLACE_BID);
-    }
-
-    const latestResult = await this._bidRepo.findLatestByAuctionId(
-      input.auctionId,
+    // Acquire per-auction lock to prevent bid races.
+    const acquired = await redis.set(
+      lockKey,
+      lockToken,
+      'EX',
+      lockTtlSeconds,
+      'NX',
     );
 
-    if (latestResult.isFailure) return Result.fail(latestResult.getError());
+    if (!acquired) {
+      return Result.fail('Bid is being processed, try again');
+    }
 
-    const latest = latestResult.getValue();
+    const releaseScript = `
+      if redis.call("get", KEYS[1]) == ARGV[1] then
+        return redis.call("del", KEYS[1])
+      else
+        return 0
+      end
+    `;
 
-    if (latest !== null) {
-      if (latest.getAmount() >= input.amount) {
-        return Result.fail(AUCTION_MESSAGES.BID_BELOW_LATEST);
+    try {
+      const auctionResult = await this._auctionRepo.findById(input.auctionId);
+
+      if (auctionResult.isFailure) {
+        return Result.fail(auctionResult.getError());
+      }
+      const auction = auctionResult.getValue();
+
+      if (
+        auction.getStatus() !== AuctionStatus.ACTIVE &&
+        auction.getStatus() !== AuctionStatus.PAUSED
+      ) {
+        return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
+      }
+
+      // Guard: do not allow bids after auction end time.
+      if (auction.getEndAt().getTime() <= Date.now()) {
+        return Result.fail(AUCTION_MESSAGES.AUCTION_ENDED);
+      }
+
+      if (auction.getSellerId() === input.userId) {
+        return Result.fail(AUCTION_MESSAGES.SELLER_CANNOT_PLACE_BID);
+      }
+
+      const latestResult = await this._bidRepo.findLatestByAuctionId(
+        input.auctionId,
+      );
+
+      if (latestResult.isFailure) return Result.fail(latestResult.getError());
+
+      const latest = latestResult.getValue();
+
+      if (latest !== null) {
+        if (latest.getAmount() >= input.amount) {
+          return Result.fail(AUCTION_MESSAGES.BID_BELOW_LATEST);
+        }
+      }
+
+      const currentMin =
+        latest !== null
+          ? latest.getAmount() + auction.getMinIncrement()
+          : auction.getStartPrice();
+
+      if (input.amount < currentMin) {
+        return Result.fail(
+          AUCTION_MESSAGES.BID_BELOW_MIN(currentMin, auction.getMinIncrement()),
+        );
+      }
+
+      const lastBidResult = await this._bidRepo.findLastBidTimeByUser(
+        input.auctionId,
+        input.userId,
+      );
+
+      if (lastBidResult.isFailure) return Result.fail(lastBidResult.getError());
+
+      const lastBidTime = lastBidResult.getValue();
+
+      if (lastBidTime) {
+        const elapsedSec = (Date.now() - lastBidTime.getTime()) / 1000;
+        if (elapsedSec < auction.getBidCooldownSeconds())
+          return Result.fail(
+            AUCTION_MESSAGES.COOLDOWN_WAIT(
+              Math.ceil(auction.getBidCooldownSeconds() - elapsedSec),
+            ),
+          );
+      }
+
+      // Anti-sniping + max extension: extend endAt if bid comes in close to end.
+      const nowMs = Date.now();
+      const remainingSec = (auction.getEndAt().getTime() - nowMs) / 1000;
+      const currentExtensionCount = auction.getExtensionCount();
+      const maxExtensionCount = auction.getMaxExtensionCount();
+      const shouldExtend =
+        remainingSec <= auction.getAntiSnipSeconds() &&
+        currentExtensionCount < maxExtensionCount;
+
+      let effectiveEndAt = auction.getEndAt().toISOString();
+      let effectiveExtensionCount = currentExtensionCount;
+
+      if (shouldExtend) {
+        const extendedEndAt = new Date(
+          auction.getEndAt().getTime() + auction.getAntiSnipSeconds() * 1000,
+        );
+
+        const updatedAuctionRes = Auction.create({
+          id: auction.getId(),
+          sellerId: auction.getSellerId(),
+          auctionType: auction.getAuctionType(),
+          title: auction.getTitle(),
+          description: auction.getDescription(),
+          category: auction.getCategory(),
+          condition: auction.getCondition(),
+          startPrice: auction.getStartPrice(),
+          minIncrement: auction.getMinIncrement(),
+          startAt: auction.getStartAt(),
+          endAt: extendedEndAt,
+          antiSnipSeconds: auction.getAntiSnipSeconds(),
+          extensionCount: currentExtensionCount + 1,
+          maxExtensionCount: auction.getMaxExtensionCount(),
+          bidCooldownSeconds: auction.getBidCooldownSeconds(),
+          status: auction.getStatus(),
+          winnerId: auction.getWinnerId(),
+          assets: auction.getAssets(),
+        });
+
+        if (updatedAuctionRes.isFailure) {
+          return Result.fail(updatedAuctionRes.getError());
+        }
+
+        const updatedAuction = updatedAuctionRes.getValue();
+        const saveRes = await this._auctionRepo.save(updatedAuction);
+        if (saveRes.isFailure) {
+          return Result.fail(saveRes.getError());
+        }
+
+        effectiveEndAt = saveRes.getValue().getEndAt().toISOString();
+        effectiveExtensionCount = saveRes.getValue().getExtensionCount();
+      }
+
+      const participantResult = await this._participantRepo.save({
+        auctionId: input.auctionId,
+        userId: input.userId,
+        userName: input.userName,
+      });
+
+      if (participantResult.isFailure) {
+        return Result.fail(participantResult.getError());
+      }
+
+      const bidId = this._idGeneratingService.generateId();
+
+      const createResult = await this._bidRepo.create({
+        id: bidId,
+        auctionId: input.auctionId,
+        userId: input.userId,
+        amount: input.amount,
+      });
+
+      if (createResult.isFailure) {
+        return Result.fail(createResult.getError());
+      }
+
+      const bid = createResult.getValue();
+
+      const output: IPlaceBidOutput = {
+        id: bid.getId(),
+        auctionId: bid.getAuctionId(),
+        userId: bid.getUserId(),
+        amount: bid.getAmount(),
+        createdAt: bid.getCreatedAt().toISOString(),
+        endAt: effectiveEndAt,
+        extensionCount: effectiveExtensionCount,
+      };
+
+      return Result.ok(output);
+    } finally {
+      // Safe unlock: only delete if token matches.
+      try {
+        await redis.eval(releaseScript, 1, lockKey, lockToken);
+      } catch {
+        // Ignore unlock failures; TTL will expire the lock.
       }
     }
-
-    const currentMin =
-      latest !== null
-        ? latest.getAmount() + auction.getMinIncrement()
-        : auction.getStartPrice();
-
-    if (input.amount < currentMin) {
-      return Result.fail(
-        AUCTION_MESSAGES.BID_BELOW_MIN(currentMin, auction.getMinIncrement()),
-      );
-    }
-
-    const lastBidResult = await this._bidRepo.findLastBidTimeByUser(
-      input.auctionId,
-      input.userId,
-    );
-
-    if (lastBidResult.isFailure) return Result.fail(lastBidResult.getError());
-
-    const lastBidTime = lastBidResult.getValue();
-
-    if (lastBidTime) {
-      const elapsedSec = (Date.now() - lastBidTime.getTime()) / 1000;
-      if (elapsedSec < auction.getBidCooldownSeconds())
-        return Result.fail(
-          AUCTION_MESSAGES.COOLDOWN_WAIT(
-            Math.ceil(auction.getBidCooldownSeconds() - elapsedSec),
-          ),
-        );
-    }
-
-    const participantResult = await this._participantRepo.save({
-      auctionId: input.auctionId,
-      userId: input.userId,
-      userName: input.userName,
-    });
-
-    if (participantResult.isFailure) {
-      return Result.fail(participantResult.getError());
-    }
-
-    const bidId = this._idGeneratingService.generateId();
-
-    const createResult = await this._bidRepo.create({
-      id: bidId,
-      auctionId: input.auctionId,
-      userId: input.userId,
-      amount: input.amount,
-    });
-
-    if (createResult.isFailure) {
-      return Result.fail(createResult.getError());
-    }
-
-    const bid = createResult.getValue();
-
-    const output: IPlaceBidOutput = {
-      id: bid.getId(),
-      auctionId: bid.getAuctionId(),
-      userId: bid.getUserId(),
-      amount: bid.getAmount(),
-      createdAt: bid.getCreatedAt().toISOString(),
-    };
-
-    return Result.ok(output);
   }
 }

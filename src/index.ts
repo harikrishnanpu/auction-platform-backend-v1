@@ -4,6 +4,7 @@ import { app } from './main';
 import { container } from '@di/container';
 import { TYPES } from '@di/types.di';
 import type { ILogger } from '@application/interfaces/services/ILogger';
+import { setupSockets } from './socket/setupSockets';
 
 dotenv.config();
 
@@ -14,6 +15,10 @@ const startServer = async () => {
 
   try {
     const httpServer = createServer(app);
+
+    const io = setupSockets(httpServer, container);
+    app.set('io', io);
+
     httpServer.listen(PORT, () => {
       logger.info(`Server started on port ${PORT}`);
     });

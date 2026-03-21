@@ -70,6 +70,11 @@ export const TYPES = {
   IAuctionParticipantRepository: Symbol.for('IAuctionParticipantRepository'),
   IPlaceBidUsecase: Symbol.for('IPlaceBidUsecase'),
   IGetAuctionRoomUsecase: Symbol.for('IGetAuctionRoomUsecase'),
+  IPauseAuctionUsecase: Symbol.for('IPauseAuctionUsecase'),
+  IResumeAuctionUsecase: Symbol.for('IResumeAuctionUsecase'),
+  IAuctionChatMessageRepository: Symbol.for('IAuctionChatMessageRepository'),
+  ISendAuctionChatMessageUsecase: Symbol.for('ISendAuctionChatMessageUsecase'),
+  IGetAuctionChatMessagesUsecase: Symbol.for('IGetAuctionChatMessagesUsecase'),
   IAuctionCategoryRepository: Symbol.for('IAuctionCategoryRepositoy'),
   IRequestAuctionCategoryUsecase: Symbol.for('IRequestAuctionCategoryUsecase'),
   ISlugGeneratorService: Symbol.for('ISlugGeneratorService'),
@@ -84,6 +89,7 @@ export const TYPES = {
   IGetAllAdminAuctionCategoriesUsecase: Symbol.for(
     'IGetAllAdminAuctionCategoriesUsecase',
   ),
+  IGetAdminAuctionsUsecase: Symbol.for('IGetAdminAuctionsUsecase'),
   IUpdateAuctionCategoryUsecase: Symbol.for('IUpdateAuctionCategoryUsecase'),
   IViewKycUsecase: Symbol.for('IViewKycUsecase'),
   IGetAllSellerAuctionCategoryRequestUsecase: Symbol.for(

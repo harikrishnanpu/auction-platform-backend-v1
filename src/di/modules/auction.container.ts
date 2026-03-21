@@ -11,6 +11,10 @@ import { UpdateAuctionUsecase } from '@application/usecases/auction/updateAuctio
 import { PublishAuctionUsecase } from '@application/usecases/auction/publishAuction.usecase';
 import { EndAuctionUsecase } from '@application/usecases/auction/endAuction.usecase';
 import { PlaceBidUsecase } from '@application/usecases/auction/placeBid.usecase';
+import { GetAuctionRoomUsecase } from '@application/usecases/auction/getAuctionRoom.usecase';
+import { GetBrowseAuctionsUsecase } from '@application/usecases/auction/getBrowseAuctions.usecase';
+import { PauseAuctionUsecase } from '@application/usecases/auction/pauseAuction.usecase';
+import { ResumeAuctionUsecase } from '@application/usecases/auction/resumeAuction.usecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
@@ -26,6 +30,16 @@ import { ISlugGeneratorService } from '@application/interfaces/services/ISlugGen
 import { SlugGeneratorService } from '@infrastructure/services/slug/SlugGenerator.service';
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 import { GetAllAuctionCategoryUsecase } from '@application/usecases/auction/getAllAuctionCategory.usecase';
+import { IAuctionChatMessageRepository } from '@domain/repositories/IAuctionChatMessageRepository';
+import { PrismaAuctionChatMessageRepo } from '@infrastructure/repositories/auction/auction-chat-message.repo';
+import { SendAuctionChatMessageUsecase } from '@application/usecases/auction/sendAuctionChatMessage.usecase';
+import { ISendAuctionChatMessageUsecase } from '@application/interfaces/usecases/auction/ISendAuctionChatMessageUsecase';
+import { GetAuctionChatMessagesUsecase } from '@application/usecases/auction/getAuctionChatMessages.usecase';
+import { IGetAuctionChatMessagesUsecase } from '@application/interfaces/usecases/auction/IGetAuctionChatMessagesUsecase';
+import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
+import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
+import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
   bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -61,4 +75,32 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
   bind<IGetAllAuctionCategoriesUsecase>(
     TYPES.IGetAllAuctionCategoriesUsecase,
   ).to(GetAllAuctionCategoryUsecase);
+
+  bind<IGetAuctionRoomUsecase>(TYPES.IGetAuctionRoomUsecase).to(
+    GetAuctionRoomUsecase,
+  );
+
+  bind<IGetBrowseAuctionsUsecase>(TYPES.IGetBrowseAuctionsUsecase).to(
+    GetBrowseAuctionsUsecase,
+  );
+
+  bind<IPauseAuctionUsecase>(TYPES.IPauseAuctionUsecase).to(
+    PauseAuctionUsecase,
+  );
+
+  bind<IResumeAuctionUsecase>(TYPES.IResumeAuctionUsecase).to(
+    ResumeAuctionUsecase,
+  );
+
+  bind<IAuctionChatMessageRepository>(TYPES.IAuctionChatMessageRepository).to(
+    PrismaAuctionChatMessageRepo,
+  );
+
+  bind<ISendAuctionChatMessageUsecase>(TYPES.ISendAuctionChatMessageUsecase).to(
+    SendAuctionChatMessageUsecase,
+  );
+
+  bind<IGetAuctionChatMessagesUsecase>(TYPES.IGetAuctionChatMessagesUsecase).to(
+    GetAuctionChatMessagesUsecase,
+  );
 });

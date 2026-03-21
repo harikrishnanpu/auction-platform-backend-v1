@@ -28,17 +28,22 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
     if (existing.isFailure) return Result.fail(existing.getError());
 
     const auction = existing.getValue();
-    if (auction.getSellerId() !== input.userId) {
+    const isAdmin = input.isAdmin ?? false;
+    if (!isAdmin && auction.getSellerId() !== input.userId) {
       return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_END);
     }
 
-    if (auction.getStatus() !== AuctionStatus.ACTIVE) {
+    if (
+      auction.getStatus() !== AuctionStatus.ACTIVE &&
+      auction.getStatus() !== AuctionStatus.PAUSED
+    ) {
       return Result.fail(AUCTION_MESSAGES.ONLY_ACTIVE_CAN_BE_ENDED);
     }
 
     const latestBidResult = await this._bidRepository.findLatestByAuctionId(
       input.auctionId,
     );
+
     const winnerId =
       latestBidResult.isSuccess && latestBidResult.getValue()
         ? latestBidResult.getValue()!.getUserId()

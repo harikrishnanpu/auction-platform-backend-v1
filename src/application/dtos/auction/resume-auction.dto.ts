@@ -1,10 +1,10 @@
-export interface IEndAuctionInput {
+export interface IResumeAuctionInput {
   auctionId: string;
   userId: string;
   isAdmin?: boolean;
 }
 
-export interface IEndAuctionOutput {
+export interface IResumeAuctionOutput {
   id: string;
   status: string;
 }

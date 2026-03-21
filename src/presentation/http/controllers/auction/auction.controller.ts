@@ -21,6 +21,12 @@ import { IPlaceBidInput } from '@application/dtos/auction/place-bid.dto';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
+import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
+import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
+import { getLatestAuctionsSchema } from '@presentation/validators/schemas/auction/getLatestAuctions.schema';
+import { getBrowseAuctionsSchema } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 
 @injectable()
 export class AuctionController {
@@ -41,6 +47,12 @@ export class AuctionController {
     private readonly _getAllAuctionCategoryUsecase: IGetAllAuctionCategoriesUsecase,
     @inject(TYPES.IGetAuctionByIdUsecase)
     private readonly _getAuctionByIdUsecase: IGetAuctionByIdUsecase,
+    @inject(TYPES.IPauseAuctionUsecase)
+    private readonly _pauseAuctionUsecase: IPauseAuctionUsecase,
+    @inject(TYPES.IResumeAuctionUsecase)
+    private readonly _resumeAuctionUsecase: IResumeAuctionUsecase,
+    @inject(TYPES.IGetBrowseAuctionsUsecase)
+    private readonly _getBrowseAuctionsUsecase: IGetBrowseAuctionsUsecase,
   ) {}
 
   createAuction = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -104,6 +116,97 @@ export class AuctionController {
         success: true,
         message:
           AUCTION_CONSTANTS.MESSAGES.AUCTION_CATEGORIES_FETCHED_SUCCESSFULLY,
+        status: AUCTION_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  getLatestAuctions = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      if (!req.user) {
+        throw new AppError(
+          AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const parsed = getLatestAuctionsSchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError(
+          parsed.error.issues[0]?.message ?? 'Invalid limit',
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const result = await this._getBrowseAuctionsUsecase.execute({
+        auctionType: 'ALL',
+        categoryId: 'ALL',
+        page: 1,
+        limit: parsed.data.limit,
+        sort: 'startAt',
+        order: 'desc',
+        search: '',
+      });
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(AUCTION_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,
+        status: AUCTION_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  getBrowseAuctions = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      if (!req.user) {
+        throw new AppError(
+          AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const parsed = getBrowseAuctionsSchema.safeParse(req.query);
+      if (!parsed.success) {
+        throw new AppError(
+          parsed.error.issues[0]?.message ?? 'Invalid query',
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const result = await this._getBrowseAuctionsUsecase.execute({
+        auctionType:
+          parsed.data.auctionType === 'ALL'
+            ? 'ALL'
+            : (parsed.data.auctionType as AuctionType),
+        categoryId: parsed.data.categoryId,
+        page: parsed.data.page,
+        limit: parsed.data.limit,
+        sort: parsed.data.sort,
+        order: parsed.data.order,
+        search: parsed.data.search,
+      });
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(AUCTION_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,
         status: AUCTION_CONSTANTS.CODES.OK,
         error: null,
       });
@@ -310,6 +413,7 @@ export class AuctionController {
     const result = await this._endAuctionUsecase.execute({
       auctionId: id as string,
       userId: req.user.id,
+      isAdmin: req.user.roles?.includes(UserRoleType.ADMIN) ?? false,
     });
 
     if (result.isFailure) {
@@ -319,10 +423,113 @@ export class AuctionController {
       );
     }
 
+    const updated = result.getValue();
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`auction:${updated.id}`).emit('auction:updated', {
+        auctionId: updated.id,
+        status: updated.status,
+      });
+    }
+
     res.status(AUCTION_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
+      data: updated,
       success: true,
       message: AUCTION_CONSTANTS.MESSAGES.AUCTION_ENDED_SUCCESSFULLY,
+      status: AUCTION_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  pauseAuction = expressAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(
+        AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const params = publishAuctionParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      const message = params.error.issues[0]?.message ?? 'Invalid auction id';
+      throw new AppError(message, AUCTION_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    const isAdmin = req.user.roles?.includes(UserRoleType.ADMIN) ?? false;
+
+    const result = await this._pauseAuctionUsecase.execute({
+      auctionId: params.data.id,
+      userId: req.user.id,
+      isAdmin,
+    });
+
+    if (result.isFailure) {
+      throw new AppError(
+        result.getError(),
+        AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const updated = result.getValue();
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`auction:${updated.id}`).emit('auction:updated', {
+        auctionId: updated.id,
+        status: updated.status,
+      });
+    }
+
+    res.status(AUCTION_CONSTANTS.CODES.OK).json({
+      data: updated,
+      success: true,
+      message: 'Auction paused successfully',
+      status: AUCTION_CONSTANTS.CODES.OK,
+      error: null,
+    });
+  });
+
+  resumeAuction = expressAsyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(
+        AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+        AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const params = publishAuctionParamsSchema.safeParse(req.params);
+    if (!params.success) {
+      const message = params.error.issues[0]?.message ?? 'Invalid auction id';
+      throw new AppError(message, AUCTION_CONSTANTS.CODES.BAD_REQUEST);
+    }
+
+    const isAdmin = req.user.roles?.includes(UserRoleType.ADMIN) ?? false;
+
+    const result = await this._resumeAuctionUsecase.execute({
+      auctionId: params.data.id,
+      userId: req.user.id,
+      isAdmin,
+    });
+
+    if (result.isFailure) {
+      throw new AppError(
+        result.getError(),
+        AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+      );
+    }
+
+    const updated = result.getValue();
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`auction:${updated.id}`).emit('auction:updated', {
+        auctionId: updated.id,
+        status: updated.status,
+      });
+    }
+
+    res.status(AUCTION_CONSTANTS.CODES.OK).json({
+      data: updated,
+      success: true,
+      message: 'Auction resumed successfully',
       status: AUCTION_CONSTANTS.CODES.OK,
       error: null,
     });
