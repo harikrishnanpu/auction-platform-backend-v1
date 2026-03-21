@@ -44,10 +44,11 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
       input.auctionId,
     );
 
-    const winnerId =
-      latestBidResult.isSuccess && latestBidResult.getValue()
-        ? latestBidResult.getValue()!.getUserId()
-        : null;
+    if (latestBidResult.isFailure)
+      return Result.fail(latestBidResult.getError());
+
+    const latestBid = latestBidResult.getValue();
+    const winnerId = latestBid ? latestBid.getUserId() : null;
 
     const endedResult = Auction.create({
       id: auction.getId(),
