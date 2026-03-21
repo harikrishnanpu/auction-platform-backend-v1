@@ -6,14 +6,18 @@ export type SocketAckPayload = {
 
 export type SocketAckCallback = (payload: SocketAckPayload) => void;
 
-export async function runWithAck(
-  ack: SocketAckCallback | undefined,
+export async function hanldeSocketCallback(
+  callback: SocketAckCallback | undefined,
   fn: () => Promise<SocketAckPayload>,
 ): Promise<void> {
   try {
     const result = await fn();
-    ack?.(result);
+    if (callback) {
+      callback(result);
+    }
   } catch {
-    ack?.({ success: false, error: 'Internal Server Error' });
+    if (callback) {
+      callback({ success: false, error: 'Internal Server Error' });
+    }
   }
 }

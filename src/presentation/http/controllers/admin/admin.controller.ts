@@ -38,6 +38,9 @@ import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/us
 import { IGetAdminAuctionsUsecase } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
 import { UpdateAuctionCategorySchema } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
+import { createAuctionCategorySchema } from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
+import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/ICreateAuctionCategoryUsecase';
+import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
 import { getBrowseAuctionsSchema } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { viewKycSchema } from '@presentation/validators/schemas/admin/viewKyc.schema';
 import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKycUsecase';
@@ -75,6 +78,8 @@ export class AdminController {
     private readonly _getAllAdminAuctionsUsecase: IGetAdminAuctionsUsecase,
     @inject(TYPES.IUpdateAuctionCategoryUsecase)
     private readonly _updateAuctionCategoryUsecase: IUpdateAuctionCategoryUsecase,
+    @inject(TYPES.ICreateAuctionCategoryUsecase)
+    private readonly _createAuctionCategoryUsecase: ICreateAuctionCategoryUsecase,
     @inject(TYPES.IViewKycUsecase)
     private readonly _viewKycUsecase: IViewKycUsecase,
     @inject(TYPES.IRejectAuctionCategoryUsecase)
@@ -575,6 +580,52 @@ export class AdminController {
         data: result.getValue(),
         success: true,
         message: ADMIN_CONSTANTS.MESSAGES.UPDATE_AUCTION_CATEGORY_SUCCESSFULLY,
+        status: ADMIN_CONSTANTS.CODES.OK,
+        error: null,
+      });
+    },
+  );
+
+  createAuctionCategory = expressAsyncHandler(
+    async (req: Request, res: Response) => {
+      if (!req.user) {
+        throw new AppError(
+          ADMIN_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const validationResult = createAuctionCategorySchema.safeParse({
+        name: req.body?.name,
+        parentId: req.body?.parentId,
+      });
+
+      if (!validationResult.success) {
+        throw new AppError(
+          validationResult.error.issues[0].message,
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      const input: ICreateAuctionCategoryInputDto = {
+        name: validationResult.data.name,
+        parentId: validationResult.data.parentId ?? null,
+        userId: req.user.id,
+      };
+
+      const result = await this._createAuctionCategoryUsecase.execute(input);
+
+      if (result.isFailure) {
+        throw new AppError(
+          result.getError(),
+          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+        );
+      }
+
+      res.status(ADMIN_CONSTANTS.CODES.OK).json({
+        data: result.getValue(),
+        success: true,
+        message: ADMIN_CONSTANTS.MESSAGES.CREATE_AUCTION_CATEGORY_SUCCESSFULLY,
         status: ADMIN_CONSTANTS.CODES.OK,
         error: null,
       });

@@ -10,7 +10,7 @@ export interface IAuctionRoomBidDto {
   createdAt: string;
 }
 
-export interface IAuctionRoomSnapshotDto {
+export interface IAuctionRoomResultDto {
   auction: IAuctionDto;
   currentBid: IAuctionRoomBidDto | null;
   liveFeed: IAuctionRoomBidDto[];

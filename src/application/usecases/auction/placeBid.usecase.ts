@@ -11,9 +11,9 @@ import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionPart
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { IBidLockService } from '@application/interfaces/services/IBidLockService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { Auction } from '@domain/entities/auction/auction.entity';
-import { redis } from '@infrastructure/redis/redis.client';
 
 @injectable()
 export class PlaceBidUsecase implements IPlaceBidUsecase {
@@ -26,33 +26,24 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
     private readonly _participantRepo: IAuctionParticipantRepository,
     @inject(TYPES.IIdGeneratingService)
     private readonly _idGeneratingService: IIdGeneratingService,
+    @inject(TYPES.IBidLockService)
+    private readonly _bidLockService: IBidLockService,
   ) {}
 
   async execute(input: IPlaceBidInput): Promise<Result<IPlaceBidOutput>> {
-    const lockKey = `lock:auction:bid:${input.auctionId}`;
+    const lockKey = this._bidLockService.lockKeyForAuction(input.auctionId);
     const lockTtlSeconds = 5;
     const lockToken = this._idGeneratingService.generateId();
 
-    // Acquire per-auction lock to prevent bid races.
-    const acquired = await redis.set(
+    const locked = await this._bidLockService.lock(
       lockKey,
       lockToken,
-      'EX',
       lockTtlSeconds,
-      'NX',
     );
 
-    if (!acquired) {
+    if (!locked) {
       return Result.fail('Bid is being processed, try again');
     }
-
-    const releaseScript = `
-      if redis.call("get", KEYS[1]) == ARGV[1] then
-        return redis.call("del", KEYS[1])
-      else
-        return 0
-      end
-    `;
 
     try {
       const auctionResult = await this._auctionRepo.findById(input.auctionId);
@@ -60,16 +51,13 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
       if (auctionResult.isFailure) {
         return Result.fail(auctionResult.getError());
       }
+
       const auction = auctionResult.getValue();
 
-      if (
-        auction.getStatus() !== AuctionStatus.ACTIVE &&
-        auction.getStatus() !== AuctionStatus.PAUSED
-      ) {
+      if (auction.getStatus() !== AuctionStatus.ACTIVE) {
         return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
       }
 
-      // Guard: do not allow bids after auction end time.
       if (auction.getEndAt().getTime() <= Date.now()) {
         return Result.fail(AUCTION_MESSAGES.AUCTION_ENDED);
       }
@@ -122,11 +110,11 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
           );
       }
 
-      // Anti-sniping + max extension: extend endAt if bid comes in close to end.
       const nowMs = Date.now();
       const remainingSec = (auction.getEndAt().getTime() - nowMs) / 1000;
       const currentExtensionCount = auction.getExtensionCount();
       const maxExtensionCount = auction.getMaxExtensionCount();
+
       const shouldExtend =
         remainingSec <= auction.getAntiSnipSeconds() &&
         currentExtensionCount < maxExtensionCount;
@@ -211,12 +199,7 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
       return Result.ok(output);
     } finally {
-      // Safe unlock: only delete if token matches.
-      try {
-        await redis.eval(releaseScript, 1, lockKey, lockToken);
-      } catch {
-        // Ignore unlock failures; TTL will expire the lock.
-      }
+      await this._bidLockService.release(lockKey, lockToken);
     }
   }
 }

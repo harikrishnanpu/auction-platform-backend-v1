@@ -8,10 +8,9 @@ import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
 import {
-  AuctionRoomMode,
   IAuctionRoomBidDto,
   IAuctionRoomParticipantDto,
-  IAuctionRoomSnapshotDto,
+  IAuctionRoomResultDto,
   IGetAuctionRoomInputDto,
 } from '@application/dtos/auction/getAuctionRoom.dto';
 
@@ -28,7 +27,7 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
 
   async execute(
     input: IGetAuctionRoomInputDto,
-  ): Promise<Result<IAuctionRoomSnapshotDto>> {
+  ): Promise<Result<IAuctionRoomResultDto>> {
     const auctionResult = await this._auctionRepository.findById(
       input.auctionId,
     );
@@ -53,6 +52,7 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
       return Result.fail(latestBidResult.getError());
 
     const latestBid = latestBidResult.getValue();
+
     const currentBid: IAuctionRoomBidDto | null = latestBid
       ? {
           id: latestBid.getId(),
@@ -63,7 +63,8 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
         }
       : null;
 
-    const bidsLimit = this.getLiveFeedLimit(input.mode);
+    const bidsLimit = 10; // ----!!!!!----------
+
     const liveFeedResult = await this._bidRepository.findManyByAuctionId(
       input.auctionId,
       bidsLimit,
@@ -96,18 +97,13 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
         joinedAt: p.getJoinedAt().toISOString(),
       }));
 
-    const snapshot: IAuctionRoomSnapshotDto = {
+    const result: IAuctionRoomResultDto = {
       auction: auctionDto,
       currentBid,
       liveFeed,
       participants,
     };
 
-    return Result.ok(snapshot);
-  }
-
-  private getLiveFeedLimit(mode: AuctionRoomMode): number {
-    if (mode === 'ADMIN') return 10000;
-    return 10;
+    return Result.ok(result);
   }
 }

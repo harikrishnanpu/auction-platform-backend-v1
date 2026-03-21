@@ -36,6 +36,8 @@ export const ADMIN_MESSAGES = {
   REJECT_AUCTION_CATEGORY_SUCCESSFULLY:
     'Auction category rejected successfully',
   REJECT_AUCTION_CATEGORY_FAILED: 'Failed to reject auction category',
+  CREATE_AUCTION_CATEGORY_SUCCESSFULLY: 'Auction category created successfully',
+  CREATE_AUCTION_CATEGORY_FAILED: 'Failed to create auction category',
 };
 
 export const ADMIN_CONSTANTS = {

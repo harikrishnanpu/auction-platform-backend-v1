@@ -305,6 +305,8 @@ export class AuctionController {
       );
     }
 
+    console.log('UPDATE AUCTION REQ: ', req.body);
+
     const id = req.params.id;
 
     if (!id) {

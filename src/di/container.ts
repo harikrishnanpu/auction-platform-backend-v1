@@ -13,6 +13,7 @@ import { KycController } from '@presentation/http/controllers/kyc/kyc.controller
 import { AdminController } from '@presentation/http/controllers/admin/admin.controller';
 import { adminContainer } from './modules/admin.container';
 import { auctionContainer } from './modules/auction.container';
+import { redisContainer } from './modules/redis.container';
 import { AuctionController } from '@presentation/http/controllers/auction/auction.controller';
 import { sellerContainer } from './modules/seller.container';
 import { SellerController } from '@presentation/http/controllers/seller/seller.controller';
@@ -24,6 +25,7 @@ container.load(authContainer);
 container.load(userContainer);
 container.load(kycContainer);
 container.load(adminContainer);
+container.load(redisContainer);
 container.load(auctionContainer);
 container.load(sellerContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);

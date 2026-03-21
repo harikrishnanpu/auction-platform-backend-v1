@@ -18,6 +18,7 @@ import {
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 
 @injectable()
 export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
@@ -33,6 +34,8 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
   async execute(
     input: IUpdateAuctionInput,
   ): Promise<Result<IUpdateAuctionOutput>> {
+    console.log('UPDATE AUCTION INPUT: ', input);
+
     const existing = await this._auctionRepository.findById(input.auctionId);
 
     if (existing.isFailure) {
@@ -104,26 +107,8 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
 
     const saved = updateResult.getValue();
 
-    const output: IUpdateAuctionOutput = {
-      id: saved.getId(),
-      sellerId: saved.getSellerId(),
-      auctionType: saved.getAuctionType(),
-      title: saved.getTitle(),
-      description: saved.getDescription(),
-      category: saved.getCategory(),
-      condition: saved.getCondition(),
-      startPrice: saved.getStartPrice(),
-      minIncrement: saved.getMinIncrement(),
-      startAt: saved.getStartAt().toISOString(),
-      endAt: saved.getEndAt().toISOString(),
-      status: saved.getStatus(),
-      antiSnipSeconds: saved.getAntiSnipSeconds(),
-      extensionCount: saved.getExtensionCount(),
-      maxExtensionCount: saved.getMaxExtensionCount(),
-      bidCooldownSeconds: saved.getBidCooldownSeconds(),
-      winnerId: saved.getWinnerId(),
-    };
+    const dto = AuctionMapperProrfile.toAuctionOutputDto(saved);
 
-    return Result.ok(output);
+    return Result.ok({ auction: dto });
   }
 }

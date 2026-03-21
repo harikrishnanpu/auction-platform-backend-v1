@@ -41,6 +41,7 @@ export class AuctionHandler {
 
   async handleJoin(payload: unknown): Promise<SocketAckPayload> {
     const parsed = parseSocketPayload(auctionJoinSocketSchema, payload);
+
     if (!parsed.ok) {
       return { success: false, error: parsed.error };
     }
@@ -48,15 +49,15 @@ export class AuctionHandler {
     const { auctionId, mode } = parsed.data;
     const user = this.socket.data.user;
 
-    const getRoom = this.container.get<IGetAuctionRoomUsecase>(
+    const getAuctionRoomUsecase = this.container.get<IGetAuctionRoomUsecase>(
       TYPES.IGetAuctionRoomUsecase,
     );
 
-    const getChat = this.container.get<IGetAuctionChatMessagesUsecase>(
+    const getChatUsecase = this.container.get<IGetAuctionChatMessagesUsecase>(
       TYPES.IGetAuctionChatMessagesUsecase,
     );
 
-    const roomResult = await getRoom.execute({
+    const roomResult = await getAuctionRoomUsecase.execute({
       userId: user.id,
       auctionId,
       mode,
@@ -66,7 +67,8 @@ export class AuctionHandler {
       return { success: false, error: roomResult.getError() };
     }
 
-    const chatResult = await getChat.execute({ auctionId, limit: 50 });
+    const chatResult = await getChatUsecase.execute({ auctionId, limit: 50 });
+    console.log('chatResult is', chatResult);
     if (chatResult.isFailure) {
       return { success: false, error: chatResult.getError() };
     }
@@ -74,16 +76,17 @@ export class AuctionHandler {
     const roomId = `auction:${auctionId}`;
     await this.socket.join(roomId);
 
-    const snapshot = roomResult.getValue();
+    const result = roomResult.getValue();
     const chatMessages = chatResult.getValue();
 
-    this.socket.emit(SocketEvents.JOINED, { ...snapshot, chatMessages });
+    this.socket.emit(SocketEvents.JOINED, { ...result, chatMessages });
 
     return { success: true, data: { auctionId } };
   }
 
   async handlePlaceBid(payload: unknown): Promise<SocketAckPayload> {
     const parsed = parseSocketPayload(placeBidSocketSchema, payload);
+
     if (!parsed.ok) {
       return { success: false, error: parsed.error };
     }
@@ -91,11 +94,11 @@ export class AuctionHandler {
     const { auctionId, amount } = parsed.data;
     const user = this.socket.data.user;
 
-    const placeBid = this.container.get<IPlaceBidUsecase>(
+    const placeBidUsecase = this.container.get<IPlaceBidUsecase>(
       TYPES.IPlaceBidUsecase,
     );
 
-    const result = await placeBid.execute({
+    const result = await placeBidUsecase.execute({
       auctionId,
       userId: user.id,
       userName: user.name,
@@ -123,10 +126,10 @@ export class AuctionHandler {
       extensionCount: out.extensionCount,
     });
 
-    // Best-effort refresh so the participant list updates after bids.
     const participantsRepo = this.container.get<IAuctionParticipantRepository>(
       TYPES.IAuctionParticipantRepository,
     );
+
     const participantsResult =
       await participantsRepo.findByAuctionId(auctionId);
 
@@ -190,10 +193,10 @@ export class AuctionHandler {
 
     const { auctionId } = parsed.data;
     const isAdmin = user.roles.includes(UserRoleType.ADMIN);
-    const pause = this.container.get<IPauseAuctionUsecase>(
+    const pauseAuctionUsecase = this.container.get<IPauseAuctionUsecase>(
       TYPES.IPauseAuctionUsecase,
     );
-    const result = await pause.execute({
+    const result = await pauseAuctionUsecase.execute({
       auctionId,
       userId: user.id,
       isAdmin,

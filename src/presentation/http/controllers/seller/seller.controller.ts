@@ -180,7 +180,8 @@ export class SellerController {
         );
       }
 
-      const auctionId = req.params.id;
+      const auctionId = req.params.id as string;
+
       if (!auctionId) {
         throw new AppError(
           'Auction id is required',
@@ -190,7 +191,7 @@ export class SellerController {
 
       const result = await this._getAuctionByIdUsecase.execute({
         userId: req.user.id,
-        auctionId,
+        auctionId: auctionId,
       });
 
       if (result.isFailure) {

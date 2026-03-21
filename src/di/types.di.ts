@@ -72,6 +72,7 @@ export const TYPES = {
   IGetAuctionRoomUsecase: Symbol.for('IGetAuctionRoomUsecase'),
   IPauseAuctionUsecase: Symbol.for('IPauseAuctionUsecase'),
   IResumeAuctionUsecase: Symbol.for('IResumeAuctionUsecase'),
+  ICreateAuctionCategoryUsecase: Symbol.for('ICreateAuctionCategoryUsecase'),
   IAuctionChatMessageRepository: Symbol.for('IAuctionChatMessageRepository'),
   ISendAuctionChatMessageUsecase: Symbol.for('ISendAuctionChatMessageUsecase'),
   IGetAuctionChatMessagesUsecase: Symbol.for('IGetAuctionChatMessagesUsecase'),
@@ -98,4 +99,9 @@ export const TYPES = {
   SellerController: Symbol.for('SellerController'),
   IRejectAuctionCategoryUsecase: Symbol.for('IRejectAuctionCategoryUsecase'),
   IGetAllSellerAuctionsUsecase: Symbol.for('IGetAllSellerAuctionsUsecase'),
+  Redis: Symbol.for('Redis'),
+  IBidLockService: Symbol.for('IBidLockService'),
+  ISocketServer: Symbol.for('ISocketServer'),
+  ISocketClient: Symbol.for('ISocketClient'),
+  ISocketContainer: Symbol.for('ISocketContainer'),
 };

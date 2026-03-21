@@ -106,6 +106,13 @@ export class AdminRoutes {
       this._adminController.getAllAdminAuctionCategories,
     );
 
+    this._router.post(
+      '/auction-categories',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.createAuctionCategory,
+    );
+
     this._router.put(
       '/auction-categories/:id',
       this._authenticateMiddleware.authenticate,

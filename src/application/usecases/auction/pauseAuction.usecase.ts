@@ -28,7 +28,7 @@ export class PauseAuctionUsecase implements IPauseAuctionUsecase {
     if (existing.isFailure) return Result.fail(existing.getError());
 
     const auction = existing.getValue();
-    const isAdmin = input.isAdmin ?? false;
+    const isAdmin = !!input.isAdmin;
 
     if (!isAdmin && auction.getSellerId() !== input.userId) {
       return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_END);

@@ -13,6 +13,7 @@ export function createSocketAuthMiddleware(container: Container) {
     const tokenGenerator = container.get<ITokenGeneratorService>(
       TYPES.ITokenGeneratorService,
     );
+
     const getUserUseCase = container.get<IGetUserUsecase>(
       TYPES.IGetUserUsecase,
     );
