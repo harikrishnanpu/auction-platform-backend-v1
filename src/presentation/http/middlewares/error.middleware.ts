@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { AppError } from '../error/app.error';
 import { STATUS_CODES } from '@presentation/constants/http/status.code';
+import { ResponseHelper } from '../helpers/response.helper';
 
 export const errorMiddleware = (
   err: AppError,
@@ -10,6 +11,7 @@ export const errorMiddleware = (
   _next: NextFunction,
 ) => {
   if (err instanceof AppError) {
+    console.log('ERROR MIDDLEWARE: ', err);
     return res.status(err.statusCode).json({
       success: false,
       status: err.statusCode,
@@ -19,9 +21,9 @@ export const errorMiddleware = (
 
   console.log(err);
 
-  return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json({
-    success: false,
-    status: STATUS_CODES.INTERNAL_SERVER_ERROR,
-    message: 'Internal Server Error',
-  });
+  const response = ResponseHelper.error(
+    'Internal Server Error',
+    STATUS_CODES.INTERNAL_SERVER_ERROR,
+  );
+  return res.status(STATUS_CODES.INTERNAL_SERVER_ERROR).json(response);
 };

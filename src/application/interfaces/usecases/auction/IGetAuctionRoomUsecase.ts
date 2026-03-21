@@ -1,9 +1,11 @@
 import {
-  IGetAuctionRoomInput,
-  IGetAuctionRoomOutput,
-} from '@application/dtos/auction/get-auction-room.dto';
+  IAuctionRoomResultDto,
+  IGetAuctionRoomInputDto,
+} from '@application/dtos/auction/getAuctionRoom.dto';
 import { Result } from '@domain/shared/result';
 
 export interface IGetAuctionRoomUsecase {
-  execute(input: IGetAuctionRoomInput): Promise<Result<IGetAuctionRoomOutput>>;
+  execute(
+    input: IGetAuctionRoomInputDto,
+  ): Promise<Result<IAuctionRoomResultDto>>;
 }

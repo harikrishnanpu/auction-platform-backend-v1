@@ -1,9 +1,14 @@
 import { Result } from '@domain/shared/result';
 import { AuctionAsset } from './auction-asset.entity';
+import {
+  AuctionCategory,
+  AuctionCategoryStatus,
+} from './auction-category.entity';
 
 export enum AuctionStatus {
   DRAFT = 'DRAFT',
   ACTIVE = 'ACTIVE',
+  PAUSED = 'PAUSED',
   ENDED = 'ENDED',
   SOLD = 'SOLD',
   CANCELLED = 'CANCELLED',
@@ -22,7 +27,7 @@ export class Auction {
     private readonly auctionType: AuctionType,
     private readonly title: string,
     private readonly description: string,
-    private readonly category: string,
+    private readonly category: AuctionCategory,
     private readonly condition: string,
     private readonly startPrice: number,
     private readonly minIncrement: number,
@@ -62,7 +67,7 @@ export class Auction {
     auctionType?: AuctionType;
     title: string;
     description: string;
-    category: string;
+    category: AuctionCategory;
     condition: string;
     startPrice: number;
     minIncrement: number;
@@ -76,36 +81,24 @@ export class Auction {
     winnerId?: string | null;
     assets?: AuctionAsset[];
   }): Result<Auction> {
-    if (startPrice < 0) {
-      return Result.fail('Start price must be non-negative');
+    if (category.getStatus() !== AuctionCategoryStatus.APPROVED) {
+      return Result.fail('Auction category is not approved');
     }
 
-    if (minIncrement < 0) {
-      return Result.fail('Min increment must be non-negative');
+    if (startPrice < 500) {
+      return Result.fail('Start price must be greater than 500');
     }
 
-    if (endAt <= startAt) {
-      return Result.fail('End time must be after start time');
-    }
-
-    if (antiSnipSeconds < 0) {
-      return Result.fail('Anti-snip seconds must be non-negative');
-    }
-
-    if (extensionCount < 0) {
-      return Result.fail('Extension count must be non-negative');
-    }
-
-    if (maxExtensionCount < 0) {
-      return Result.fail('Max extension count must be non-negative');
-    }
-
-    if (bidCooldownSeconds < 0) {
-      return Result.fail('Bid cooldown seconds must be non-negative');
+    if (maxExtensionCount > 10) {
+      return Result.fail('Max extension count must be less than 10');
     }
 
     if (extensionCount > maxExtensionCount) {
       return Result.fail('Extension count cannot exceed max extension count');
+    }
+
+    if (minIncrement < 1) {
+      return Result.fail('Min increment must be greater than 1');
     }
 
     return Result.ok(
@@ -113,10 +106,10 @@ export class Auction {
         id,
         sellerId,
         auctionType,
-        title.trim(),
-        description?.trim() ?? '',
-        category?.trim() ?? '',
-        condition?.trim() ?? '',
+        title,
+        description,
+        category,
+        condition,
         startPrice,
         minIncrement,
         startAt,
@@ -126,7 +119,7 @@ export class Auction {
         extensionCount,
         maxExtensionCount,
         bidCooldownSeconds,
-        winnerId ?? null,
+        winnerId,
         assets,
       ),
     );
@@ -152,8 +145,8 @@ export class Auction {
     return this.description;
   }
 
-  getCategory(): string {
-    return this.category;
+  getCategoryId(): string {
+    return this.category.getId();
   }
 
   getCondition(): string {
@@ -202,5 +195,9 @@ export class Auction {
 
   getWinnerId(): string | null {
     return this.winnerId;
+  }
+
+  getCategory(): AuctionCategory {
+    return this.category;
   }
 }

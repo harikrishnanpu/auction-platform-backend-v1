@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity';
 
 const nonNegativeInt = z.number().int('Must be a whole number').min(0);
 
@@ -20,6 +21,19 @@ export const updateAuctionSchema = z
     antiSnipSeconds: nonNegativeInt.optional(),
     maxExtensionCount: nonNegativeInt.optional(),
     bidCooldownSeconds: nonNegativeInt.optional(),
+
+    assets: z
+      .array(
+        z.object({
+          fileKey: z.string().trim().min(1, 'Asset file key is required'),
+          position: z.number().int().min(0).optional(),
+          assetType: z
+            .enum([AuctionAssetType.IMAGE, AuctionAssetType.VIDEO])
+            .optional(),
+        }),
+      )
+      .min(1)
+      .optional(),
   })
   .refine((data) => new Date(data.endAt) > new Date(data.startAt), {
     message: 'End time must be after start time',

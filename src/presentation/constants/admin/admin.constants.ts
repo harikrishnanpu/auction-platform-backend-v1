@@ -15,6 +15,29 @@ export const ADMIN_MESSAGES = {
   APPROVE_SELLER_KYC_FAILED: 'Failed to approve KYC',
   REJECT_SELLER_KYC_SUCCESSFULLY: 'KYC rejected successfully',
   REJECT_SELLER_KYC_FAILED: 'Failed to reject KYC',
+  GET_ALL_CATEGORY_REQUEST_SUCCESSFULLY:
+    'All category request fetched successfully',
+  GET_ALL_CATEGORY_REQUEST_FAILED: 'Failed to fetch all category request',
+  APPROVE_AUCTION_CATEGORY_SUCCESSFULLY:
+    'Auction category approved successfully',
+  APPROVE_AUCTION_CATEGORY_FAILED: 'Failed to approve auction category',
+  CHANGE_AUCTION_CATEGORY_STATUS_SUCCESSFULLY:
+    'Auction category status changed successfully',
+  CHANGE_AUCTION_CATEGORY_STATUS_FAILED:
+    'Failed to change auction category status',
+  GET_ALL_AUCTION_CATEGORIES_SUCCESSFULLY:
+    'All auction categories fetched successfully',
+  GET_ALL_AUCTION_CATEGORIES_FAILED: 'Failed to fetch all auction categories',
+  UPDATE_AUCTION_CATEGORY_SUCCESSFULLY: 'Auction category updated successfully',
+  UPDATE_AUCTION_CATEGORY_FAILED: 'Failed to update auction category',
+  VIEW_KYC_SUCCESSFULLY: 'KYC viewed successfully',
+  VIEW_KYC_FAILED: 'Failed to view KYC',
+  USER_NOT_FOUND: 'User not found',
+  REJECT_AUCTION_CATEGORY_SUCCESSFULLY:
+    'Auction category rejected successfully',
+  REJECT_AUCTION_CATEGORY_FAILED: 'Failed to reject auction category',
+  CREATE_AUCTION_CATEGORY_SUCCESSFULLY: 'Auction category created successfully',
+  CREATE_AUCTION_CATEGORY_FAILED: 'Failed to create auction category',
 };
 
 export const ADMIN_CONSTANTS = {

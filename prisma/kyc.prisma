@@ -1,61 +1,60 @@
-
-
-
-enum KycStatus {
-    PENDING
-    APPROVED
-    REJECTED
-    NOT_SUBMITTED
-}
-
-enum DocumentType {
-    NATIONAL_ID
-    PASSPORT
-    DRIVING_LICENSE
-    VOTER_ID
-    KYC_ID
-    ADDRESS_PROOF
-}
-
-enum KycFor{
-    SELLER
-    MODERATOR
-}
-
 model Kyc {
-    id String @id @default(uuid())
-    userId String
-    status KycStatus
-    for KycFor
-    rejectionReason String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    documents KycDocument[]
-    user User @relation(fields: [userId], references: [id])
-    @@unique([userId, for])
-}
+  id              String        @id @default(uuid())
+  userId          String
+  status          KycStatus
+  for             KycFor
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  rejectionReason String?
+  user            User          @relation(fields: [userId], references: [id])
+  documents       KycDocument[]
 
-enum DocumentSide {
-    FRONT
-    BACK
-}
-
-enum DocumentStatus {
-    PENDING
-    APPROVED
-    REJECTED
+  @@unique([userId, for])
 }
 
 model KycDocument {
-    id String @id @default(uuid())
-    kycId String
-    documentId String @unique
-    documentType DocumentType
-    side DocumentSide
-    documentUrl String
-    status DocumentStatus
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    kyc Kyc @relation(fields: [kycId], references: [id])
-    @@unique([kycId, documentType, side])
+  id           String         @id @default(uuid())
+  kycId        String
+  documentId   String         @unique
+  documentType DocumentType
+  side         DocumentSide
+  documentUrl  String
+  status       DocumentStatus
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  kyc          Kyc            @relation(fields: [kycId], references: [id])
+
+  @@unique([kycId, documentType, side])
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NOT_SUBMITTED
+}
+
+enum DocumentType {
+  NATIONAL_ID
+  PASSPORT
+  DRIVING_LICENSE
+  VOTER_ID
+  KYC_ID
+  ADDRESS_PROOF
+}
+
+enum KycFor {
+  SELLER
+  MODERATOR
+}
+
+enum DocumentSide {
+  FRONT
+  BACK
+}
+
+enum DocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }

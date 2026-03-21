@@ -1,3 +1,4 @@
+import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
   IEndAuctionInput,
   IEndAuctionOutput,
@@ -27,17 +28,22 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
     if (existing.isFailure) return Result.fail(existing.getError());
 
     const auction = existing.getValue();
-    if (auction.getSellerId() !== input.userId) {
-      return Result.fail('Not authorized to end this auction');
+    const isAdmin = input.isAdmin ?? false;
+    if (!isAdmin && auction.getSellerId() !== input.userId) {
+      return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_END);
     }
 
-    if (auction.getStatus() !== AuctionStatus.ACTIVE) {
-      return Result.fail('Only active auctions can be ended');
+    if (
+      auction.getStatus() !== AuctionStatus.ACTIVE &&
+      auction.getStatus() !== AuctionStatus.PAUSED
+    ) {
+      return Result.fail(AUCTION_MESSAGES.ONLY_ACTIVE_CAN_BE_ENDED);
     }
 
     const latestBidResult = await this._bidRepository.findLatestByAuctionId(
       input.auctionId,
     );
+
     const winnerId =
       latestBidResult.isSuccess && latestBidResult.getValue()
         ? latestBidResult.getValue()!.getUserId()
@@ -67,7 +73,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
     if (endedResult.isFailure) return Result.fail(endedResult.getError());
     const ended = endedResult.getValue();
 
-    const updateResult = await this._auctionRepository.update(ended);
+    const updateResult = await this._auctionRepository.save(ended);
     if (updateResult.isFailure) return Result.fail(updateResult.getError());
 
     const saved = updateResult.getValue();

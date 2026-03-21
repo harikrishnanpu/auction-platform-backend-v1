@@ -63,6 +63,70 @@ export class AdminRoutes {
       this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
       this._adminController.getUser,
     );
+
+    this._router.get(
+      '/category-requests',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllCategoryRequest,
+    );
+
+    this._router.get(
+      '/auctions',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllAdminAuctions,
+    );
+
+    this._router.patch(
+      '/auction-categories/:id/approve',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.approveAuctionCategory,
+    );
+
+    this._router.patch(
+      '/auction-categories/:id/reject',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.rejectAuctionCategory,
+    );
+
+    this._router.patch(
+      '/auction-categories/:id/status',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.changeAuctionCategoryStatus,
+    );
+
+    this._router.get(
+      '/auction-categories',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.getAllAdminAuctionCategories,
+    );
+
+    this._router.post(
+      '/auction-categories',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.createAuctionCategory,
+    );
+
+    this._router.put(
+      '/auction-categories/:id',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.updateAuctionCategory,
+    );
+
+    this._router.get(
+      '/kyc/:id/view',
+      this._authenticateMiddleware.authenticate,
+      this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+      this._adminController.viewKyc,
+    );
+
     return this._router;
   }
 }

@@ -1,99 +1,109 @@
-import {
-  IGetAuctionRoomInput,
-  IGetAuctionRoomOutput,
-} from '@application/dtos/auction/get-auction-room.dto';
-import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
-import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
-import { Result } from '@domain/shared/result';
+import { TYPES } from '@di/types.di';
 import { inject, injectable } from 'inversify';
+import { Result } from '@domain/shared/result';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
+import {
+  IAuctionRoomBidDto,
+  IAuctionRoomParticipantDto,
+  IAuctionRoomResultDto,
+  IGetAuctionRoomInputDto,
+} from '@application/dtos/auction/getAuctionRoom.dto';
 
 @injectable()
 export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
   constructor(
     @inject(TYPES.IAuctionRepository)
-    private readonly _auctionRepo: IAuctionRepository,
+    private readonly _auctionRepository: IAuctionRepository,
     @inject(TYPES.IBidRepository)
-    private readonly _bidRepo: IBidRepository,
+    private readonly _bidRepository: IBidRepository,
     @inject(TYPES.IAuctionParticipantRepository)
-    private readonly _participantRepo: IAuctionParticipantRepository,
+    private readonly _participantRepository: IAuctionParticipantRepository,
   ) {}
 
   async execute(
-    input: IGetAuctionRoomInput,
-  ): Promise<Result<IGetAuctionRoomOutput>> {
-    const auctionResult = await this._auctionRepo.findById(input.auctionId);
+    input: IGetAuctionRoomInputDto,
+  ): Promise<Result<IAuctionRoomResultDto>> {
+    const auctionResult = await this._auctionRepository.findById(
+      input.auctionId,
+    );
 
     if (auctionResult.isFailure) {
       return Result.fail(auctionResult.getError());
     }
 
     const auction = auctionResult.getValue();
-    const isSellerViewingOwn =
-      input.sellerId && auction.getSellerId() === input.sellerId;
 
-    if (!isSellerViewingOwn) {
-      if (auction.getStatus() === AuctionStatus.DRAFT) {
-        return Result.fail('Auction is not active');
-      }
-      if (
-        auction.getStatus() === AuctionStatus.ENDED ||
-        auction.getStatus() === AuctionStatus.CANCELLED
-      ) {
-        return Result.fail('Auction is ended');
-      }
-      if (auction.getStartAt() > new Date()) {
-        return Result.fail('Auction is not started');
-      }
-      if (auction.getEndAt() < new Date()) {
-        return Result.fail('Auction is ended');
-      }
+    if (auction.getStatus() === AuctionStatus.DRAFT) {
+      return Result.fail('Only non-draft auctions can be viewed');
     }
 
-    const [bidsResult, participantsResult] = await Promise.all([
-      this._bidRepo.findManyByAuctionId(input.auctionId, 500),
-      this._participantRepo.findByAuctionId(input.auctionId),
-    ]);
+    const auctionDto = AuctionMapperProrfile.toAuctionOutputDto(auction);
 
-    if (bidsResult.isFailure) {
-      return Result.fail(bidsResult.getError());
-    }
+    const latestBidResult = await this._bidRepository.findLatestByAuctionId(
+      input.auctionId,
+    );
+
+    if (latestBidResult.isFailure)
+      return Result.fail(latestBidResult.getError());
+
+    const latestBid = latestBidResult.getValue();
+
+    const currentBid: IAuctionRoomBidDto | null = latestBid
+      ? {
+          id: latestBid.getId(),
+          auctionId: latestBid.getAuctionId(),
+          userId: latestBid.getUserId(),
+          amount: latestBid.getAmount(),
+          createdAt: latestBid.getCreatedAt().toISOString(),
+        }
+      : null;
+
+    const bidsLimit = 10; // ----!!!!!----------
+
+    const liveFeedResult = await this._bidRepository.findManyByAuctionId(
+      input.auctionId,
+      bidsLimit,
+    );
+
+    if (liveFeedResult.isFailure) return Result.fail(liveFeedResult.getError());
+
+    const liveFeed = liveFeedResult.getValue().map((b) => ({
+      id: b.getId(),
+      auctionId: b.getAuctionId(),
+      userId: b.getUserId(),
+      amount: b.getAmount(),
+      createdAt: b.getCreatedAt().toISOString(),
+    }));
+
+    const participantsResult =
+      await this._participantRepository.findByAuctionId(input.auctionId);
 
     if (participantsResult.isFailure) {
       return Result.fail(participantsResult.getError());
     }
 
-    const bids = bidsResult.getValue();
-    const participants = participantsResult.getValue();
-
-    const byTime = [...bids].sort(
-      (a, b) => b.getCreatedAt().getTime() - a.getCreatedAt().getTime(),
-    );
-
-    const lastBidTime = byTime[0]?.getCreatedAt();
-
-    const output: IGetAuctionRoomOutput = {
-      bids: byTime.map((b) => ({
-        id: b.getId(),
-        auctionId: b.getAuctionId(),
-        userId: b.getUserId(),
-        amount: b.getAmount(),
-        createdAt: b.getCreatedAt().toISOString(),
-      })),
-
-      participants: participants.map((p) => ({
+    const participants: IAuctionRoomParticipantDto[] = participantsResult
+      .getValue()
+      .map((p) => ({
         id: p.getId(),
         auctionId: p.getAuctionId(),
         userId: p.getUserId(),
         userName: p.getUserName(),
         joinedAt: p.getJoinedAt().toISOString(),
-      })),
+      }));
 
-      lastBidTime: lastBidTime ? lastBidTime.toISOString() : null,
+    const result: IAuctionRoomResultDto = {
+      auction: auctionDto,
+      currentBid,
+      liveFeed,
+      participants,
     };
-    return Result.ok(output);
+
+    return Result.ok(result);
   }
 }

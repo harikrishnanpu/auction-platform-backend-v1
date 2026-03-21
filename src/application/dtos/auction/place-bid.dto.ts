@@ -11,4 +11,6 @@ export interface IPlaceBidOutput {
   userId: string;
   amount: number;
   createdAt: string;
+  endAt: string;
+  extensionCount: number;
 }

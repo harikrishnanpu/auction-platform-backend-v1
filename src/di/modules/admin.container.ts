@@ -14,6 +14,24 @@ import { GetAllSellersUseCase } from '@application/usecases/admin/getAllSellers.
 import { RejectSellerKycUseCase } from '@application/usecases/admin/rejectSellerKyc.usecase';
 import { TYPES } from '@di/types.di';
 import { ContainerModule } from 'inversify';
+import { GetAllCategoryRequestUsecase } from '@application/usecases/admin/getAllcategoryrequest.usecase';
+import { IGetAllCategoryRequestUsecase } from '@application/interfaces/usecases/admin/IGetAllCategoryrequestusecase';
+import { IApproveAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IApproveAuctioncategoryUsecasse';
+import { ApproveAuctionCategoryUsecase } from '@application/usecases/admin/approveAuctionCategory.usecase';
+import { IChangeAuctionCategoryStatusUsecase } from '@application/interfaces/usecases/admin/IChangeAuctionCategoyUsecase';
+import { ChangeAuctionCategoryStatusUsecase } from '@application/usecases/admin/changeAuctionCategoryStatus.usecase';
+import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/usecases/admin/IGetAllAuctionCategoriesUsecase';
+import { GetAllAdminAuctionCategoriesUsecase } from '@application/usecases/admin/getAllAdminAuctionCategories.usecase';
+import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
+import { UpdateAuctionCategoryUsecase } from '@application/usecases/admin/updateAuctionCategory.usecase';
+import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKycUsecase';
+import { ViewKycUsecase } from '@application/usecases/admin/viewKycUsecase';
+import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
+import { RejectAuctionCategoryUsecase } from '@application/usecases/admin/rejectAuctionCategory.usecase';
+import { IGetAdminAuctionsUsecase } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
+import { GetAdminAuctionsUsecase } from '@application/usecases/admin/getAdminAuctions.usecase';
+import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/ICreateAuctionCategoryUsecase';
+import { CreateAuctionCategoryUsecase } from '@application/usecases/admin/createAuctionCategory.usecase';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
   console.log('Admin container loaded');
@@ -35,4 +53,32 @@ export const adminContainer = new ContainerModule(({ bind }) => {
   bind<IRejectSellerKycUsecase>(TYPES.IRejectSellerKycUsecase).to(
     RejectSellerKycUseCase,
   );
+  bind<IGetAllCategoryRequestUsecase>(TYPES.IGetAllCategoryRequestUsecase).to(
+    GetAllCategoryRequestUsecase,
+  );
+
+  bind<IApproveAuctionCategoryUsecase>(TYPES.IApproveAuctionCategoryUsecase).to(
+    ApproveAuctionCategoryUsecase,
+  );
+  bind<IChangeAuctionCategoryStatusUsecase>(
+    TYPES.IChangeAuctionCategoryStatusUsecase,
+  ).to(ChangeAuctionCategoryStatusUsecase);
+  bind<IGetAllAdminAuctionCategoriesUsecase>(
+    TYPES.IGetAllAdminAuctionCategoriesUsecase,
+  ).to(GetAllAdminAuctionCategoriesUsecase);
+
+  bind<IGetAdminAuctionsUsecase>(TYPES.IGetAdminAuctionsUsecase).to(
+    GetAdminAuctionsUsecase,
+  );
+
+  bind<IUpdateAuctionCategoryUsecase>(TYPES.IUpdateAuctionCategoryUsecase).to(
+    UpdateAuctionCategoryUsecase,
+  );
+  bind<ICreateAuctionCategoryUsecase>(TYPES.ICreateAuctionCategoryUsecase).to(
+    CreateAuctionCategoryUsecase,
+  );
+  bind<IViewKycUsecase>(TYPES.IViewKycUsecase).to(ViewKycUsecase);
+  bind<IRejectAuctionCategoryrequestUsecase>(
+    TYPES.IRejectAuctionCategoryUsecase,
+  ).to(RejectAuctionCategoryUsecase);
 });

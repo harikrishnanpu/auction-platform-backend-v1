@@ -22,15 +22,8 @@ export class AuctionParticipant {
     userName: string;
     joinedAt?: Date;
   }): Result<AuctionParticipant> {
-    if (!id?.trim()) return Result.fail('Participant id is required');
-    if (!auctionId?.trim()) return Result.fail('Auction id is required');
-    if (!userId?.trim()) return Result.fail('User id is required');
-    if (!userName?.trim()) return Result.fail('User name is required');
-
-    const date =
-      joinedAt instanceof Date ? joinedAt : new Date(joinedAt as string);
     return Result.ok(
-      new AuctionParticipant(id, auctionId, userId, userName.trim(), date),
+      new AuctionParticipant(id, auctionId, userId, userName, joinedAt),
     );
   }
 

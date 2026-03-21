@@ -1,12 +1,12 @@
-import {
-  IGetBrowseAuctionsInput,
-  IGetBrowseAuctionsOutput,
-  IBrowseAuctionListItemDto,
-} from '@application/dtos/auction/get-browse-auctions.dto';
-import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import type {
+  IGetBrowseAuctionsInputDto,
+  IGetBrowseAuctionsOutputDto,
+  IGetBrowseAuctionsUsecase,
+} from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
-import { AuctionType } from '@domain/entities/auction/auction.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -18,46 +18,46 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
   ) {}
 
   async execute(
-    input: IGetBrowseAuctionsInput,
-  ): Promise<Result<IGetBrowseAuctionsOutput>> {
-    const result = await this._auctionRepository.findForBrowse({
-      category: input.category,
-      auctionType: input.auctionType as AuctionType | 'ALL',
+    input: IGetBrowseAuctionsInputDto,
+  ): Promise<Result<IGetBrowseAuctionsOutputDto>> {
+    const safePage = Number(input.page) > 0 ? input.page : 1;
+    const safeLimit = Number(input.limit) > 0 ? input.limit : 10;
+
+    const auctionsRes = await this._auctionRepository.findAll({
+      status: 'ALL',
+      auctionType: input.auctionType,
+      categoryId: input.categoryId,
+      sort: input.sort,
+      order: input.order,
+      search: input.search,
     });
 
-    if (result.isFailure) return Result.fail(result.getError());
+    if (auctionsRes.isFailure) return Result.fail(auctionsRes.getError());
 
-    const auctions = result.getValue();
+    const allAuctions = auctionsRes.getValue();
+    const eligible = allAuctions.filter(
+      (a) =>
+        a.getStatus() === AuctionStatus.ACTIVE ||
+        a.getStatus() === AuctionStatus.PAUSED,
+    );
+    const total = eligible.length;
+    const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+    const currentPage = Math.min(safePage, totalPages);
 
-    const auctionResults: IBrowseAuctionListItemDto[] = auctions.map((a) => {
-      const assets = a.getAssets();
-      const primary = assets.sort(
-        (x, y) => x.getPosition() - y.getPosition(),
-      )[0];
+    const start = (currentPage - 1) * safeLimit;
+    const end = start + safeLimit;
 
-      return {
-        id: a.getId(),
-        sellerId: a.getSellerId(),
-        auctionType: a.getAuctionType(),
-        title: a.getTitle(),
-        description: a.getDescription(),
-        category: a.getCategory(),
-        condition: a.getCondition(),
-        startPrice: a.getStartPrice(),
-        minIncrement: a.getMinIncrement(),
-        startAt: a.getStartAt().toISOString(),
-        endAt: a.getEndAt().toISOString(),
-        status: a.getStatus(),
-        assetCount: assets.length,
-        primaryImageKey: primary?.getFileKey(),
-        antiSnipSeconds: a.getAntiSnipSeconds(),
-        extensionCount: a.getExtensionCount(),
-        maxExtensionCount: a.getMaxExtensionCount(),
-        bidCooldownSeconds: a.getBidCooldownSeconds(),
-        winnerId: a.getWinnerId(),
-      };
+    const auctionsResult = eligible
+      .slice(start, end)
+      .map((a) => AuctionMapperProrfile.toAuctionOutputDto(a));
+
+    return Result.ok({
+      auctions: auctionsResult,
+      total,
+      page: currentPage,
+      limit: safeLimit,
+      totalPages,
+      currentPage,
     });
-
-    return Result.ok({ auctions: auctionResults });
   }
 }

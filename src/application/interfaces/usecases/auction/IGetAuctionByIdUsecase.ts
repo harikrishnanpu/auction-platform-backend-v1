@@ -1,9 +1,11 @@
-import {
-  IGetAuctionByIdInput,
-  IGetAuctionByIdOutput,
-} from '@application/dtos/auction/get-auction-by-id.dto';
+import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { Result } from '@domain/shared/result';
 
+export interface IGetAuctionByIdInputDto {
+  userId: string;
+  auctionId: string;
+}
+
 export interface IGetAuctionByIdUsecase {
-  execute(input: IGetAuctionByIdInput): Promise<Result<IGetAuctionByIdOutput>>;
+  execute(input: IGetAuctionByIdInputDto): Promise<Result<IAuctionDto>>;
 }

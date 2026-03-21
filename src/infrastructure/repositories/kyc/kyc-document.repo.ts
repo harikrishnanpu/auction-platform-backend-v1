@@ -1,6 +1,8 @@
 import { TYPES } from '@di/types.di';
 import { KycDocument } from '@domain/entities/kyc/kyc-document.entity';
 import { IKycDocumentRepository } from '@domain/repositories/IKycDocumentRepository';
+import { Result } from '@domain/shared/result';
+import { KycDocumentMapper } from '@infrastructure/mappers/kyc/kyc-document.mapper';
 import { DocumentStatus, DocumentType, PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
@@ -45,5 +47,19 @@ export class PrismaKycDocumentRepo implements IKycDocumentRepository {
         },
       },
     });
+  }
+
+  async findById(id: string): Promise<Result<KycDocument>> {
+    const document = await this._prisma.kycDocument.findUnique({
+      where: { id },
+    });
+
+    if (!document) return Result.fail('Document not found');
+
+    const documentResult = KycDocumentMapper.toDomain(document);
+
+    if (documentResult.isFailure) return Result.fail(documentResult.getError());
+
+    return Result.ok(documentResult.getValue());
   }
 }

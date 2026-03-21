@@ -1,36 +1,36 @@
+model Otp {
+  id          String     @id @default(uuid())
+  userId      String
+  purpose     OtpPurpose
+  channel     OtpChannel
+  otp         String
+  expiresAt   DateTime
+  maxAttempts Int        @default(2)
+  attempts    Int        @default(0)
+  status      OtpStatus
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  user        User       @relation(fields: [userId], references: [id])
+}
+
 enum OtpPurpose {
-    REGISTER
-    LOGIN
-    VERIFY_PHONE
-    VERIFY_EMAIL
-    RESET_PASSWORD
-    CHANGE_PROFILE_PASSWORD
-    EDIT_PROFILE
+  REGISTER
+  LOGIN
+  VERIFY_PHONE
+  VERIFY_EMAIL
+  RESET_PASSWORD
+  CHANGE_PROFILE_PASSWORD
+  EDIT_PROFILE
 }
 
 enum OtpChannel {
-    SMS
-    EMAIL
+  SMS
+  EMAIL
 }
 
 enum OtpStatus {
-    PENDING
-    VERIFIED
-    EXPIRED
-    BLOCKED
-}
-
-model Otp {
-    id          String     @id @default(uuid())
-    userId      String
-    purpose     OtpPurpose
-    channel     OtpChannel
-    otp         String
-    expiresAt   DateTime
-    maxAttempts Int        @default(2)
-    attempts    Int        @default(0)
-    status      OtpStatus
-    createdAt   DateTime   @default(now())
-    updatedAt   DateTime   @updatedAt
-    user        User       @relation(fields: [userId], references: [id])
+  PENDING
+  VERIFIED
+  EXPIRED
+  BLOCKED
 }

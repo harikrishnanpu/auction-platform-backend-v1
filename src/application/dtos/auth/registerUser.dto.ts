@@ -1,4 +1,4 @@
-export interface RegisterUserInput {
+export interface RegisterUserInputDto {
   name: string;
   email: string;
   phone: string;
@@ -6,6 +6,6 @@ export interface RegisterUserInput {
   address: string;
 }
 
-export interface RegisterUserOutput {
+export interface RegisterUserOutputDto {
   userId: string;
 }

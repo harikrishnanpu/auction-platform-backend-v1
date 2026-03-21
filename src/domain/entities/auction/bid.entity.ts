@@ -22,15 +22,7 @@ export class Bid {
     amount: number;
     createdAt?: Date;
   }): Result<Bid> {
-    if (!id?.trim()) return Result.fail('Bid id is required');
-    if (!auctionId?.trim()) return Result.fail('Auction id is required');
-    if (!userId?.trim()) return Result.fail('User id is required');
-    if (typeof amount !== 'number' || amount < 0)
-      return Result.fail('Amount must be a non-negative number');
-
-    const date =
-      createdAt instanceof Date ? createdAt : new Date(createdAt as string);
-    return Result.ok(new Bid(id, auctionId, userId, amount, date));
+    return Result.ok(new Bid(id, auctionId, userId, amount, createdAt));
   }
 
   getId(): string {

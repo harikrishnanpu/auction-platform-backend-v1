@@ -1,14 +1,14 @@
-import {
-  IGetAuctionByIdInput,
-  IGetAuctionByIdOutput,
-  IAuctionAssetDto,
-} from '@application/dtos/auction/get-auction-by-id.dto';
-import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
-import { TYPES } from '@di/types.di';
-import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
+import { TYPES } from '@di/types.di';
 import { inject, injectable } from 'inversify';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { IAuctionDto } from '@application/dtos/auction/auction.dto';
+import type {
+  IGetAuctionByIdInputDto,
+  IGetAuctionByIdUsecase,
+} from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
+import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 
 @injectable()
 export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {
@@ -17,67 +17,18 @@ export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {
     private readonly _auctionRepository: IAuctionRepository,
   ) {}
 
-  async execute(
-    input: IGetAuctionByIdInput,
-  ): Promise<Result<IGetAuctionByIdOutput>> {
-    const result = await this._auctionRepository.findById(input.auctionId);
-
-    if (result.isFailure) {
-      return Result.fail(result.getError());
+  async execute(input: IGetAuctionByIdInputDto): Promise<Result<IAuctionDto>> {
+    const existing = await this._auctionRepository.findById(input.auctionId);
+    if (existing.isFailure) {
+      return Result.fail(existing.getError());
     }
 
-    const auction = result.getValue();
-
-    const isSellerViewingOwn =
-      input.userId && auction.getSellerId() === input.userId;
-
-    if (!isSellerViewingOwn) {
-      if (auction.getStatus() === AuctionStatus.DRAFT) {
-        return Result.fail('Auction is not active');
-      }
-      if (
-        auction.getStatus() === AuctionStatus.ENDED ||
-        auction.getStatus() === AuctionStatus.CANCELLED
-      ) {
-        return Result.fail('Auction is ended');
-      }
-      if (auction.getStartAt() > new Date()) {
-        return Result.fail('Auction is not started');
-      }
-      if (auction.getEndAt() < new Date()) {
-        return Result.fail('Auction is ended');
-      }
+    const auction = existing.getValue();
+    if (auction.getSellerId() !== input.userId) {
+      return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_VIEW_AUCTION);
     }
 
-    const assets: IAuctionAssetDto[] = auction.getAssets().map((a) => ({
-      id: a.getId(),
-      auctionId: a.getAuctionId(),
-      fileKey: a.getFileKey(),
-      position: a.getPosition(),
-      assetType: a.getAssetType(),
-    }));
-
-    const output: IGetAuctionByIdOutput = {
-      id: auction.getId(),
-      sellerId: auction.getSellerId(),
-      auctionType: auction.getAuctionType(),
-      title: auction.getTitle(),
-      description: auction.getDescription(),
-      category: auction.getCategory(),
-      condition: auction.getCondition(),
-      startPrice: auction.getStartPrice(),
-      minIncrement: auction.getMinIncrement(),
-      startAt: auction.getStartAt().toISOString(),
-      endAt: auction.getEndAt().toISOString(),
-      status: auction.getStatus(),
-      assets,
-      antiSnipSeconds: auction.getAntiSnipSeconds(),
-      extensionCount: auction.getExtensionCount(),
-      maxExtensionCount: auction.getMaxExtensionCount(),
-      bidCooldownSeconds: auction.getBidCooldownSeconds(),
-      winnerId: auction.getWinnerId(),
-    };
-
+    const output = AuctionMapperProrfile.toAuctionOutputDto(auction);
     return Result.ok(output);
   }
 }
