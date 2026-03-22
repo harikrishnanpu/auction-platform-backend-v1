@@ -2,14 +2,14 @@ export interface IPlaceBidInput {
   auctionId: string;
   userId: string;
   userName: string;
-  amount: number;
+  amount: string;
 }
 
 export interface IPlaceBidOutput {
   id: string;
   auctionId: string;
   userId: string;
-  amount: number;
+  amount: string;
   createdAt: string;
   endAt: string;
   extensionCount: number;

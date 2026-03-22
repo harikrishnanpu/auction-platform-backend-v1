@@ -97,7 +97,7 @@ export class Auction {
       return Result.fail('Extension count cannot exceed max extension count');
     }
 
-    if (minIncrement < 1) {
+    if (auctionType === AuctionType.LONG && minIncrement < 1) {
       return Result.fail('Min increment must be greater than 1');
     }
 
