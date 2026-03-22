@@ -10,3 +10,5 @@ export const getAllUsersSchema = z.object({
   status: z.string().optional(),
   authProvider: z.string().optional(),
 });
+
+export type ZodGetAllUsersInputType = z.infer<typeof getAllUsersSchema>;

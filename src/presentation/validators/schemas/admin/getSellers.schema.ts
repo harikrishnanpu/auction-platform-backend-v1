@@ -5,3 +5,5 @@ export const getAllSellersSchema = z.object({
   limit: z.string().optional(),
   pendingOnly: z.boolean().optional(),
 });
+
+export type ZodGetAllSellersInputType = z.infer<typeof getAllSellersSchema>;
