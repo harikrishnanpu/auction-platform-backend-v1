@@ -5,3 +5,7 @@ export const generateAuctionUploadUrlSchema = z.object({
   contentType: z.string().min(1, 'Content type is required').trim(),
   fileSize: z.number().min(1, 'File size is required'),
 });
+
+export type ZodGenerateAuctionUploadUrlInputType = z.infer<
+  typeof generateAuctionUploadUrlSchema
+>;

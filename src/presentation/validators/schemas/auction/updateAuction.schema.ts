@@ -40,4 +40,4 @@ export const updateAuctionSchema = z
     path: ['endAt'],
   });
 
-export type UpdateAuctionSchemaType = z.infer<typeof updateAuctionSchema>;
+export type ZodUpdateAuctionInputType = z.infer<typeof updateAuctionSchema>;
