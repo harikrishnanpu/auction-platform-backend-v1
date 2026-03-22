@@ -41,6 +41,7 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
         a.getStatus() === AuctionStatus.PAUSED,
     );
     const total = eligible.length;
+
     const totalPages = Math.max(1, Math.ceil(total / safeLimit));
     const currentPage = Math.min(safePage, totalPages);
 

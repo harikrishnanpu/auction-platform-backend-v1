@@ -2,11 +2,14 @@ import {
   userResponseDto,
   UserRoleType,
 } from '@application/dtos/auth/loginUser.dto';
-import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
+import {
+  VerifyCredentialsInput,
+  verifyCredentialsOutput,
+} from '@application/dtos/auth/verifyCredentials.dto';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/auth/IVerifyCredentialsUseCase';
 import { TYPES } from '@di/types.di';
-import { OtpPurpose, OtpStatus } from '@domain/entities/otp/otp.entity';
+import { OtpStatus } from '@domain/entities/otp/otp.entity';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
@@ -25,12 +28,10 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
   ) {}
 
   async execute(
-    otp: string,
-    email: string,
-    purpose: OtpPurpose,
+    data: VerifyCredentialsInput,
   ): Promise<Result<verifyCredentialsOutput>> {
     try {
-      const emailVo = Email.create(email);
+      const emailVo = Email.create(data.email);
       if (emailVo.isFailure) {
         return Result.fail('Invalid email');
       }
@@ -46,7 +47,7 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
       const otpEntity =
         await this._otpRepository.findRecentOtpByUserIdAndPurpose(
           userEntity.getValue().getId(),
-          purpose,
+          data.purpose,
         );
 
       if (!otpEntity) {
@@ -57,7 +58,7 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
         return Result.fail('Otp blocked');
       }
 
-      if (otpEntity.getOtp() !== otp) {
+      if (otpEntity.getOtp() !== data.otp) {
         otpEntity.incrementAttempts();
         console.log('otpEntity', otpEntity);
         await this._otpRepository.update(otpEntity);

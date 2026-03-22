@@ -1,5 +1,5 @@
 import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
-import { SendOtpInput } from '@application/dtos/otp/SendOtp.dto';
+import { SendVerificationCodeInputDto } from '@application/dtos/otp/SendOtp.dto';
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IOtpService } from '@application/interfaces/services/IOtpService';
@@ -30,7 +30,7 @@ export class SendOtpUseCase implements ISendOtpUsecase {
     private readonly _emailService: IEmailService,
   ) {}
 
-  async execute(data: SendOtpInput): Promise<Result<void>> {
+  async execute(data: SendVerificationCodeInputDto): Promise<Result<void>> {
     try {
       const emailVo = Email.create(data.email);
       if (emailVo.isFailure) {

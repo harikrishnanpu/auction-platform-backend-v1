@@ -11,7 +11,7 @@ import {
   IApproveAuctionCategoryInputDto,
   IApproveAuctionCategoryOutputDto,
 } from '@application/dtos/admin/approveAuctionCategory.dto';
-import { ApproveAuctionCategoryInput } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
+import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
 import {
   GetAllAuctionCategoryDto,
   IGetAllAuctionsInputDto,
@@ -20,7 +20,7 @@ import {
   IUpdateAuctionCategoryInputDto,
   IUpdateAuctionCategoryOutputDto,
 } from '@application/dtos/admin/updateAuctionCategory.dto';
-import { UpdateAuctionCategoryInput } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import {
   IRejectAuctionCategoryrequestInputDto,
   IRejectAuctionCategoryrequestOutputDto,
@@ -145,7 +145,7 @@ export class AuctionMapperProrfile {
   }
 
   public static toApproveAuctionCategoryInputDto(
-    data: ApproveAuctionCategoryInput,
+    data: ZodApproveAuctionCategoryInputType,
   ): IApproveAuctionCategoryInputDto {
     return {
       categoryId: data.categoryId.trim(),
@@ -171,7 +171,7 @@ export class AuctionMapperProrfile {
   }
 
   public static toUpdateAuctionCategoryInputDto(
-    data: UpdateAuctionCategoryInput,
+    data: ZodUpdateAuctionCategoryInputType,
   ): IUpdateAuctionCategoryInputDto {
     return {
       categoryId: data.categoryId.trim(),

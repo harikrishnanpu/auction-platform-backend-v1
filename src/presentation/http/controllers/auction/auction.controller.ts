@@ -2,8 +2,6 @@ import { ICreateAuctionUsecase } from '@application/interfaces/usecases/auction/
 import { IGenerateAuctionUploadUrlUsecase } from '@application/interfaces/usecases/auction/IGenerateAuctionUploadUrlUsecase';
 import { IUpdateAuctionUsecase } from '@application/interfaces/usecases/auction/IUpdateAuctionUsecase';
 import { IPublishAuctionUsecase } from '@application/interfaces/usecases/auction/IPublishAuctionUsecase';
-import { IEndAuctionUsecase } from '@application/interfaces/usecases/auction/IEndAuctionUsecase';
-import { IPlaceBidUsecase } from '@application/interfaces/usecases/auction/IPlaceBidUsecase';
 import { IUpdateAuctionOutput } from '@application/dtos/auction/update-auction.dto';
 import { TYPES } from '@di/types.di';
 import {
@@ -31,8 +29,6 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
-import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
-import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
 import {
   getBrowseAuctionsSchema,
   ZodGetBrowseAuctionsInputType,
@@ -58,18 +54,10 @@ export class AuctionController {
     private readonly _updateAuctionUsecase: IUpdateAuctionUsecase,
     @inject(TYPES.IPublishAuctionUsecase)
     private readonly _publishAuctionUsecase: IPublishAuctionUsecase,
-    @inject(TYPES.IEndAuctionUsecase)
-    private readonly _endAuctionUsecase: IEndAuctionUsecase,
-    @inject(TYPES.IPlaceBidUsecase)
-    private readonly _placeBidUsecase: IPlaceBidUsecase,
     @inject(TYPES.IGetAllAuctionCategoriesUsecase)
     private readonly _getAllAuctionCategoryUsecase: IGetAllAuctionCategoriesUsecase,
     @inject(TYPES.IGetAuctionByIdUsecase)
     private readonly _getAuctionByIdUsecase: IGetAuctionByIdUsecase,
-    @inject(TYPES.IPauseAuctionUsecase)
-    private readonly _pauseAuctionUsecase: IPauseAuctionUsecase,
-    @inject(TYPES.IResumeAuctionUsecase)
-    private readonly _resumeAuctionUsecase: IResumeAuctionUsecase,
     @inject(TYPES.IGetBrowseAuctionsUsecase)
     private readonly _getBrowseAuctionsUsecase: IGetBrowseAuctionsUsecase,
   ) {}

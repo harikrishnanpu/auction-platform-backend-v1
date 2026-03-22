@@ -16,6 +16,7 @@ import { inject, injectable } from 'inversify';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
+// import { AuctionCreateStartegyFactory } from '@application/strategies/factory/auctionCreateStartegy.factory';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -30,6 +31,11 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
 
   async execute(input: ICreateAuctionInputDto): Promise<Result<IAuctionDto>> {
     console.log('CREATE AUCTION INPUT: ', input);
+
+    // const strategy = AuctionCreateStartegyFactory.create(input.auctionType);
+    // const validatedInput = strategy.validate(input);
+    // if(validatedInput.isFailure) return Result.fail(validatedInput.getError());
+    // const validatedAuctionInput = validatedInput.getValue();
 
     const categoryResult = await this._auctionCategoryRepository.findById(
       input.categoryId,
