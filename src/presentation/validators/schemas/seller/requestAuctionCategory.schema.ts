@@ -8,6 +8,6 @@ export const requestAuctionCategorySchema = z.object({
   parentId: z.string().optional().nullable(),
 });
 
-export type RequestAuctionCategoryInput = z.infer<
+export type ZodRequestAuctionCategoryInputType = z.infer<
   typeof requestAuctionCategorySchema
 >;

@@ -7,3 +7,5 @@ export const uploadKycUrlSchema = z.object({
   contentType: z.string().min(1, 'Content type is required').trim(),
   fileSize: z.number().min(1, 'File size is required'),
 });
+
+export type ZodUploadKycUrlInputType = z.infer<typeof uploadKycUrlSchema>;
