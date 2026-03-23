@@ -5,7 +5,10 @@ import { Request, Response } from 'express';
 import { AppError } from '@presentation/http/error/app.error';
 import { IChangeProfilePasswordUsecase } from '@application/interfaces/usecases/user/IChangeProfilePassword';
 import { ChangeProfilePasswordInput } from '@application/dtos/user/userProfile.dto';
-import { changeProfilePasswordSchema } from '@presentation/validators/schemas/user/change-profile-password.schema';
+import {
+  changeProfilePasswordSchema,
+  ZodChangeProfilePasswordInputType,
+} from '@presentation/validators/schemas/user/change-profile-password.schema';
 import { USER_PROFILE_CONSTANTS } from '@presentation/constants/user/user-profile.constants';
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
 import { SendVerificationCodeInputDto } from '@application/dtos/otp/SendOtp.dto';
@@ -15,14 +18,28 @@ import {
   EditProfileOutput,
 } from '@application/dtos/user/editProfile.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
-import { editProfileSchema } from '@presentation/validators/schemas/user/editProfile.schema';
-import { AvatarUploadUrlRequestDto } from '@application/dtos/user/avatarUploadUrl.dto';
+import {
+  editProfileSchema,
+  ZodEditProfileInputType,
+} from '@presentation/validators/schemas/user/editProfile.schema';
+import { GenerateAvatarUploadUrlInput } from '@application/dtos/user/avatarUploadUrl.dto';
 import { IGenerateAvatarUploadUrlUsecase } from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
-import { generateUploadUrlSchema } from '@presentation/validators/schemas/user/generate-upload-url.schema';
-import { updateAvatarUrlSchema } from '@presentation/validators/schemas/user/update-avatar-url.schema';
-import { UpdateAvatarUrlRequestDto } from '@application/dtos/user/updateAvatar.dto';
+import {
+  generateUploadUrlSchema,
+  ZodGenerateUploadUrlInputType,
+} from '@presentation/validators/schemas/user/generate-upload-url.schema';
+import {
+  updateAvatarUrlSchema,
+  ZodUpdateAvatarUrlInputType,
+} from '@presentation/validators/schemas/user/update-avatar-url.schema';
+import {
+  UpdateAvatarUrlRequestDto,
+  UpdateAvatarUrlResponseDto,
+} from '@application/dtos/user/updateAvatar.dto';
 import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
+import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
+import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
 export class UserController {
@@ -68,14 +85,13 @@ export class UserController {
         );
       }
 
-      const response = ResponseHelper.success<null>(
+      ResponseHelper.success<null>(
+        res,
         null,
         USER_PROFILE_CONSTANTS.MESSAGES
           .PROFILE_CHANGE_PASSWORD_EMAIL_SENT_SUCCESSFULLY,
         USER_PROFILE_CONSTANTS.CODES.OK,
       );
-
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
 
@@ -87,14 +103,11 @@ export class UserController {
   changeProfilePassword = expressAsyncHandler(
     async (req: Request, res: Response) => {
       // console.log(req.body);
-      const parsedData = changeProfilePasswordSchema.safeParse(req.body);
-
-      if (!parsedData.success) {
-        throw new AppError(
-          parsedData.error.issues[0].message,
-          USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodChangeProfilePasswordInputType>(
+          changeProfilePasswordSchema,
+          req.body,
         );
-      }
 
       if (!req.user) {
         throw new AppError(
@@ -103,21 +116,13 @@ export class UserController {
         );
       }
 
-      const changeProfilePasswordDto: ChangeProfilePasswordInput = {
-        userId: req.user.id,
-        otp: parsedData.data.otp,
-        oldPassword: parsedData.data.oldPassword,
-        newPassword: parsedData.data.newPassword,
-      };
+      const dto: ChangeProfilePasswordInput =
+        UserMapperProfile.toChangeProfilePasswordInput(
+          validationResult,
+          req.user.id,
+        );
 
-      console.log(
-        'CHANGE PROFILE PASSWORD DTO CALLING',
-        changeProfilePasswordDto,
-      );
-
-      const user = await this._changeProfilePasswordUseCase.execute(
-        changeProfilePasswordDto,
-      );
+      const user = await this._changeProfilePasswordUseCase.execute(dto);
 
       if (user.isFailure) {
         throw new AppError(
@@ -126,13 +131,12 @@ export class UserController {
         );
       }
 
-      const response = ResponseHelper.success<null>(
+      ResponseHelper.success<null>(
+        res,
         null,
         USER_PROFILE_CONSTANTS.MESSAGES.CHANGE_PROFILE_PASSWORD_SUCCESSFULLY,
         USER_PROFILE_CONSTANTS.CODES.OK,
       );
-
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
 
@@ -165,13 +169,12 @@ export class UserController {
         );
       }
 
-      const response = ResponseHelper.success<null>(
+      ResponseHelper.success<null>(
+        res,
         null,
         USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SEND_OTP_SUCCESSFULLY,
         USER_PROFILE_CONSTANTS.CODES.OK,
       );
-
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
 
@@ -181,16 +184,12 @@ export class UserController {
    */
 
   editProfile = expressAsyncHandler(async (req: Request, res: Response) => {
-    console.log('EDIT PROFILE=---', req.body);
+    // console.log('EDIT PROFILE=---', req.body);
 
-    const parsedData = editProfileSchema.safeParse(req.body);
-
-    if (!parsedData.success) {
-      throw new AppError(
-        parsedData.error.issues[0].message,
-        USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const validationResult = ValidationHelper.validate<ZodEditProfileInputType>(
+      editProfileSchema,
+      req.body,
+    );
 
     if (!req.user) {
       throw new AppError(
@@ -199,16 +198,14 @@ export class UserController {
       );
     }
 
-    const editProfileInput: EditProfileInput = {
-      userId: req.user.id,
-      otp: parsedData.data.otp,
-      name: parsedData.data.name,
-      email: req.user.email,
-      phone: parsedData.data.phone,
-      address: parsedData.data.address,
-    };
+    const dto: EditProfileInput = UserMapperProfile.toEditProfileInput(
+      validationResult,
+      req.user.id,
+      req.user.email,
+    );
 
-    const result = await this._editProfileUseCase.execute(editProfileInput);
+    const result = await this._editProfileUseCase.execute(dto);
+
     if (result.isFailure) {
       throw new AppError(
         result.getError(),
@@ -216,25 +213,21 @@ export class UserController {
       );
     }
 
-    const response = ResponseHelper.success<EditProfileOutput>(
+    ResponseHelper.success<EditProfileOutput>(
+      res,
       result.getValue(),
       USER_PROFILE_CONSTANTS.MESSAGES.EDIT_PROFILE_SUCCESSFULLY,
       USER_PROFILE_CONSTANTS.CODES.OK,
     );
-
-    res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
   });
 
   generateAvatarUploadUrl = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const parsedData = generateUploadUrlSchema.safeParse(req.body);
-
-      if (!parsedData.success) {
-        throw new AppError(
-          parsedData.error.issues[0].message,
-          USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodGenerateUploadUrlInputType>(
+          generateUploadUrlSchema,
+          req.body,
         );
-      }
 
       if (!req.user) {
         throw new AppError(
@@ -243,16 +236,13 @@ export class UserController {
         );
       }
 
-      const generateAvatarUploadUrlInput: AvatarUploadUrlRequestDto = {
-        userId: req.user.id,
-        contentType: parsedData.data.contentType,
-        fileName: parsedData.data.fileName,
-        fileSize: parsedData.data.fileSize,
-      };
+      const dto: GenerateAvatarUploadUrlInput =
+        UserMapperProfile.toGenerateAvatarUploadUrlInput(
+          validationResult,
+          req.user.id,
+        );
 
-      const result = await this._generateAvatarUploadUrlUseCase.execute(
-        generateAvatarUploadUrlInput,
-      );
+      const result = await this._generateAvatarUploadUrlUseCase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -261,25 +251,21 @@ export class UserController {
         );
       }
 
-      const response = ResponseHelper.success(
+      ResponseHelper.success(
+        res,
         result.getValue(),
         USER_PROFILE_CONSTANTS.MESSAGES.GENERATE_AVATAR_UPLOAD_URL_SUCCESSFULLY,
         USER_PROFILE_CONSTANTS.CODES.OK,
       );
-
-      res.status(USER_PROFILE_CONSTANTS.CODES.OK).json(response);
     },
   );
 
   updateAvatarUrl = expressAsyncHandler(async (req: Request, res: Response) => {
-    const parsedData = updateAvatarUrlSchema.safeParse(req.body);
-
-    if (!parsedData.success) {
-      throw new AppError(
-        parsedData.error.issues[0].message,
-        USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+    const validationResult =
+      ValidationHelper.validate<ZodUpdateAvatarUrlInputType>(
+        updateAvatarUrlSchema,
+        req.body,
       );
-    }
 
     if (!req.user) {
       throw new AppError(
@@ -288,13 +274,10 @@ export class UserController {
       );
     }
 
-    const updateAvatarUrlInput: UpdateAvatarUrlRequestDto = {
-      userId: req.user.id,
-      avatarKey: parsedData.data.fileKey,
-    };
+    const dto: UpdateAvatarUrlRequestDto =
+      UserMapperProfile.toUpdateAvatarUrlInput(validationResult, req.user.id);
 
-    const result =
-      await this._updateAvatarUrlUseCase.execute(updateAvatarUrlInput);
+    const result = await this._updateAvatarUrlUseCase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(
@@ -303,12 +286,11 @@ export class UserController {
       );
     }
 
-    res.status(USER_PROFILE_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: USER_PROFILE_CONSTANTS.MESSAGES.UPDATE_AVATAR_URL_SUCCESSFULLY,
-      status: USER_PROFILE_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<UpdateAvatarUrlResponseDto>(
+      res,
+      result.getValue(),
+      USER_PROFILE_CONSTANTS.MESSAGES.UPDATE_AVATAR_URL_SUCCESSFULLY,
+      USER_PROFILE_CONSTANTS.CODES.OK,
+    );
   });
 }

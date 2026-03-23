@@ -1,53 +1,96 @@
-import { IGetAllUsersInput } from '@application/dtos/admin/getAllusers.dto';
-import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { IGetAllUsersUsecase } from '@application/interfaces/usecases/admin/IGetAllUsersUsecase';
 import { TYPES } from '@di/types.di';
-import {
-  AuthProviderType,
-  UserStatus,
-} from '@domain/entities/user/user.entity';
 import { ADMIN_CONSTANTS } from '@presentation/constants/admin/admin.constants';
 import { AppError } from '@presentation/http/error/app.error';
 import expressAsyncHandler from 'express-async-handler';
 import { inject, injectable } from 'inversify';
 import { Request, Response } from 'express';
-import { getAllUsersSchema } from '@presentation/validators/schemas/admin/getAllUsers.schema';
-import { blockUserSchema } from '@presentation/validators/schemas/admin/blockUsers.schema';
-import { IBlockUserInput } from '@application/dtos/admin/blockuser.dto';
+import {
+  getAllUsersSchema,
+  ZodGetAllUsersInputType,
+} from '@presentation/validators/schemas/admin/getAllUsers.schema';
+import {
+  blockUserSchema,
+  ZodBlockUserInputType,
+} from '@presentation/validators/schemas/admin/blockUsers.schema';
+import { IBlockUserOutput } from '@application/dtos/admin/blockuser.dto';
 import { IBlockUserUsecase } from '@application/interfaces/usecases/admin/IBlockUserUsecase';
-import { IGetUserInput } from '@application/dtos/admin/getUser.dto';
+import { IGetUserOutput } from '@application/dtos/admin/getUser.dto';
 import { IGetAdminUserUsecase } from '@application/interfaces/usecases/admin/IGetAdminUserUsecase';
 import { IGetAllSellersUsecase } from '@application/interfaces/usecases/admin/IGetAllSellersUsecase';
 import { IGetAdminSellerUsecase } from '@application/interfaces/usecases/admin/IGetAdminSellerUsecase';
 import { IApproveSellerKycUsecase } from '@application/interfaces/usecases/admin/IApproveSellerKycUsecase';
 import { IRejectSellerKycUsecase } from '@application/interfaces/usecases/admin/IRejectSellerKycUsecase';
-import { IGetAllSellersInput } from '@application/dtos/admin/getSellers.dto';
-import { IRejectSellerKycInput } from '@application/dtos/admin/rejectSellerKyc.dto';
-import { getAdminUserSchema } from '@presentation/validators/schemas/admin/getAdminUser.schema';
-import { getAdminSellerSchema } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
-import { getAllSellersSchema } from '@presentation/validators/schemas/admin/getSellers.schema';
-import { rejectSellerKycSchema } from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
+import { IGetAllSellersOutput } from '@application/dtos/admin/getSellers.dto';
+import { IRejectSellerKycOutput } from '@application/dtos/admin/rejectSellerKyc.dto';
+import {
+  getAdminUserSchema,
+  ZodGetAdminUserInputType,
+} from '@presentation/validators/schemas/admin/getAdminUser.schema';
+import {
+  getAdminSellerSchema,
+  ZodGetAdminSellerInputType,
+} from '@presentation/validators/schemas/admin/getAdminSeller.schema';
+import {
+  getAllSellersSchema,
+  ZodGetAllSellersInputType,
+} from '@presentation/validators/schemas/admin/getSellers.schema';
+import {
+  rejectSellerKycSchema,
+  ZodRejectSellerKycInputType,
+} from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
 import { IGetAllCategoryRequestUsecase } from '@application/interfaces/usecases/admin/IGetAllCategoryrequestusecase';
-import { approveAuctionCategorySchema } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
-import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import {
+  approveAuctionCategorySchema,
+  ZodApproveAuctionCategoryInputType,
+} from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
 import { IApproveAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IApproveAuctioncategoryUsecasse';
-import { changeAuctionCategoryStatusSchema } from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
-import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
+import {
+  changeAuctionCategoryStatusSchema,
+  ZodChangeAuctionCategoryStatusInputType,
+} from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
+import { IChangeAuctionCategoryStatusOutputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
 import { IChangeAuctionCategoryStatusUsecase } from '@application/interfaces/usecases/admin/IChangeAuctionCategoyUsecase';
 import { IGetAllAdminAuctionCategoriesUsecase } from '@application/interfaces/usecases/admin/IGetAllAuctionCategoriesUsecase';
-import { IGetAdminAuctionsUsecase } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
-import { UpdateAuctionCategorySchema } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import {
+  IGetAdminAuctionsOutputDto,
+  IGetAdminAuctionsUsecase,
+} from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
+import {
+  UpdateAuctionCategorySchema,
+  ZodUpdateAuctionCategoryInputType,
+} from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
-import { createAuctionCategorySchema } from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
+import {
+  createAuctionCategorySchema,
+  ZodCreateAuctionCategoryInputType,
+} from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
 import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/ICreateAuctionCategoryUsecase';
-import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
-import { getBrowseAuctionsSchema } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
-import { viewKycSchema } from '@presentation/validators/schemas/admin/viewKyc.schema';
+import { ICreateAuctionCategoryOutputDto } from '@application/dtos/admin/createAuctionCategory.dto';
+import {
+  getBrowseAuctionsSchema,
+  ZodGetBrowseAuctionsInputType,
+} from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import {
+  viewKycSchema,
+  ZodViewKycInputType,
+} from '@presentation/validators/schemas/admin/viewKyc.schema';
 import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKycUsecase';
-import { IViewKycInputDto } from '@application/dtos/admin/viewKyc.dto';
 import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
-import { rejectAuctionCategorySchema } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
-import { AuctionType } from '@domain/entities/auction/auction.entity';
+import {
+  rejectAuctionCategorySchema,
+  ZodRejectAuctionCategoryInputType,
+} from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
+import { ResponseHelper } from '@presentation/http/helpers/response.helper';
+import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
+import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
+import { IGetAdminSellerOutput } from '@application/dtos/admin/getAdminSeller.dto';
+import { IApproveSellerKycOutput } from '@application/dtos/admin/approveSellerKyc.dto';
+import { IGetAllAdminAuctionCategoryResponseDto } from '@application/dtos/admin/getAllCategoryRequest.dto';
+import { IApproveAuctionCategoryOutputDto } from '@application/dtos/admin/approveAuctionCategory.dto';
+import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/rejectAuctionCategory.dto';
+import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
+import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
 
 @injectable()
 export class AdminController {
@@ -87,36 +130,16 @@ export class AdminController {
   ) {}
 
   getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = getAllUsersSchema.safeParse(req.query);
+    const validationResult = ValidationHelper.validate<ZodGetAllUsersInputType>(
+      getAllUsersSchema,
+      req.query,
+    );
 
     console.log(req.query);
 
-    if (!validationResult.success) {
-      console.log(validationResult.error.message);
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const dto = AdminMapperProfile.toGetAllUsersInputDto(validationResult);
 
-    const { page, limit, search, sort, order, role, status, authProvider } =
-      validationResult.data;
-
-    const getAllUsersInput: IGetAllUsersInput = {
-      page: Number(page) || 1,
-      limit: Number(limit) || 10,
-      search: search ?? '',
-      sort: sort ?? 'createdAt',
-      order: (order as 'asc' | 'desc') ?? 'desc',
-      role: (role as UserRoleType | null) ?? 'ALL',
-      status: (status as UserStatus | null) ?? 'ALL',
-      authProvider: (authProvider as AuthProviderType | null) ?? 'ALL',
-    };
-
-    const getAllUsersResult =
-      await this._getAllUsersUsecase.execute(getAllUsersInput);
-
-    console.log(getAllUsersResult.getValue());
+    const getAllUsersResult = await this._getAllUsersUsecase.execute(dto);
 
     if (getAllUsersResult.isFailure) {
       console.log(getAllUsersResult.getError());
@@ -126,36 +149,24 @@ export class AdminController {
       );
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: getAllUsersResult.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.GET_ALL_USERS_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success(
+      res,
+      getAllUsersResult.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.GET_ALL_USERS_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   blockUser = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = blockUserSchema.safeParse({
-      userId: req.params.id,
-      block: req.body.block,
-    });
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const validationResult = ValidationHelper.validate<ZodBlockUserInputType>(
+      blockUserSchema,
+      req.body,
+    );
 
-    const { userId, block } = validationResult.data;
+    const dto = AdminMapperProfile.toBlockUserInputDto(validationResult);
 
-    const blockUserInput: IBlockUserInput = {
-      userId: userId,
-      block: block,
-    };
+    const blockUserResult = await this._blockUserUsecase.execute(dto);
 
-    const blockUserResult =
-      await this._blockUserUsecase.execute(blockUserInput);
     if (blockUserResult.isFailure) {
       throw new AppError(
         blockUserResult.getError(),
@@ -163,35 +174,23 @@ export class AdminController {
       );
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: blockUserResult.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.BLOCK_USER_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<IBlockUserOutput>(
+      res,
+      blockUserResult.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.BLOCK_USER_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   getUser = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = getAdminUserSchema.safeParse({
-      userId: req.params.id,
-    });
+    const validationResult =
+      ValidationHelper.validate<ZodGetAdminUserInputType>(getAdminUserSchema, {
+        userId: req.params.id as string,
+      });
 
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const dto = AdminMapperProfile.toGetAdminUserInputDto(validationResult);
 
-    const { userId } = validationResult.data;
-
-    const getAdminUserInput: IGetUserInput = {
-      userId: userId,
-    };
-
-    const getAdminUserResult =
-      await this._getAdminUserUsecase.execute(getAdminUserInput);
+    const getAdminUserResult = await this._getAdminUserUsecase.execute(dto);
 
     if (getAdminUserResult.isFailure) {
       throw new AppError(
@@ -200,35 +199,24 @@ export class AdminController {
       );
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: getAdminUserResult.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.GET_USER_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<IGetUserOutput>(
+      res,
+      getAdminUserResult.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.GET_USER_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   getAllSellers = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = getAllSellersSchema.safeParse(req.query);
-
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+    const validationResult =
+      ValidationHelper.validate<ZodGetAllSellersInputType>(
+        getAllSellersSchema,
+        req.query,
       );
-    }
 
-    const { page, limit, pendingOnly } = validationResult.data;
+    const dto = AdminMapperProfile.toGetAllSellersInputDto(validationResult);
 
-    const getAllSellersInput: IGetAllSellersInput = {
-      page: Number(page) || 1,
-      limit: Number(limit) || 10,
-      pendingOnly: pendingOnly ?? false,
-    };
-
-    const getAllSellersResult =
-      await this._getAllSellersUsecase.execute(getAllSellersInput);
+    const getAllSellersResult = await this._getAllSellersUsecase.execute(dto);
 
     if (getAllSellersResult.isFailure) {
       throw new AppError(
@@ -237,31 +225,24 @@ export class AdminController {
       );
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: getAllSellersResult.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.GET_ALL_SELLERS_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<IGetAllSellersOutput>(
+      res,
+      getAllSellersResult.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.GET_ALL_SELLERS_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   getSeller = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = getAdminSellerSchema.safeParse({
-      id: req.params.id,
-    });
-
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+    const validationResult =
+      ValidationHelper.validate<ZodGetAdminSellerInputType>(
+        getAdminSellerSchema,
+        { id: req.params.id as string },
       );
-    }
 
-    const { id: sellerId } = validationResult.data;
-    const getSellerResult = await this._getAdminSellerUsecase.execute({
-      sellerId,
-    });
+    const dto = AdminMapperProfile.toGetAdminSellerInputDto(validationResult);
+
+    const getSellerResult = await this._getAdminSellerUsecase.execute(dto);
 
     if (getSellerResult.isFailure) {
       throw new AppError(
@@ -270,30 +251,26 @@ export class AdminController {
       );
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: getSellerResult.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.GET_SELLER_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<IGetAdminSellerOutput>(
+      res,
+      getSellerResult.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.GET_SELLER_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   approveSellerKyc = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const validationResult = getAdminSellerSchema.safeParse({
-        id: req.params.id,
-      });
-
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodGetAdminSellerInputType>(
+          getAdminSellerSchema,
+          { id: req.params.id as string },
         );
-      }
 
-      const { id: sellerId } = validationResult.data;
-      const result = await this._approveSellerKycUsecase.execute({ sellerId });
+      const dto =
+        AdminMapperProfile.toApproveSellerKycInputDto(validationResult);
+
+      const result = await this._approveSellerKycUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -302,50 +279,39 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: ADMIN_CONSTANTS.MESSAGES.APPROVE_SELLER_KYC_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IApproveSellerKycOutput>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.APPROVE_SELLER_KYC_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
   rejectSellerKyc = expressAsyncHandler(async (req: Request, res: Response) => {
-    const paramsResult = getAdminSellerSchema.safeParse({
-      id: req.params.id,
-    });
-
-    if (!paramsResult.success) {
-      throw new AppError(
-        paramsResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+    const validationResult =
+      ValidationHelper.validate<ZodRejectSellerKycInputType>(
+        rejectSellerKycSchema,
+        {
+          id: req.params.id as string,
+          reason: req.body.reason,
+        },
       );
-    }
 
-    const bodyResult = rejectSellerKycSchema.safeParse(req.body ?? {});
-    const body = bodyResult.success ? bodyResult.data : {};
+    const dto = AdminMapperProfile.toRejectSellerKycInputDto(validationResult);
 
-    const { id: sellerId } = paramsResult.data;
-    const input: IRejectSellerKycInput = {
-      sellerId,
-      reason: body.reason,
-    };
-
-    const result = await this._rejectSellerKycUsecase.execute(input);
+    const result = await this._rejectSellerKycUsecase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), ADMIN_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(ADMIN_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: ADMIN_CONSTANTS.MESSAGES.REJECT_SELLER_KYC_SUCCESSFULLY,
-      status: ADMIN_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<IRejectSellerKycOutput>(
+      res,
+      result.getValue(),
+      ADMIN_CONSTANTS.MESSAGES.REJECT_SELLER_KYC_SUCCESSFULLY,
+      ADMIN_CONSTANTS.CODES.OK,
+    );
   });
 
   getAllCategoryRequest = expressAsyncHandler(
@@ -359,34 +325,29 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: ADMIN_CONSTANTS.MESSAGES.GET_ALL_CATEGORY_REQUEST_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IGetAllAdminAuctionCategoryResponseDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.GET_ALL_CATEGORY_REQUEST_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
   approveAuctionCategory = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const validationResult = approveAuctionCategorySchema.safeParse({
-        categoryId: req.params.id,
-      });
-
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodApproveAuctionCategoryInputType>(
+          approveAuctionCategorySchema,
+          {
+            categoryId: req.params.id as string,
+          },
         );
-      }
 
-      const input = AuctionMapperProrfile.toApproveAuctionCategoryInputDto(
-        validationResult.data,
-      );
+      const dto =
+        AdminMapperProfile.toApproveAuctionCategoryInputDto(validationResult);
 
-      const result = await this._approveAuctionCategoryUsecase.execute(input);
+      const result = await this._approveAuctionCategoryUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -395,35 +356,30 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: ADMIN_CONSTANTS.MESSAGES.APPROVE_AUCTION_CATEGORY_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IApproveAuctionCategoryOutputDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.APPROVE_AUCTION_CATEGORY_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
   rejectAuctionCategory = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const validationResult = rejectAuctionCategorySchema.safeParse({
-        categoryId: req.params.id,
-        reason: req.body.reason,
-      });
-
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodRejectAuctionCategoryInputType>(
+          rejectAuctionCategorySchema,
+          {
+            categoryId: req.params.id as string,
+            reason: req.body.reason,
+          },
         );
-      }
 
-      const input = AuctionMapperProrfile.toRejectAuctionCategoryInputDto(
-        validationResult.data,
-      );
+      const dto =
+        AdminMapperProfile.toRejectAuctionCategoryInputDto(validationResult);
 
-      const result = await this._rejectAuctionCategoryUsecase.execute(input);
+      const result = await this._rejectAuctionCategoryUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -432,37 +388,33 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: ADMIN_CONSTANTS.MESSAGES.REJECT_AUCTION_CATEGORY_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IRejectAuctionCategoryrequestOutputDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.REJECT_AUCTION_CATEGORY_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
   changeAuctionCategoryStatus = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const validationResult = changeAuctionCategoryStatusSchema.safeParse({
-        categoryId: req.params.id,
-        status: req.body.status,
-      });
-
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodChangeAuctionCategoryStatusInputType>(
+          changeAuctionCategoryStatusSchema,
+          {
+            categoryId: req.params.id as string,
+            status: req.body.status,
+          },
         );
-      }
 
-      const inuput: IChangeAuctionCategoryStatusInputDto = {
-        categoryId: validationResult.data.categoryId.trim(),
-        status: validationResult.data.status,
-      };
+      const dto =
+        AdminMapperProfile.toChangeAuctionCategoryStatusInputDto(
+          validationResult,
+        );
 
       const result =
-        await this._changeAuctionCategoryStatusUsecase.execute(inuput);
+        await this._changeAuctionCategoryStatusUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -471,14 +423,12 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message:
-          ADMIN_CONSTANTS.MESSAGES.CHANGE_AUCTION_CATEGORY_STATUS_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IChangeAuctionCategoryStatusOutputDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.CHANGE_AUCTION_CATEGORY_STATUS_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
@@ -493,36 +443,27 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message:
-          ADMIN_CONSTANTS.MESSAGES.GET_ALL_AUCTION_CATEGORIES_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<GetAllAuctionCategoryDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.GET_ALL_AUCTION_CATEGORIES_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
   getAllAdminAuctions = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const parsed = getBrowseAuctionsSchema.safeParse(req.query);
-      if (!parsed.success) {
-        throw new AppError(
-          parsed.error.issues[0]?.message ?? 'Invalid query',
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodGetBrowseAuctionsInputType>(
+          getBrowseAuctionsSchema,
+          req.query as unknown as ZodGetBrowseAuctionsInputType,
         );
-      }
 
-      const result = await this._getAllAdminAuctionsUsecase.execute({
-        auctionType: parsed.data.auctionType as AuctionType,
-        categoryId: parsed.data.categoryId,
-        page: parsed.data.page,
-        limit: parsed.data.limit,
-        sort: parsed.data.sort,
-        order: parsed.data.order,
-        search: parsed.data.search,
-      });
+      const dto =
+        AdminMapperProfile.toGetAdminAuctionsInputDto(validationResult);
+
+      const result = await this._getAllAdminAuctionsUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -531,13 +472,12 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: 'All auctions fetched successfully',
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IGetAdminAuctionsOutputDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.GET_ALL_ADMIN_AUCTIONS_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
@@ -550,24 +490,20 @@ export class AdminController {
         );
       }
 
-      const validationResult = UpdateAuctionCategorySchema.safeParse({
-        categoryId: req.params.id,
-        name: req.body.name,
-        parentId: req.body.parentId,
-      });
-
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodUpdateAuctionCategoryInputType>(
+          UpdateAuctionCategorySchema,
+          {
+            categoryId: req.params.id as string,
+            name: req.body.name as string,
+            parentId: req.body.parentId as string | null,
+          },
         );
-      }
 
-      const input = AuctionMapperProrfile.toUpdateAuctionCategoryInputDto(
-        validationResult.data,
-      );
+      const dto =
+        AdminMapperProfile.toUpdateAuctionCategoryInputDto(validationResult);
 
-      const result = await this._updateAuctionCategoryUsecase.execute(input);
+      const result = await this._updateAuctionCategoryUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -576,13 +512,12 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: ADMIN_CONSTANTS.MESSAGES.UPDATE_AUCTION_CATEGORY_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IUpdateAuctionCategoryOutputDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.UPDATE_AUCTION_CATEGORY_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
@@ -595,25 +530,21 @@ export class AdminController {
         );
       }
 
-      const validationResult = createAuctionCategorySchema.safeParse({
-        name: req.body?.name,
-        parentId: req.body?.parentId,
-      });
-
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodCreateAuctionCategoryInputType>(
+          createAuctionCategorySchema,
+          {
+            name: req.body?.name,
+            parentId: req.body?.parentId,
+          },
         );
-      }
 
-      const input: ICreateAuctionCategoryInputDto = {
-        name: validationResult.data.name,
-        parentId: validationResult.data.parentId ?? null,
-        userId: req.user.id,
-      };
+      const dto = AdminMapperProfile.toCreateAuctionCategoryInputDto(
+        validationResult,
+        req.user.id,
+      );
 
-      const result = await this._createAuctionCategoryUsecase.execute(input);
+      const result = await this._createAuctionCategoryUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -622,13 +553,12 @@ export class AdminController {
         );
       }
 
-      res.status(ADMIN_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: ADMIN_CONSTANTS.MESSAGES.CREATE_AUCTION_CATEGORY_SUCCESSFULLY,
-        status: ADMIN_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<ICreateAuctionCategoryOutputDto>(
+        res,
+        result.getValue(),
+        ADMIN_CONSTANTS.MESSAGES.CREATE_AUCTION_CATEGORY_SUCCESSFULLY,
+        ADMIN_CONSTANTS.CODES.OK,
+      );
     },
   );
 
@@ -640,23 +570,19 @@ export class AdminController {
       );
     }
 
-    const validationResult = viewKycSchema.safeParse({
-      documentId: req.params.id,
-    });
+    const validationResult = ValidationHelper.validate<ZodViewKycInputType>(
+      viewKycSchema,
+      {
+        documentId: req.params.id as string,
+      },
+    );
 
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        ADMIN_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const dto = AdminMapperProfile.toViewKycInputDto(
+      validationResult,
+      req.user.id,
+    );
 
-    const viewKycInput: IViewKycInputDto = {
-      userId: req.user.id,
-      documentId: validationResult.data.documentId,
-    };
-
-    const result = await this._viewKycUsecase.execute(viewKycInput);
+    const result = await this._viewKycUsecase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), ADMIN_CONSTANTS.CODES.BAD_REQUEST);

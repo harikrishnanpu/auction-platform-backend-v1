@@ -1,4 +1,5 @@
 export const AUCTION_MESSAGES = {
+  NOT_AUTHORIZED_TO_VIEW_AUCTION: 'Not authorized to view this auction',
   NOT_AUTHORIZED_TO_UPDATE: 'Not authorized to update this auction',
   ONLY_DRAFT_CAN_BE_UPDATED: 'Only draft auctions can be updated',
 

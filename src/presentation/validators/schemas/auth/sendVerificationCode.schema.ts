@@ -8,6 +8,6 @@ export const sendVerificationCodeSchema = z.object({
     .max(50, 'Email cannot exceed 50 characters'),
 });
 
-export type SendVerificationCodeInput = z.infer<
+export type ZodSendVerificationCodeInputType = z.infer<
   typeof sendVerificationCodeSchema
 >;

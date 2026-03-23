@@ -5,19 +5,34 @@ import expressAsyncHandler from 'express-async-handler';
 import { inject, injectable } from 'inversify';
 import { Request, Response } from 'express';
 import { AppError } from '@presentation/http/error/app.error';
-import { IGetAllAuctionCategoryRequestInputDto } from '@application/dtos/seller/getAllAuctionCategoryRequest.dto';
-import { requestAuctionCategorySchema } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
-import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import {
+  IGetAllAuctionCategoryRequestInputDto,
+  IGetAllAuctionCategoryRequestOutputDto,
+} from '@application/dtos/seller/getAllAuctionCategoryRequest.dto';
+import {
+  requestAuctionCategorySchema,
+  ZodRequestAuctionCategoryInputType,
+} from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/seller/IRequestAuctionCategory.usecase';
 import { IGetAllSellerAuctionsUsecase } from '@application/interfaces/usecases/seller/IGetallAuctionsUsecase';
-import { IGetAllAuctionsInputDto } from '@application/dtos/auction/getAllAuction.dto';
-import { getAllAuctionsSchema } from '@presentation/validators/schemas/seller/getAllAuctions.schema';
 import {
-  AuctionStatus,
-  AuctionType,
-} from '@domain/entities/auction/auction.entity';
+  IGetAllAuctionsInputDto,
+  IGetAllAuctionsOutputDto,
+} from '@application/dtos/auction/getAllAuction.dto';
+import {
+  getAllAuctionsSchema,
+  ZodGetAllAuctionsInputType,
+} from '@presentation/validators/schemas/seller/getAllAuctions.schema';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { AUCTION_CONSTANTS } from '@presentation/constants/auction/auction.constants';
+import { SellerMapperProfile } from '@infrastructure/mappers/seller/seller.mapper';
+import { ResponseHelper } from '@presentation/http/helpers/response.helper';
+import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
+import {
+  IRequestAuctionCategoryInputDto,
+  IRequestAuctionCategoryOutputDto,
+} from '@application/dtos/admin/request-auction-category.dto';
+import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 
 @injectable()
 export class SellerController {
@@ -41,12 +56,11 @@ export class SellerController {
         );
       }
 
-      const input: IGetAllAuctionCategoryRequestInputDto = {
-        userId: req.user.id,
-      };
+      const dto: IGetAllAuctionCategoryRequestInputDto =
+        SellerMapperProfile.toGetAllAuctionCategoryRequestInputDto(req.user.id);
 
       const result =
-        await this._getAllSellerAuctionCategoryRequestUsecase.execute(input);
+        await this._getAllSellerAuctionCategoryRequestUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -55,15 +69,12 @@ export class SellerController {
         );
       }
 
-      res.status(SELLER_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message:
-          SELLER_CONSTANTS.MESSAGES
-            .GET_ALL_SELLER_AUCTION_CATEGORY_SUCCESSFULLY,
-        status: SELLER_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IGetAllAuctionCategoryRequestOutputDto>(
+        res,
+        result.getValue(),
+        SELLER_CONSTANTS.MESSAGES.GET_ALL_SELLER_AUCTION_CATEGORY_SUCCESSFULLY,
+        SELLER_CONSTANTS.CODES.OK,
+      );
     },
   );
 
@@ -76,22 +87,19 @@ export class SellerController {
         );
       }
 
-      const parsedResult = requestAuctionCategorySchema.safeParse(req.body);
-
-      if (!parsedResult.success) {
-        throw new AppError(
-          parsedResult.error.issues[0].message,
-          SELLER_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodRequestAuctionCategoryInputType>(
+          requestAuctionCategorySchema,
+          req.body,
         );
-      }
 
-      const inputDto = AuctionMapperProrfile.toRequestAuctionCategoryDto(
-        parsedResult.data,
-        req.user.id,
-      );
+      const dto: IRequestAuctionCategoryInputDto =
+        SellerMapperProfile.toRequestAuctionCategoryInputDto(
+          validationResult,
+          req.user.id,
+        );
 
-      const result =
-        await this._requestAuctionCategoryUsecase.execute(inputDto);
+      const result = await this._requestAuctionCategoryUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -100,27 +108,16 @@ export class SellerController {
         );
       }
 
-      res.status(SELLER_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message:
-          SELLER_CONSTANTS.MESSAGES.ACTION_CATEGORY_REQUESTED_SUCCESSFULLY,
-        status: SELLER_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IRequestAuctionCategoryOutputDto>(
+        res,
+        result.getValue(),
+        SELLER_CONSTANTS.MESSAGES.ACTION_CATEGORY_REQUESTED_SUCCESSFULLY,
+        SELLER_CONSTANTS.CODES.OK,
+      );
     },
   );
 
   getAllAuctions = expressAsyncHandler(async (req: Request, res: Response) => {
-    const parsedResult = getAllAuctionsSchema.safeParse(req.query);
-
-    if (!parsedResult.success) {
-      throw new AppError(
-        parsedResult.error.issues[0].message,
-        SELLER_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
-
     if (!req.user) {
       throw new AppError(
         SELLER_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -128,47 +125,30 @@ export class SellerController {
       );
     }
 
-    const toDomainStatus = (status: string): AuctionStatus | 'ALL' => {
-      if (status === 'PUBLISHED') return AuctionStatus.ACTIVE;
-      if (status === 'COMPLETED') return AuctionStatus.ENDED;
-      if (status === 'ALL') return 'ALL';
-      return Object.values(AuctionStatus).includes(status as AuctionStatus)
-        ? (status as AuctionStatus)
-        : 'ALL';
-    };
+    const validationResult =
+      ValidationHelper.validate<ZodGetAllAuctionsInputType>(
+        getAllAuctionsSchema,
+        req.query,
+      );
 
-    const toDomainType = (auctionType: string): AuctionType | 'ALL' => {
-      if (auctionType === 'ALL') return 'ALL';
-      return Object.values(AuctionType).includes(auctionType as AuctionType)
-        ? (auctionType as AuctionType)
-        : 'ALL';
-    };
+    const dto: IGetAllAuctionsInputDto =
+      SellerMapperProfile.toGetAllAuctionsInputDto(
+        validationResult,
+        req.user.id,
+      );
 
-    const input: IGetAllAuctionsInputDto = {
-      userId: req.user.id,
-      status: toDomainStatus(parsedResult.data.status ?? 'ALL'),
-      auctionType: toDomainType(parsedResult.data.auctionType ?? 'ALL'),
-      categoryId: parsedResult.data.categoryId ?? 'ALL',
-      page: parseInt(parsedResult.data.page ?? '1'),
-      limit: parseInt(parsedResult.data.limit ?? '10'),
-      sort: parsedResult.data.sort ?? 'startAt',
-      order: (parsedResult.data.order as 'asc' | 'desc') ?? 'desc',
-      search: parsedResult.data.search ?? '',
-    };
-
-    const result = await this._getAllAuctionsUsecase.execute(input);
+    const result = await this._getAllAuctionsUsecase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), SELLER_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    res.status(SELLER_CONSTANTS.CODES.OK).json({
-      data: result.getValue(),
-      success: true,
-      message: SELLER_CONSTANTS.MESSAGES.GET_ALL_SELLER_AUCTIONS_SUCCESSFULLY,
-      status: SELLER_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<IGetAllAuctionsOutputDto>(
+      res,
+      result.getValue(),
+      SELLER_CONSTANTS.MESSAGES.GET_ALL_SELLER_AUCTIONS_SUCCESSFULLY,
+      SELLER_CONSTANTS.CODES.OK,
+    );
   });
 
   getSellerAuctionById = expressAsyncHandler(
@@ -189,10 +169,12 @@ export class SellerController {
         );
       }
 
-      const result = await this._getAuctionByIdUsecase.execute({
-        userId: req.user.id,
-        auctionId: auctionId,
-      });
+      const dto = SellerMapperProfile.toGetAuctionByIdInputDto(
+        auctionId,
+        req.user.id,
+      );
+
+      const result = await this._getAuctionByIdUsecase.execute(dto);
 
       if (result.isFailure) {
         throw new AppError(
@@ -201,13 +183,12 @@ export class SellerController {
         );
       }
 
-      res.status(SELLER_CONSTANTS.CODES.OK).json({
-        data: result.getValue(),
-        success: true,
-        message: AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,
-        status: SELLER_CONSTANTS.CODES.OK,
-        error: null,
-      });
+      ResponseHelper.success<IAuctionDto>(
+        res,
+        result.getValue(),
+        AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,
+        SELLER_CONSTANTS.CODES.OK,
+      );
     },
   );
 }

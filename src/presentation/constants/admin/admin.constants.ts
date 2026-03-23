@@ -38,6 +38,8 @@ export const ADMIN_MESSAGES = {
   REJECT_AUCTION_CATEGORY_FAILED: 'Failed to reject auction category',
   CREATE_AUCTION_CATEGORY_SUCCESSFULLY: 'Auction category created successfully',
   CREATE_AUCTION_CATEGORY_FAILED: 'Failed to create auction category',
+  GET_ALL_ADMIN_AUCTIONS_SUCCESSFULLY: 'All auctions fetched successfully',
+  GET_ALL_ADMIN_AUCTIONS_FAILED: 'Failed to fetch all auctions',
 };
 
 export const ADMIN_CONSTANTS = {

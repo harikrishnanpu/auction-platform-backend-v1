@@ -1,47 +1,56 @@
 import { Result } from '@domain/shared/result';
 
 export class Bid {
-  constructor(
-    private readonly id: string,
-    private readonly auctionId: string,
-    private readonly userId: string,
-    private readonly amount: number,
-    private readonly createdAt: Date,
-  ) {}
+    constructor(
+        private readonly id: string,
+        private readonly auctionId: string,
+        private readonly userId: string,
+        private readonly createdAt: Date,
+        private readonly amount: number | null,
+        private readonly encryptedAmount: string | null,
+    ) {}
 
-  static create({
-    id,
-    auctionId,
-    userId,
-    amount,
-    createdAt = new Date(),
-  }: {
-    id: string;
-    auctionId: string;
-    userId: string;
-    amount: number;
-    createdAt?: Date;
-  }): Result<Bid> {
-    return Result.ok(new Bid(id, auctionId, userId, amount, createdAt));
-  }
+    static create({
+        id,
+        auctionId,
+        userId,
+        amount = null,
+        encryptedAmount = null,
+        createdAt = new Date(),
+    }: {
+        id: string;
+        auctionId: string;
+        userId: string;
+        amount?: number | null;
+        encryptedAmount?: string | null;
+        createdAt?: Date;
+    }): Result<Bid> {
+        return Result.ok(
+            new Bid(id, auctionId, userId, createdAt, amount, encryptedAmount),
+        );
+    }
 
-  getId(): string {
-    return this.id;
-  }
+    getId(): string {
+        return this.id;
+    }
 
-  getAuctionId(): string {
-    return this.auctionId;
-  }
+    getAuctionId(): string {
+        return this.auctionId;
+    }
 
-  getUserId(): string {
-    return this.userId;
-  }
+    getUserId(): string {
+        return this.userId;
+    }
 
-  getAmount(): number {
-    return this.amount;
-  }
+    getAmount(): number | null {
+        return this.amount ?? 0;
+    }
 
-  getCreatedAt(): Date {
-    return this.createdAt;
-  }
+    getEncryptedAmount(): string | null {
+        return this.encryptedAmount ?? null;
+    }
+
+    getCreatedAt(): Date {
+        return this.createdAt;
+    }
 }

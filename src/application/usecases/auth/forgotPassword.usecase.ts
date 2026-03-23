@@ -1,4 +1,5 @@
 import { EMAIL_TEMPLATES } from '@application/constants/template/email.template.constants';
+import { ForgotPasswordInput } from '@application/dtos/auth/forgotPassword.dto';
 import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
@@ -32,8 +33,8 @@ export class ForgotPasswordUsecase implements IForgotPasswordUsecase {
     private readonly _idGeneratingService: IIdGeneratingService,
   ) {}
 
-  async execute(email: string): Promise<Result<void>> {
-    const emailVo = Email.create(email);
+  async execute(data: ForgotPasswordInput): Promise<Result<void>> {
+    const emailVo = Email.create(data.email);
     if (emailVo.isFailure) return Result.fail(emailVo.getError());
 
     const user = await this._userRepository.findByEmail(emailVo.getValue());

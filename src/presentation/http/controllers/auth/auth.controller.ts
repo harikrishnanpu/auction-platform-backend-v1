@@ -8,33 +8,66 @@ import { NextFunction, Request, Response } from 'express';
 import { inject, injectable } from 'inversify';
 import { AppError } from '@presentation/http/error/app.error';
 import expressAsyncHandler from 'express-async-handler';
-import { registerSchema } from '@presentation/validators/schemas/auth/register.schema';
-import { sendVerificationCodeSchema } from '@presentation/validators/schemas/auth/sendVerificationCode.schema';
-import { verifyCredentialsSchema } from '@presentation/validators/schemas/auth/verifyCredentials.schema';
+import {
+  ZodRegisterInputType,
+  registerSchema,
+} from '@presentation/validators/schemas/auth/register.schema';
+import {
+  sendVerificationCodeSchema,
+  ZodSendVerificationCodeInputType,
+} from '@presentation/validators/schemas/auth/sendVerificationCode.schema';
+import {
+  verifyCredentialsSchema,
+  ZodVerifyCredentialsInputType,
+} from '@presentation/validators/schemas/auth/verifyCredentials.schema';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/auth/IVerifyCredentialsUseCase';
 import { ILoginUseCase } from '@application/interfaces/usecases/auth/ILoginUsecase';
-import { loginSchema } from '@presentation/validators/schemas/auth/login.schema';
+import {
+  loginSchema,
+  ZodLoginInputType,
+} from '@presentation/validators/schemas/auth/login.schema';
 import { IGetUserUsecase } from '@application/interfaces/usecases/auth/IGetUserUsecase';
 import passport, { Profile } from 'passport';
 import { IGoogleAuthUsecase } from '@application/interfaces/usecases/auth/IGoogleAuthUsecase';
 import { GoogleUserDto } from '@application/dtos/auth/googleUser.dto';
-import { completeProfileSchema } from '@presentation/validators/schemas/auth/completeProfile.schema';
+import {
+  completeProfileSchema,
+  ZodCompleteProfileInputType,
+} from '@presentation/validators/schemas/auth/completeProfile.schema';
 import { ICompleteProfileUsecase } from '@application/interfaces/usecases/auth/ICompleteProfileUsecase';
-import { CompleteProfileInput } from '@application/dtos/auth/completeProfile.dto';
-import { forgottenPasswordSchema } from '@presentation/validators/schemas/auth/forgottenPassword.schema';
+import {
+  CompleteProfileInput,
+  CompleteProfileOutput,
+} from '@application/dtos/auth/completeProfile.dto';
+import {
+  forgottenPasswordSchema,
+  ZodForgottenPasswordInputType,
+} from '@presentation/validators/schemas/auth/forgottenPassword.schema';
 import { IForgotPasswordUsecase } from '@application/interfaces/usecases/auth/IForgotPasswordUsecase';
 import { IChangePasswordUsecase } from '@application/interfaces/usecases/auth/IChangePasswordUsecase';
-import { changePasswordSchema } from '@presentation/validators/schemas/auth/changePassword.schema';
+import {
+  changePasswordSchema,
+  ZodChangePasswordInputType,
+} from '@presentation/validators/schemas/auth/changePassword.schema';
 import { ChangePasswordInput } from '@application/dtos/auth/changePassword.dto';
 import { JWT_CONSTANTS } from '@presentation/constants/jwt/jwt.constants';
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
-import { verifyCredentialsOutput } from '@application/dtos/auth/verifyCredentials.dto';
+import {
+  VerifyCredentialsInput,
+  verifyCredentialsOutput,
+} from '@application/dtos/auth/verifyCredentials.dto';
 import { RegisterUserMapper } from '@application/mappers/auth/register.mapper';
 import { RegisterUserOutputDto } from '@application/dtos/auth/registerUser.dto';
 import { SendEmailVerificationCodeMapper } from '@application/mappers/auth/sendOtp.mapper';
-import { LoginUserOutput } from '@application/dtos/auth/loginUser.dto';
+import {
+  LoginUserInput,
+  LoginUserOutput,
+} from '@application/dtos/auth/loginUser.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
+import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
+import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
+import { ForgotPasswordInput } from '@application/dtos/auth/forgotPassword.dto';
 
 @injectable()
 export class AuthController {
@@ -65,16 +98,13 @@ export class AuthController {
    */
 
   register = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = registerSchema.safeParse(req.body);
+    const validationResult = ValidationHelper.validate<ZodRegisterInputType>(
+      registerSchema,
+      req.body,
+    );
 
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        AUTH_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const dto = RegisterUserMapper.toDto(validationResult);
 
-    const dto = RegisterUserMapper.toDto(validationResult.data);
     const result = await this._registerUseCase.execute(dto);
 
     if (result.isFailure) {
@@ -82,12 +112,12 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    const response = ResponseHelper.success<RegisterUserOutputDto>(
+    ResponseHelper.success<RegisterUserOutputDto>(
+      res,
       result.getValue(),
       AUTH_CONSTANTS.MESSAGES.USER_REGISTERED_SUCCESSFULLY,
       AUTH_CONSTANTS.CODES.CREATED,
     );
-    res.status(AUTH_CONSTANTS.CODES.CREATED).json(response);
   });
 
   /**
@@ -98,16 +128,14 @@ export class AuthController {
   sendVerificationCode = expressAsyncHandler(
     async (req: Request, res: Response) => {
       console.log(req.body);
-      const validationResult = sendVerificationCodeSchema.safeParse(req.body);
 
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          AUTH_CONSTANTS.CODES.BAD_REQUEST,
+      const validationResult =
+        ValidationHelper.validate<ZodSendVerificationCodeInputType>(
+          sendVerificationCodeSchema,
+          req.body,
         );
-      }
 
-      const dto = SendEmailVerificationCodeMapper.toDto(validationResult.data);
+      const dto = SendEmailVerificationCodeMapper.toDto(validationResult);
 
       const result = await this._sendOtpUsecase.execute(dto);
 
@@ -116,13 +144,12 @@ export class AuthController {
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
-      const response = ResponseHelper.success<null>(
+      ResponseHelper.success<null>(
+        res,
         null,
         AUTH_CONSTANTS.MESSAGES.VERIFICATION_CODE_SENT_SUCCESSFULLY,
         AUTH_CONSTANTS.CODES.OK,
       );
-
-      res.status(AUTH_CONSTANTS.CODES.OK).json(response);
     },
   );
 
@@ -133,68 +160,55 @@ export class AuthController {
 
   verifyCredentials = expressAsyncHandler(
     async (req: Request, res: Response) => {
-      const validationResult = verifyCredentialsSchema.safeParse(req.body);
+      const validationResult =
+        ValidationHelper.validate<ZodVerifyCredentialsInputType>(
+          verifyCredentialsSchema,
+          req.body,
+        );
 
       // console.log(validationResult.error?.format());
 
-      if (!validationResult.success) {
-        throw new AppError(
-          validationResult.error.issues[0].message,
-          AUTH_CONSTANTS.CODES.BAD_REQUEST,
-        );
-      }
+      const dto: VerifyCredentialsInput =
+        AuthMapperProfile.toVerifyCredentialsInput(validationResult);
 
-      const { otp, email, purpose, channel } = validationResult.data;
-
-      console.log(validationResult.data);
-
-      const result = await this._verifyCredentialsUseCase.execute(
-        otp,
-        email,
-        purpose,
-        channel,
-      );
+      const result = await this._verifyCredentialsUseCase.execute(dto);
 
       if (result.isFailure) {
         console.log('error');
         throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
       }
 
-      const response = ResponseHelper.success<verifyCredentialsOutput>(
+      ResponseHelper.success<verifyCredentialsOutput>(
+        res,
         result.getValue(),
         AUTH_CONSTANTS.MESSAGES.EMAIL_VERIFIED_SUCCESSFULLY,
         AUTH_CONSTANTS.CODES.OK,
       );
-      res.status(AUTH_CONSTANTS.CODES.OK).json(response);
     },
   );
 
   login = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = loginSchema.safeParse(req.body);
+    const validationResult = ValidationHelper.validate<ZodLoginInputType>(
+      loginSchema,
+      req.body,
+    );
 
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        AUTH_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
+    const dto: LoginUserInput =
+      AuthMapperProfile.toLoginUserInput(validationResult);
 
-    const { email, password } = validationResult.data;
-
-    const result = await this._loginUseCase.execute({ email, password });
+    const result = await this._loginUseCase.execute(dto);
 
     if (result.isFailure) {
       console.log('error');
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    const response = ResponseHelper.success<LoginUserOutput>(
+    ResponseHelper.success<LoginUserOutput>(
+      res,
       result.getValue(),
       AUTH_CONSTANTS.MESSAGES.LOGIN_SUCCESSFULLY,
       AUTH_CONSTANTS.CODES.OK,
     );
-
-    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 
   getUser = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -206,6 +220,7 @@ export class AuthController {
         AUTH_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
+
     const userId = req.user.id;
 
     const result = await this._getUserUseCase.execute(userId);
@@ -214,13 +229,12 @@ export class AuthController {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    const response = ResponseHelper.success<userResponseDto>(
+    ResponseHelper.success<userResponseDto>(
+      res,
       result.getValue(),
       AUTH_CONSTANTS.MESSAGES.USER_FETCHED_SUCCESSFULLY,
       AUTH_CONSTANTS.CODES.OK,
     );
-
-    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 
   googleAuth = expressAsyncHandler(
@@ -282,106 +296,83 @@ export class AuthController {
   );
 
   completeProfile = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = completeProfileSchema.safeParse(req.body);
-
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        AUTH_CONSTANTS.CODES.BAD_REQUEST,
-      );
-    }
-
-    const { phone, address } = validationResult.data;
-
     if (!req.user) {
       throw new AppError(
         AUTH_MESSAGES.USER_NOT_FOUND,
         AUTH_CONSTANTS.CODES.BAD_REQUEST,
       );
     }
-    const userId = req.user.id;
 
-    const completeProfileInput: CompleteProfileInput = {
-      userId,
-      phone,
-      address,
-    };
+    const validationResult =
+      ValidationHelper.validate<ZodCompleteProfileInputType>(
+        completeProfileSchema,
+        req.body,
+      );
 
-    const result =
-      await this._completeProfileUseCase.execute(completeProfileInput);
+    const dto: CompleteProfileInput = AuthMapperProfile.toCompleteProfileInput(
+      validationResult,
+      req.user.id,
+    );
+
+    const result = await this._completeProfileUseCase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    const user = result.getValue().user;
-
-    res.status(AUTH_CONSTANTS.CODES.OK).json({
-      data: user,
-      success: true,
-      message: AUTH_CONSTANTS.MESSAGES.PROFILE_COMPLETED_SUCCESSFULLY,
-      status: AUTH_CONSTANTS.CODES.OK,
-      error: null,
-    });
+    ResponseHelper.success<CompleteProfileOutput>(
+      res,
+      result.getValue(),
+      AUTH_CONSTANTS.MESSAGES.PROFILE_COMPLETED_SUCCESSFULLY,
+      AUTH_CONSTANTS.CODES.OK,
+    );
   });
 
   forgotPassword = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = forgottenPasswordSchema.safeParse(req.body);
-
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+    const validationResult =
+      ValidationHelper.validate<ZodForgottenPasswordInputType>(
+        forgottenPasswordSchema,
+        req.body,
       );
-    }
 
-    const { email } = validationResult.data;
+    const dto: ForgotPasswordInput =
+      AuthMapperProfile.toForgotPasswordInput(validationResult);
 
-    const result = await this._forgotPasswordUseCase.execute(email);
+    const result = await this._forgotPasswordUseCase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    const response = ResponseHelper.success<null>(
+    ResponseHelper.success<null>(
+      res,
       null,
       AUTH_CONSTANTS.MESSAGES.FORGOT_PASSWORD_SENT_SUCCESSFULLY,
       AUTH_CONSTANTS.CODES.OK,
     );
-
-    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 
   changePassword = expressAsyncHandler(async (req: Request, res: Response) => {
-    const validationResult = changePasswordSchema.safeParse(req.body);
-
-    if (!validationResult.success) {
-      throw new AppError(
-        validationResult.error.issues[0].message,
-        AUTH_CONSTANTS.CODES.BAD_REQUEST,
+    const validationResult =
+      ValidationHelper.validate<ZodChangePasswordInputType>(
+        changePasswordSchema,
+        req.body,
       );
-    }
 
-    const { token, newPassword } = validationResult.data;
+    const dto: ChangePasswordInput =
+      AuthMapperProfile.toChangePasswordInput(validationResult);
 
-    const changePasswordInput: ChangePasswordInput = {
-      token,
-      newPassword,
-    };
-
-    const result =
-      await this._changePasswordUseCase.execute(changePasswordInput);
+    const result = await this._changePasswordUseCase.execute(dto);
 
     if (result.isFailure) {
       throw new AppError(result.getError(), AUTH_CONSTANTS.CODES.BAD_REQUEST);
     }
 
-    const response = ResponseHelper.success<null>(
+    ResponseHelper.success<null>(
+      res,
       null,
       AUTH_CONSTANTS.MESSAGES.PASSWORD_CHANGED_SUCCESSFULLY,
       AUTH_CONSTANTS.CODES.OK,
     );
-
-    res.status(AUTH_CONSTANTS.CODES.OK).json(response);
   });
 }

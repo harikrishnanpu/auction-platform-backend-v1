@@ -10,3 +10,5 @@ export const getAllAuctionsSchema = z.object({
   order: z.enum(['asc', 'desc']).optional(),
   search: z.string().optional(),
 });
+
+export type ZodGetAllAuctionsInputType = z.infer<typeof getAllAuctionsSchema>;

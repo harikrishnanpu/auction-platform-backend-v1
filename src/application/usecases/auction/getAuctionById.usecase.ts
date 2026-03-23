@@ -4,11 +4,9 @@ import { TYPES } from '@di/types.di';
 import { inject, injectable } from 'inversify';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
-import type {
-  IGetAuctionByIdInputDto,
-  IGetAuctionByIdUsecase,
-} from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
+import type { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
+import { IGetAuctionByIdInputDto } from '@application/dtos/auction/getAuctionById.dto';
 
 @injectable()
 export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {

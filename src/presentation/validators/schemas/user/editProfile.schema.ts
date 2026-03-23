@@ -9,3 +9,5 @@ export const editProfileSchema = z.object({
     .min(10, 'Address must be at least 10 characters long')
     .trim(),
 });
+
+export type ZodEditProfileInputType = z.infer<typeof editProfileSchema>;

@@ -14,3 +14,7 @@ export const getBrowseAuctionsSchema = z.object({
   order: z.enum(['asc', 'desc']).optional().default('desc'),
   search: z.string().optional().default(''),
 });
+
+export type ZodGetBrowseAuctionsInputType = z.infer<
+  typeof getBrowseAuctionsSchema
+>;

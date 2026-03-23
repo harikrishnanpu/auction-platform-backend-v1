@@ -13,3 +13,7 @@ export const verifyCredentialsSchema = z.object({
   ]),
   channel: z.enum([OtpChannel.SMS, OtpChannel.EMAIL]),
 });
+
+export type ZodVerifyCredentialsInputType = z.infer<
+  typeof verifyCredentialsSchema
+>;

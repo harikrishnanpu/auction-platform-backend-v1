@@ -8,3 +8,5 @@ export const completeProfileSchema = z.object({
     .min(1, 'Phone is required'),
   address: z.string().trim().min(10, 'Address is required'),
 });
+
+export type ZodCompleteProfileInputType = z.infer<typeof completeProfileSchema>;

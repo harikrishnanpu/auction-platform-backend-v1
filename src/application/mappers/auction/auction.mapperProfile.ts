@@ -5,19 +5,22 @@ import {
 } from '@application/dtos/admin/request-auction-category.dto';
 import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
 import { Auction, AuctionType } from '@domain/entities/auction/auction.entity';
-import { CreateAuctionInput } from '@presentation/validators/schemas/auction/createAuction.schema';
-import { RequestAuctionCategoryInput } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
+import { ZodCreateAuctionInputType } from '@presentation/validators/schemas/auction/createAuction.schema';
+import { ZodRequestAuctionCategoryInputType } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import {
   IApproveAuctionCategoryInputDto,
   IApproveAuctionCategoryOutputDto,
 } from '@application/dtos/admin/approveAuctionCategory.dto';
-import { ApproveAuctionCategoryInput } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
-import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
+import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
+import {
+  GetAllAuctionCategoryDto,
+  IGetAllAuctionsInputDto,
+} from '@application/dtos/auction/getAllAuction.dto';
 import {
   IUpdateAuctionCategoryInputDto,
   IUpdateAuctionCategoryOutputDto,
 } from '@application/dtos/admin/updateAuctionCategory.dto';
-import { UpdateAuctionCategoryInput } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import {
   IRejectAuctionCategoryrequestInputDto,
   IRejectAuctionCategoryrequestOutputDto,
@@ -26,10 +29,19 @@ import {
   IAuctionCategoryDto,
   IAuctionDto,
 } from '@application/dtos/auction/auction.dto';
+import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import { IGetAuctionByIdInputDto } from '@application/dtos/auction/getAuctionById.dto';
+import { ZodGenerateAuctionUploadUrlInputType } from '@presentation/validators/schemas/auction/generateAuctionUploadUrl.schema';
+import { IGenerateAuctionUploadUrlInput } from '@application/dtos/auction/generate-auction-upload-url.dto';
+import { ZodUpdateAuctionInputType } from '@presentation/validators/schemas/auction/updateAuction.schema';
+import { IUpdateAuctionInput } from '@application/dtos/auction/update-auction.dto';
+import { ZodPublishAuctionParamsInputType } from '@presentation/validators/schemas/auction/publishAuctionParams.schema';
+import { IPublishAuctionInput } from '@application/dtos/auction/publish-auction.dto';
+import { IEndAuctionInput } from '@application/dtos/auction/end-auction.dto';
 
 export class AuctionMapperProrfile {
   public static toCreateAuctionDto(
-    data: CreateAuctionInput,
+    data: ZodCreateAuctionInputType,
     userId: string,
   ): ICreateAuctionInputDto {
     return {
@@ -92,7 +104,7 @@ export class AuctionMapperProrfile {
   }
 
   public static toRequestAuctionCategoryDto(
-    data: RequestAuctionCategoryInput,
+    data: ZodRequestAuctionCategoryInputType,
     userId: string,
   ): IRequestAuctionCategoryInputDto {
     return {
@@ -133,7 +145,7 @@ export class AuctionMapperProrfile {
   }
 
   public static toApproveAuctionCategoryInputDto(
-    data: ApproveAuctionCategoryInput,
+    data: ZodApproveAuctionCategoryInputType,
   ): IApproveAuctionCategoryInputDto {
     return {
       categoryId: data.categoryId.trim(),
@@ -159,7 +171,7 @@ export class AuctionMapperProrfile {
   }
 
   public static toUpdateAuctionCategoryInputDto(
-    data: UpdateAuctionCategoryInput,
+    data: ZodUpdateAuctionCategoryInputType,
   ): IUpdateAuctionCategoryInputDto {
     return {
       categoryId: data.categoryId.trim(),
@@ -184,6 +196,97 @@ export class AuctionMapperProrfile {
     return {
       categoryId: data.getId(),
       status: data.getStatus(),
+    };
+  }
+
+  public static toGetBrowseAuctionsDto(
+    data: ZodGetBrowseAuctionsInputType,
+    userId: string,
+  ): IGetAllAuctionsInputDto {
+    return {
+      userId: userId,
+      status: 'ALL',
+      auctionType: 'ALL',
+      categoryId: 'ALL',
+      page: data.page,
+      limit: data.limit,
+      sort: data.sort,
+      order: data.order,
+      search: data.search,
+    };
+  }
+
+  public static toGetAuctionByIdDto(
+    auctionId: string,
+    userId: string,
+  ): IGetAuctionByIdInputDto {
+    return {
+      auctionId,
+      userId,
+    };
+  }
+
+  public static toGenerateAuctionUploadUrlDto(
+    data: ZodGenerateAuctionUploadUrlInputType,
+    userId: string,
+  ): IGenerateAuctionUploadUrlInput {
+    return {
+      userId,
+      fileName: data.fileName,
+      contentType: data.contentType,
+      fileSize: data.fileSize,
+    };
+  }
+
+  public static toUpdateAuctionInputDto(
+    data: ZodUpdateAuctionInputType,
+    userId: string,
+    auctionId: string,
+  ): IUpdateAuctionInput {
+    return {
+      userId: userId,
+      auctionId: auctionId,
+      auctionType: data.auctionType as AuctionType | undefined,
+      title: data.title,
+      description: data.description,
+      category: data.category,
+      condition: data.condition,
+      startPrice: data.startPrice,
+      minIncrement: data.minIncrement,
+      startAt: new Date(data.startAt),
+      endAt: new Date(data.endAt),
+      antiSnipSeconds: data.antiSnipSeconds,
+      maxExtensionCount: data.maxExtensionCount,
+      bidCooldownSeconds: data.bidCooldownSeconds,
+      assets: data.assets?.map((a) => {
+        return {
+          fileKey: a.fileKey,
+          position: a.position,
+          assetType: a.assetType,
+        };
+      }),
+    };
+  }
+
+  public static toPublishAuctionInputDto(
+    data: ZodPublishAuctionParamsInputType,
+    userId: string,
+  ): IPublishAuctionInput {
+    return {
+      auctionId: data.id,
+      userId: userId,
+    };
+  }
+
+  public static toEndAuctionInputDto(
+    auctionId: string,
+    userId: string,
+    isAdmin: boolean,
+  ): IEndAuctionInput {
+    return {
+      auctionId: auctionId,
+      userId: userId,
+      isAdmin: isAdmin,
     };
   }
 }

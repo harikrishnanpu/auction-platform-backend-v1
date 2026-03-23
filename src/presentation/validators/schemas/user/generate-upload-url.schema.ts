@@ -5,3 +5,7 @@ export const generateUploadUrlSchema = z.object({
   fileName: z.string().min(1, 'File name is required').trim(),
   fileSize: z.number().min(1, 'File size is required'),
 });
+
+export type ZodGenerateUploadUrlInputType = z.infer<
+  typeof generateUploadUrlSchema
+>;

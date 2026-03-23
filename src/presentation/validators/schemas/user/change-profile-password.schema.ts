@@ -15,3 +15,7 @@ export const changeProfilePasswordSchema = z.object({
       'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
     ),
 });
+
+export type ZodChangeProfilePasswordInputType = z.infer<
+  typeof changeProfilePasswordSchema
+>;

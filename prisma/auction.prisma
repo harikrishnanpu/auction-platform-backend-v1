@@ -86,7 +86,8 @@ model Bid {
   id        String   @id @default(uuid())
   auctionId String
   userId    String
-  amount    Float
+  amount    Float?   @default(0)
+  encryptedAmount String? @default("")
   createdAt DateTime @default(now())
   auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
