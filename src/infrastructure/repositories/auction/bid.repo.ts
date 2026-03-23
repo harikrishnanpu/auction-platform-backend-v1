@@ -8,67 +8,65 @@ import { inject, injectable } from 'inversify';
 
 @injectable()
 export class PrismaBidRepo implements IBidRepository {
-  constructor(
-    @inject(TYPES.PrismaClient)
-    private readonly _prisma: PrismaClient,
-  ) {}
+    constructor(
+        @inject(TYPES.PrismaClient)
+        private readonly _prisma: PrismaClient,
+    ) {}
 
-  async create(data: {
-    id: string;
-    auctionId: string;
-    userId: string;
-    amount: number;
-  }): Promise<Result<Bid>> {
-    const row = await this._prisma.bid.create({
-      data: {
-        id: data.id,
-        auctionId: data.auctionId,
-        userId: data.userId,
-        amount: data.amount,
-      },
-    });
+    async create(data: Bid): Promise<Result<Bid>> {
+        const row = await this._prisma.bid.create({
+            data: {
+                id: data.getId(),
+                auctionId: data.getAuctionId(),
+                userId: data.getUserId(),
+                amount: data.getAmount(),
+                encryptedAmount: data.getEncryptedAmount(),
+            },
+        });
 
-    return BidMapper.toDomain(row);
-  }
-
-  async findLatestByAuctionId(auctionId: string): Promise<Result<Bid | null>> {
-    const row = await this._prisma.bid.findFirst({
-      where: { auctionId },
-      orderBy: { amount: 'desc' },
-    });
-
-    if (!row) return Result.ok(null);
-    return BidMapper.toDomain(row);
-  }
-
-  async findLastBidTimeByUser(
-    auctionId: string,
-    userId: string,
-  ): Promise<Result<Date | null>> {
-    const row = await this._prisma.bid.findFirst({
-      where: { auctionId, userId },
-      orderBy: { createdAt: 'desc' },
-    });
-    return Result.ok(row?.createdAt ?? null);
-  }
-
-  async findManyByAuctionId(
-    auctionId: string,
-    limit: number,
-  ): Promise<Result<Bid[]>> {
-    const rows = await this._prisma.bid.findMany({
-      where: { auctionId },
-      orderBy: { amount: 'desc' },
-      take: limit,
-    });
-
-    const bids: Bid[] = [];
-    for (const row of rows) {
-      const result = BidMapper.toDomain(row);
-
-      if (result.isFailure) return Result.fail<Bid[]>(result.getError());
-      bids.push(result.getValue());
+        return BidMapper.toDomain(row);
     }
-    return Result.ok(bids);
-  }
+
+    async findLatestByAuctionId(
+        auctionId: string,
+    ): Promise<Result<Bid | null>> {
+        const row = await this._prisma.bid.findFirst({
+            where: { auctionId },
+            orderBy: { amount: 'desc' },
+        });
+
+        if (!row) return Result.ok(null);
+        return BidMapper.toDomain(row);
+    }
+
+    async findLastBidTimeByUser(
+        auctionId: string,
+        userId: string,
+    ): Promise<Result<Date | null>> {
+        const row = await this._prisma.bid.findFirst({
+            where: { auctionId, userId },
+            orderBy: { createdAt: 'desc' },
+        });
+        return Result.ok(row?.createdAt ?? null);
+    }
+
+    async findManyByAuctionId(
+        auctionId: string,
+        limit: number,
+    ): Promise<Result<Bid[]>> {
+        const rows = await this._prisma.bid.findMany({
+            where: { auctionId },
+            orderBy: { amount: 'desc' },
+            take: limit,
+        });
+
+        const bids: Bid[] = [];
+        for (const row of rows) {
+            const result = BidMapper.toDomain(row);
+
+            if (result.isFailure) return Result.fail<Bid[]>(result.getError());
+            bids.push(result.getValue());
+        }
+        return Result.ok(bids);
+    }
 }

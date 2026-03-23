@@ -17,6 +17,11 @@ import { redisContainer } from './modules/redis.container';
 import { AuctionController } from '@presentation/http/controllers/auction/auction.controller';
 import { sellerContainer } from './modules/seller.container';
 import { SellerController } from '@presentation/http/controllers/seller/seller.controller';
+import { IPlaceBidStrategy } from '@application/interfaces/strategies/auction/placeBid.strategy';
+import { PlaceLongAuctionBidStrategy } from '@application/strategies/auction/long-bid.placebid.strategy';
+import { PlaceSealedAuctionBidStrategy } from '@application/strategies/auction/sealed-bid.placebid.startegy';
+import { IEncryptionService } from '@application/interfaces/services/IEncryptionService';
+import { EncryptService } from '@infrastructure/services/encrypt/encrypt.service';
 
 const container = new Container();
 
@@ -34,16 +39,25 @@ container.bind<KycController>(TYPES.KycController).to(KycController);
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<SellerController>(TYPES.SellerController).to(SellerController);
 
+// --move for test only
 container
-  .bind<AuctionController>(TYPES.AuctionController)
-  .to(AuctionController);
+    .bind<IPlaceBidStrategy>(TYPES.PlaceLongAuctionBidStrategy)
+    .to(PlaceLongAuctionBidStrategy);
+container
+    .bind<IPlaceBidStrategy>(TYPES.PlaceSealedAuctionBidStrategy)
+    .to(PlaceSealedAuctionBidStrategy);
+container.bind<IEncryptionService>(TYPES.IEncryptionService).to(EncryptService);
 
 container
-  .bind<AuthenticateMiddleware>(TYPES.AuthenticateMiddleware)
-  .to(AuthenticateMiddleware);
+    .bind<AuctionController>(TYPES.AuctionController)
+    .to(AuctionController);
 
 container
-  .bind<AuthorizeMiddleware>(TYPES.AuthorizeMiddleware)
-  .to(AuthorizeMiddleware);
+    .bind<AuthenticateMiddleware>(TYPES.AuthenticateMiddleware)
+    .to(AuthenticateMiddleware);
+
+container
+    .bind<AuthorizeMiddleware>(TYPES.AuthorizeMiddleware)
+    .to(AuthorizeMiddleware);
 
 export { container };
