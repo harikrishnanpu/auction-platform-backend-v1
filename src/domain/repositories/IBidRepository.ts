@@ -5,10 +5,12 @@ export interface IBidRepository {
     create(data: Bid): Promise<Result<Bid>>;
 
     findLatestByAuctionId(auctionId: string): Promise<Result<Bid | null>>;
-    findLastBidTimeByUser(
+
+    findLastBidsByUser(
         auctionId: string,
         userId: string,
-    ): Promise<Result<Date | null>>;
+    ): Promise<Result<Bid | null>>;
+
     findManyByAuctionId(
         auctionId: string,
         limit: number,

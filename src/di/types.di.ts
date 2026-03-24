@@ -115,4 +115,5 @@ export const TYPES = {
     IEncryptionService: Symbol.for('IEncryptionService'),
     PlaceLongAuctionBidStrategy: Symbol.for('PlaceLongAuctionBidStrategy'),
     PlaceSealedAuctionBidStrategy: Symbol.for('PlaceSealedAuctionBidStrategy'),
+    PlaceBidPolicyService: Symbol.for('PlaceBidPolicyService'),
 };

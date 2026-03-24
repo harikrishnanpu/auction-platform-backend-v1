@@ -1,3 +1,5 @@
+import { IAuctionRoomParticipantDto } from './getAuctionRoom.dto';
+
 export interface IPlaceBidInput {
     auctionId: string;
     userId: string;
@@ -18,4 +20,5 @@ export interface IPlaceBidOutput {
     createdAt: string;
     endAt: string;
     extensionCount: number;
+    participants: IAuctionRoomParticipantDto[];
 }

@@ -1,4 +1,3 @@
-import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
     IPlaceBidInput,
     IPlaceBidOutput,
@@ -8,7 +7,6 @@ import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
-import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { IBidLockService } from '@application/interfaces/services/IBidLockService';
@@ -17,6 +15,8 @@ import { Auction } from '@domain/entities/auction/auction.entity';
 import { PlaceBidStartegyFactory } from '@application/strategies/factory/placeBidStartegy.factory';
 import { BID_LOCK_TTL_SECONDS } from '@application/constants/auction/bid.constants';
 import { Bid } from '@domain/entities/auction/bid.entity';
+import { PlaceBidPolicyService } from '@domain/policies/place-bid-policy.service';
+import { AuctionParticipant } from '@domain/entities/auction/auction-participant.entity';
 
 @injectable()
 export class PlaceBidUsecase implements IPlaceBidUsecase {
@@ -31,15 +31,18 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
         private readonly _idGeneratingService: IIdGeneratingService,
         @inject(TYPES.IBidLockService)
         private readonly _bidLockService: IBidLockService,
+        @inject(TYPES.PlaceBidPolicyService)
+        private readonly _placeBidPolicyService: PlaceBidPolicyService,
     ) {}
 
     async execute(input: IPlaceBidInput): Promise<Result<IPlaceBidOutput>> {
+        // console.log("BID INPUT: ", input);
         const lockKey = this._bidLockService.lockKeyForAuction(input.auctionId);
         const lockToken = this._idGeneratingService.generateId();
 
-        console.log('lockKey', lockKey);
-
         try {
+            console.log('lockKey', lockKey);
+
             const locked = await this._bidLockService.lock(
                 lockKey,
                 lockToken,
@@ -59,29 +62,13 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
             }
 
             const auction = auctionResult.getValue();
-            if (auction.getStatus() !== AuctionStatus.ACTIVE) {
-                return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
-            }
 
-            if (auction.getStartAt().getTime() > Date.now()) {
-                return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_STARTED);
-            }
-
-            if (auction.getEndAt().getTime() <= Date.now()) {
-                return Result.fail(AUCTION_MESSAGES.AUCTION_ENDED);
-            }
-
-            if (auction.getSellerId() === input.userId) {
-                return Result.fail(AUCTION_MESSAGES.SELLER_CANNOT_PLACE_BID);
-            }
-
-            const latestResult = await this._bidRepo.findLatestByAuctionId(
+            const latestBidResult = await this._bidRepo.findLatestByAuctionId(
                 input.auctionId,
             );
-
-            if (latestResult.isFailure)
-                return Result.fail(latestResult.getError());
-            const latest = latestResult.getValue();
+            if (latestBidResult.isFailure) {
+                return Result.fail(latestBidResult.getError());
+            }
 
             const strategy = PlaceBidStartegyFactory.create(
                 auction.getAuctionType(),
@@ -95,51 +82,51 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
             const strategyRulesResult = strategy.applyRules({
                 input,
                 auction,
-                latestBid: latest,
+                latestBid: latestBidResult.getValue(),
             });
+
             if (strategyRulesResult.isFailure) {
                 return Result.fail(strategyRulesResult.getError());
             }
 
-            const lastBidResult = await this._bidRepo.findLastBidTimeByUser(
+            const lastUserBidResult = await this._bidRepo.findLastBidsByUser(
                 input.auctionId,
                 input.userId,
             );
 
-            if (lastBidResult.isFailure)
-                return Result.fail(lastBidResult.getError());
-
-            const lastBidTime = lastBidResult.getValue();
-
-            if (lastBidTime) {
-                const elapsedSec = (Date.now() - lastBidTime.getTime()) / 1000;
-                if (elapsedSec < auction.getBidCooldownSeconds())
-                    return Result.fail(
-                        AUCTION_MESSAGES.COOLDOWN_WAIT(
-                            Math.ceil(
-                                auction.getBidCooldownSeconds() - elapsedSec,
-                            ),
-                        ),
-                    );
+            if (lastUserBidResult.isFailure) {
+                return Result.fail(lastUserBidResult.getError());
             }
 
-            const nowMs = Date.now();
-            const remainingSec = (auction.getEndAt().getTime() - nowMs) / 1000;
-            const currentExtensionCount = auction.getExtensionCount();
+            const newBid = Bid.create({
+                id: this._idGeneratingService.generateId(),
+                auctionId: input.auctionId,
+                userId: input.userId,
+                amount: validatedBid.amount ?? 0,
+                encryptedAmount: validatedBid.encryptedAmount ?? '',
+            });
+
+            if (newBid.isFailure) {
+                return Result.fail(newBid.getError());
+            }
+
+            const canPlaceBidResult = this._placeBidPolicyService.canPlaceBid(
+                auction,
+                input.userId,
+                validatedBid.amount ?? 0,
+                newBid.getValue(),
+                lastUserBidResult.getValue(),
+            );
+            if (canPlaceBidResult.isFailure) {
+                return Result.fail(canPlaceBidResult.getError());
+            }
+
             const shouldExtend = PlaceBidStartegyFactory.shouldExtendAuction(
                 auction,
-                remainingSec,
+                auction.getEndAt().getTime() - Date.now(),
             );
 
-            let effectiveEndAt = auction.getEndAt().toISOString();
-            let effectiveExtensionCount = currentExtensionCount;
-
             if (shouldExtend) {
-                const extendedEndAt = new Date(
-                    auction.getEndAt().getTime() +
-                        auction.getAntiSnipSeconds() * 1000,
-                );
-
                 const updatedAuctionRes = Auction.create({
                     id: auction.getId(),
                     sellerId: auction.getSellerId(),
@@ -151,9 +138,12 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                     startPrice: auction.getStartPrice(),
                     minIncrement: auction.getMinIncrement(),
                     startAt: auction.getStartAt(),
-                    endAt: extendedEndAt,
+                    endAt: new Date(
+                        auction.getEndAt().getTime() +
+                            auction.getAntiSnipSeconds() * 1000,
+                    ),
                     antiSnipSeconds: auction.getAntiSnipSeconds(),
-                    extensionCount: currentExtensionCount + 1,
+                    extensionCount: auction.getExtensionCount(),
                     maxExtensionCount: auction.getMaxExtensionCount(),
                     bidCooldownSeconds: auction.getBidCooldownSeconds(),
                     status: auction.getStatus(),
@@ -170,59 +160,66 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                 if (saveRes.isFailure) {
                     return Result.fail(saveRes.getError());
                 }
-
-                effectiveEndAt = saveRes.getValue().getEndAt().toISOString();
-                effectiveExtensionCount = saveRes
-                    .getValue()
-                    .getExtensionCount();
             }
 
-            const participantResult = await this._participantRepo.save({
+            const createBidResult = await this._bidRepo.create(
+                newBid.getValue(),
+            );
+
+            if (createBidResult.isFailure) {
+                return Result.fail(createBidResult.getError());
+            }
+
+            const participant = AuctionParticipant.create({
+                id: this._idGeneratingService.generateId(),
                 auctionId: input.auctionId,
                 userId: input.userId,
                 userName: input.userName,
+                joinedAt: new Date(),
             });
+
+            if (participant.isFailure) {
+                return Result.fail(participant.getError());
+            }
+
+            const participantResult = await this._participantRepo.save(
+                participant.getValue(),
+            );
 
             if (participantResult.isFailure) {
                 return Result.fail(participantResult.getError());
             }
 
-            const bidId = this._idGeneratingService.generateId();
-
-            const bidResult = Bid.create({
-                id: bidId,
-                auctionId: input.auctionId,
-                userId: input.userId,
-                amount: validatedBid.amount,
-                encryptedAmount: validatedBid.encryptedAmount,
-            });
-
-            if (bidResult.isFailure) {
-                return Result.fail(bidResult.getError());
-            }
-
-            const createResult = await this._bidRepo.create(
-                bidResult.getValue(),
-            );
-
-            if (createResult.isFailure) {
-                return Result.fail(createResult.getError());
+            const participantsResult =
+                await this._participantRepo.findByAuctionId(input.auctionId);
+            if (participantsResult.isFailure) {
+                return Result.fail(participantsResult.getError());
             }
 
             const output: IPlaceBidOutput = {
-                id: bidResult.getValue().getId(),
-                auctionId: bidResult.getValue().getAuctionId(),
-                userId: bidResult.getValue().getUserId(),
-                amount: bidResult.getValue().getAmount(),
-                createdAt: bidResult.getValue().getCreatedAt().toISOString(),
-                endAt: effectiveEndAt,
-                extensionCount: effectiveExtensionCount,
+                id: createBidResult.getValue().getId(),
+                auctionId: createBidResult.getValue().getAuctionId(),
+                userId: createBidResult.getValue().getUserId(),
+                amount: createBidResult.getValue().getAmount(),
+                createdAt: createBidResult
+                    .getValue()
+                    .getCreatedAt()
+                    .toISOString(),
+                endAt: auction.getEndAt().toISOString(),
+                extensionCount: auction.getExtensionCount(),
+                participants: participantsResult.getValue().map((p) => ({
+                    id: p.getId(),
+                    auctionId: p.getAuctionId(),
+                    userId: p.getUserId(),
+                    userName: p.getUserName(),
+                    joinedAt: p.getJoinedAt().toISOString(),
+                })),
             };
 
             return Result.ok(output);
         } catch (error) {
             console.log('error', error);
-            return;
+            // return;
             return Result.fail('An unexpected error occurred');
         } finally {
             await this._bidLockService.release(lockKey, lockToken);
