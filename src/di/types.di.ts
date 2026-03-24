@@ -116,4 +116,6 @@ export const TYPES = {
     PlaceLongAuctionBidStrategy: Symbol.for('PlaceLongAuctionBidStrategy'),
     PlaceSealedAuctionBidStrategy: Symbol.for('PlaceSealedAuctionBidStrategy'),
     PlaceBidPolicyService: Symbol.for('PlaceBidPolicyService'),
+    INotificationRepository: Symbol.for('INotificationRepository'),
+    IGetUserNotificationsUsecase: Symbol.for('IGetUserNotificationsUsecase'),
 };

@@ -55,6 +55,12 @@ export class PlaceBidPolicyService {
             }
         }
 
+        if (auction.getAuctionType() === AuctionType.SEALED) {
+            if (latestBid && latestBid.getUserId() === userId) {
+                return Result.fail(AUCTION_MESSAGES.ONLY_ONE_BID_PER_USER);
+            }
+        }
+
         return Result.ok();
     }
 }
