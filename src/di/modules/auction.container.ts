@@ -40,67 +40,71 @@ import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
 import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
+import { PlaceBidPolicyService } from '@domain/policies/place-bid-policy.service';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
-  bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
-  bind<IBidRepository>(TYPES.IBidRepository).to(PrismaBidRepo);
-  bind<IAuctionParticipantRepository>(TYPES.IAuctionParticipantRepository).to(
-    PrismaAuctionParticipantRepo,
-  );
-  bind<ICreateAuctionUsecase>(TYPES.ICreateAuctionUsecase).to(
-    CreateAuctionUsecase,
-  );
+    bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
+    bind<IBidRepository>(TYPES.IBidRepository).to(PrismaBidRepo);
+    bind<IAuctionParticipantRepository>(TYPES.IAuctionParticipantRepository).to(
+        PrismaAuctionParticipantRepo,
+    );
+    bind<ICreateAuctionUsecase>(TYPES.ICreateAuctionUsecase).to(
+        CreateAuctionUsecase,
+    );
 
-  bind<IGenerateAuctionUploadUrlUsecase>(
-    TYPES.IGenerateAuctionUploadUrlUsecase,
-  ).to(GenerateAuctionUploadUrlUsecase);
-  bind<IUpdateAuctionUsecase>(TYPES.IUpdateAuctionUsecase).to(
-    UpdateAuctionUsecase,
-  );
-  bind<IPublishAuctionUsecase>(TYPES.IPublishAuctionUsecase).to(
-    PublishAuctionUsecase,
-  );
-  bind<IEndAuctionUsecase>(TYPES.IEndAuctionUsecase).to(EndAuctionUsecase);
-  bind<IPlaceBidUsecase>(TYPES.IPlaceBidUsecase).to(PlaceBidUsecase);
-  bind<IGetAuctionByIdUsecase>(TYPES.IGetAuctionByIdUsecase).to(
-    GetAuctionByIdUsecase,
-  );
-  bind<IAuctionCategoryRepository>(TYPES.IAuctionCategoryRepository).to(
-    PrismaAuctionCategoryRepository,
-  );
-  bind<ISlugGeneratorService>(TYPES.ISlugGeneratorService).to(
-    SlugGeneratorService,
-  );
+    bind<IGenerateAuctionUploadUrlUsecase>(
+        TYPES.IGenerateAuctionUploadUrlUsecase,
+    ).to(GenerateAuctionUploadUrlUsecase);
+    bind<IUpdateAuctionUsecase>(TYPES.IUpdateAuctionUsecase).to(
+        UpdateAuctionUsecase,
+    );
+    bind<IPublishAuctionUsecase>(TYPES.IPublishAuctionUsecase).to(
+        PublishAuctionUsecase,
+    );
+    bind<IEndAuctionUsecase>(TYPES.IEndAuctionUsecase).to(EndAuctionUsecase);
+    bind<IPlaceBidUsecase>(TYPES.IPlaceBidUsecase).to(PlaceBidUsecase);
+    bind<IGetAuctionByIdUsecase>(TYPES.IGetAuctionByIdUsecase).to(
+        GetAuctionByIdUsecase,
+    );
+    bind<IAuctionCategoryRepository>(TYPES.IAuctionCategoryRepository).to(
+        PrismaAuctionCategoryRepository,
+    );
+    bind<ISlugGeneratorService>(TYPES.ISlugGeneratorService).to(
+        SlugGeneratorService,
+    );
 
-  bind<IGetAllAuctionCategoriesUsecase>(
-    TYPES.IGetAllAuctionCategoriesUsecase,
-  ).to(GetAllAuctionCategoryUsecase);
+    bind<IGetAllAuctionCategoriesUsecase>(
+        TYPES.IGetAllAuctionCategoriesUsecase,
+    ).to(GetAllAuctionCategoryUsecase);
 
-  bind<IGetAuctionRoomUsecase>(TYPES.IGetAuctionRoomUsecase).to(
-    GetAuctionRoomUsecase,
-  );
+    bind<IGetAuctionRoomUsecase>(TYPES.IGetAuctionRoomUsecase).to(
+        GetAuctionRoomUsecase,
+    );
 
-  bind<IGetBrowseAuctionsUsecase>(TYPES.IGetBrowseAuctionsUsecase).to(
-    GetBrowseAuctionsUsecase,
-  );
+    bind<IGetBrowseAuctionsUsecase>(TYPES.IGetBrowseAuctionsUsecase).to(
+        GetBrowseAuctionsUsecase,
+    );
 
-  bind<IPauseAuctionUsecase>(TYPES.IPauseAuctionUsecase).to(
-    PauseAuctionUsecase,
-  );
+    bind<IPauseAuctionUsecase>(TYPES.IPauseAuctionUsecase).to(
+        PauseAuctionUsecase,
+    );
 
-  bind<IResumeAuctionUsecase>(TYPES.IResumeAuctionUsecase).to(
-    ResumeAuctionUsecase,
-  );
+    bind<IResumeAuctionUsecase>(TYPES.IResumeAuctionUsecase).to(
+        ResumeAuctionUsecase,
+    );
 
-  bind<IAuctionChatMessageRepository>(TYPES.IAuctionChatMessageRepository).to(
-    PrismaAuctionChatMessageRepo,
-  );
+    bind<IAuctionChatMessageRepository>(TYPES.IAuctionChatMessageRepository).to(
+        PrismaAuctionChatMessageRepo,
+    );
 
-  bind<ISendAuctionChatMessageUsecase>(TYPES.ISendAuctionChatMessageUsecase).to(
-    SendAuctionChatMessageUsecase,
-  );
+    bind<ISendAuctionChatMessageUsecase>(
+        TYPES.ISendAuctionChatMessageUsecase,
+    ).to(SendAuctionChatMessageUsecase);
 
-  bind<IGetAuctionChatMessagesUsecase>(TYPES.IGetAuctionChatMessagesUsecase).to(
-    GetAuctionChatMessagesUsecase,
-  );
+    bind<IGetAuctionChatMessagesUsecase>(
+        TYPES.IGetAuctionChatMessagesUsecase,
+    ).to(GetAuctionChatMessagesUsecase);
+    bind<PlaceBidPolicyService>(TYPES.PlaceBidPolicyService).to(
+        PlaceBidPolicyService,
+    );
 });

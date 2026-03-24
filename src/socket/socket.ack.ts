@@ -1,23 +1,25 @@
 export type SocketAckPayload = {
-  success: boolean;
-  data?: unknown;
-  error?: string;
+    success: boolean;
+    data?: unknown;
+    error?: string;
 };
 
 export type SocketAckCallback = (payload: SocketAckPayload) => void;
 
 export async function hanldeSocketCallback(
-  callback: SocketAckCallback | undefined,
-  fn: () => Promise<SocketAckPayload>,
+    callback: SocketAckCallback | undefined,
+    fn: () => Promise<SocketAckPayload>,
 ): Promise<void> {
-  try {
-    const result = await fn();
-    if (callback) {
-      callback(result);
+    try {
+        const result = await fn();
+        if (callback) {
+            callback(result);
+        }
+        console.log('SOCKET ACK RESULT: ', result);
+    } catch (err) {
+        console.log('SOCKET ACK ERROR: ', err);
+        if (callback) {
+            callback({ success: false, error: 'Internal Server Error' });
+        }
     }
-  } catch {
-    if (callback) {
-      callback({ success: false, error: 'Internal Server Error' });
-    }
-  }
 }

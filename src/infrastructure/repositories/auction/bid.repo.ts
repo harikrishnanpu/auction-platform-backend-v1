@@ -39,15 +39,21 @@ export class PrismaBidRepo implements IBidRepository {
         return BidMapper.toDomain(row);
     }
 
-    async findLastBidTimeByUser(
+    async findLastBidsByUser(
         auctionId: string,
         userId: string,
-    ): Promise<Result<Date | null>> {
-        const row = await this._prisma.bid.findFirst({
-            where: { auctionId, userId },
+    ): Promise<Result<Bid | null>> {
+        const res = await this._prisma.bid.findFirst({
+            where: {
+                auctionId,
+                userId,
+            },
             orderBy: { createdAt: 'desc' },
         });
-        return Result.ok(row?.createdAt ?? null);
+
+        if (!res) return Result.ok(null);
+
+        return BidMapper.toDomain(res);
     }
 
     async findManyByAuctionId(
