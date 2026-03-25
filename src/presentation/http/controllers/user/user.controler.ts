@@ -328,6 +328,12 @@ export class UserController {
                 );
             }
 
+            const notifications = result.getValue();
+            console.log('[notifications-get]', {
+                userId: req.user.id,
+                count: notifications.length,
+            });
+
             ResponseHelper.success<IUserNotificationDto[]>(
                 res,
                 result.getValue(),
@@ -346,31 +352,47 @@ export class UserController {
                 );
             }
 
-            console.log('streamNotifications', req.user.id);
-
             res.setHeader('Content-Type', 'text/event-stream');
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
+            res.setHeader('X-Accel-Buffering', 'no');
 
-            res.write(`data: ${JSON.stringify({ connected: true })}\n\n`);
+            res.flushHeaders();
 
-            const result = await this._getUserNotificationsUsecase.execute(
-                req.user.id,
-            );
+            const userId = req.user.id;
 
-            if (result.isFailure) {
-                res.write(
-                    `data: ${JSON.stringify({ error: result.getError() })}\n\n`,
-                );
-                return;
-            }
+            const pushNotifications = async () => {
+                const notificationResult =
+                    await this._getUserNotificationsUsecase.execute(userId);
 
-            const notifications = result.getValue();
-            console.log('notifications', notifications);
+                if (notificationResult.isFailure) {
+                    res.write(
+                        `event: error\ndata: ${JSON.stringify({
+                            message: notificationResult.getError(),
+                        })}\n\n`,
+                    );
+                    return;
+                }
 
-            setInterval(() => {
+                const notifications = notificationResult.getValue();
                 res.write(`data: ${JSON.stringify(notifications)}\n\n`);
-            }, 2000);
+            };
+
+            await pushNotifications();
+
+            const interval = setInterval(() => {
+                void pushNotifications();
+            }, 5000);
+
+            const heartbeat = setInterval(() => {
+                res.write(': ping\n\n');
+            }, 15000);
+
+            req.on('close', () => {
+                clearInterval(interval);
+                clearInterval(heartbeat);
+                res.end();
+            });
         },
     );
 }
