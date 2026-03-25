@@ -3,18 +3,16 @@ import {
     IEndAuctionInput,
     IEndAuctionOutput,
 } from '@application/dtos/auction/end-auction.dto';
-import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { IEventBus } from '@application/interfaces/events/IEventBus';
 import { IEndAuctionUsecase } from '@application/interfaces/usecases/auction/IEndAuctionUsecase';
 import { TYPES } from '@di/types.di';
 import {
     Auction,
     AuctionStatus,
 } from '@domain/entities/auction/auction.entity';
-import { Notification } from '@domain/entities/notifications/notification.entity';
-import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
+import { AuctionEnded } from '@domain/events/auction-end.event';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
-import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -25,18 +23,15 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         private readonly _auctionRepository: IAuctionRepository,
         @inject(TYPES.IBidRepository)
         private readonly _bidRepository: IBidRepository,
-        @inject(TYPES.INotificationRepository)
-        private readonly _notificationRepository: INotificationRepository,
-        @inject(TYPES.IIdGeneratingService)
-        private readonly _idGeneratingService: IIdGeneratingService,
-        @inject(TYPES.IAuctionParticipantRepository)
-        private readonly _participantRepository: IAuctionParticipantRepository,
+        @inject(TYPES.IEventBus)
+        private readonly _eventBus: IEventBus,
     ) {}
 
     async execute(input: IEndAuctionInput): Promise<Result<IEndAuctionOutput>> {
         const existing = await this._auctionRepository.findById(
             input.auctionId,
         );
+
         if (existing.isFailure) return Result.fail(existing.getError());
 
         const auction = existing.getValue();
@@ -89,72 +84,15 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         const updateResult = await this._auctionRepository.save(ended);
         if (updateResult.isFailure) return Result.fail(updateResult.getError());
 
-        const allParticipantsResult =
-            await this._participantRepository.findByAuctionId(input.auctionId);
-
-        if (allParticipantsResult.isFailure)
-            return Result.fail(allParticipantsResult.getError());
-
-        if (winnerId) {
-            const winnerNotificationResult =
-                await this.createNotificationForUser({
-                    userId: winnerId,
-                    title: 'Auction result',
-                    message: `You won the auction: ${auction.getTitle()}`,
-                });
-            if (winnerNotificationResult.isFailure) {
-                return Result.fail(winnerNotificationResult.getError());
-            }
-        }
-
-        // domain event --changing to--
-        for (const participant of allParticipantsResult.getValue()) {
-            if (participant.getUserId() === winnerId) continue;
-
-            const loserNotificationResult =
-                await this.createNotificationForUser({
-                    userId: participant.getUserId(),
-                    title: 'Auction result',
-                    message: `You lost the auction: ${auction.getTitle()}`,
-                });
-
-            if (loserNotificationResult.isFailure) {
-                return Result.fail(loserNotificationResult.getError());
-            }
-        }
-
         const saved = updateResult.getValue();
+
+        this._eventBus.publish(
+            new AuctionEnded(saved.getId(), saved.getTitle(), winnerId),
+        );
+
         return Result.ok({
             id: saved.getId(),
             status: saved.getStatus(),
         });
-    }
-
-    // test for notification
-    private async createNotificationForUser({
-        userId,
-        title,
-        message,
-    }: {
-        userId: string;
-        title: string;
-        message: string;
-    }): Promise<Result<void>> {
-        const notification = Notification.create({
-            id: this._idGeneratingService.generateId(),
-            title,
-            message,
-            userId,
-        });
-
-        if (notification.isFailure) return Result.fail(notification.getError());
-
-        const savedNotification = await this._notificationRepository.save(
-            notification.getValue(),
-        );
-        if (savedNotification.isFailure)
-            return Result.fail(savedNotification.getError());
-
-        return Result.ok();
     }
 }

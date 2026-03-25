@@ -5,8 +5,9 @@ import { TYPES } from '@di/types.di';
 import { Notification } from '@domain/entities/notifications/notification.entity';
 import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { Result } from '@domain/shared/result';
-import { inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 
+@injectable()
 export class CreateNotificationUsecase implements ICreateNotificationUsecase {
     constructor(
         @inject(TYPES.IIdGeneratingService)

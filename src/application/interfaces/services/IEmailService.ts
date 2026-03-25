@@ -3,13 +3,20 @@ import { OtpPurpose } from '@domain/entities/otp/otp.entity';
 import { Email } from '@domain/value-objects/email.vo';
 
 export type EmailTemplate =
-  (typeof EMAIL_TEMPLATES)[keyof typeof EMAIL_TEMPLATES];
+    (typeof EMAIL_TEMPLATES)[keyof typeof EMAIL_TEMPLATES];
 
 export interface IEmailService {
-  sendOtpEmail(
-    email: Email,
-    otp: string,
-    purpose: OtpPurpose,
-    template: EmailTemplate,
-  ): Promise<void>;
+    sendOtpEmail(
+        email: Email,
+        otp: string,
+        purpose: OtpPurpose,
+        template: EmailTemplate,
+    ): Promise<void>;
+
+    sendNotificationEmail(
+        email: Email,
+        template: EmailTemplate,
+        subject: string,
+        message: string,
+    ): Promise<void>;
 }

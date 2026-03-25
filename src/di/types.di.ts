@@ -118,4 +118,7 @@ export const TYPES = {
     PlaceBidPolicyService: Symbol.for('PlaceBidPolicyService'),
     INotificationRepository: Symbol.for('INotificationRepository'),
     IGetUserNotificationsUsecase: Symbol.for('IGetUserNotificationsUsecase'),
+    IEventBus: Symbol.for('IEventBus'),
+    OnAuctionEndHandler: Symbol.for('OnAuctionEndHandler'),
+    OnNotificationCreatedHandler: Symbol.for('OnNotificationCreatedHandler'),
 };

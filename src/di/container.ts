@@ -24,6 +24,10 @@ import { IEncryptionService } from '@application/interfaces/services/IEncryption
 import { EncryptService } from '@infrastructure/services/encrypt/encrypt.service';
 import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 import { INotificationRepository } from '@domain/repositories/INotificationRepo';
+import { EventBus } from '@infrastructure/events/event-bus';
+import { IEventBus } from '@application/interfaces/events/IEventBus';
+import { OnAuctionEndHandler } from '@application/event-handlers/onAuctionEnd.handler';
+import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
 
 const container = new Container();
 
@@ -52,6 +56,14 @@ container.bind<IEncryptionService>(TYPES.IEncryptionService).to(EncryptService);
 container
     .bind<INotificationRepository>(TYPES.INotificationRepository)
     .to(PrismaNotificationRepo);
+
+container.bind<IEventBus>(TYPES.IEventBus).to(EventBus).inSingletonScope();
+container
+    .bind<OnAuctionEndHandler>(TYPES.OnAuctionEndHandler)
+    .to(OnAuctionEndHandler);
+container
+    .bind<OnNotificationCreatedHandler>(TYPES.OnNotificationCreatedHandler)
+    .to(OnNotificationCreatedHandler);
 
 container
     .bind<AuctionController>(TYPES.AuctionController)
