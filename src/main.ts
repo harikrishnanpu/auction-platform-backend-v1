@@ -48,6 +48,7 @@ const eventBus = container.get<IEventBus>(TYPES.IEventBus);
 const onAuctionEndedHandler = container.get<OnAuctionEndHandler>(
     TYPES.OnAuctionEndHandler,
 );
+
 const onNotificationCreatedHandler =
     container.get<OnNotificationCreatedHandler>(
         TYPES.OnNotificationCreatedHandler,
@@ -59,6 +60,7 @@ eventBus.subscribe('AuctionEnded', (event) => {
 });
 
 eventBus.subscribe('NotificationCreated', (event) => {
+    console.log('NotificationCreated event received');
     onNotificationCreatedHandler.handle(event as NotificationCreated);
 });
 

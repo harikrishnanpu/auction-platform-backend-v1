@@ -346,31 +346,31 @@ export class UserController {
                 );
             }
 
+            console.log('streamNotifications', req.user.id);
+
             res.setHeader('Content-Type', 'text/event-stream');
             res.setHeader('Cache-Control', 'no-cache');
             res.setHeader('Connection', 'keep-alive');
-            res.setHeader('X-Accel-Buffering', 'no');
+
+            res.write(`data: ${JSON.stringify({ connected: true })}\n\n`);
 
             const result = await this._getUserNotificationsUsecase.execute(
                 req.user.id,
             );
 
             if (result.isFailure) {
-                throw new AppError(
-                    result.getError(),
-                    USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+                res.write(
+                    `data: ${JSON.stringify({ error: result.getError() })}\n\n`,
                 );
+                return;
             }
 
             const notifications = result.getValue();
+            console.log('notifications', notifications);
 
-            for (const notification of notifications) {
-                res.write(`data: ${JSON.stringify(notification)}\n\n`);
-            }
-
-            req.on('close', () => {
-                res.end();
-            });
+            setInterval(() => {
+                res.write(`data: ${JSON.stringify(notifications)}\n\n`);
+            }, 2000);
         },
     );
 }
