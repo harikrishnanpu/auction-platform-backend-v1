@@ -41,6 +41,8 @@ import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auct
 import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
 import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
 import { PlaceBidPolicyService } from '@domain/policies/place-bid-policy.service';
+import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
+import { GetUserParticipatedAuctionsUsecase } from '@application/usecases/auction/getUserParticipatedAuctions.usecase';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -84,6 +86,10 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IGetBrowseAuctionsUsecase>(TYPES.IGetBrowseAuctionsUsecase).to(
         GetBrowseAuctionsUsecase,
     );
+
+    bind<IGetUserParticipatedAuctionsUsecase>(
+        TYPES.IGetUserParticipatedAuctionsUsecase,
+    ).to(GetUserParticipatedAuctionsUsecase);
 
     bind<IPauseAuctionUsecase>(TYPES.IPauseAuctionUsecase).to(
         PauseAuctionUsecase,

@@ -12,6 +12,7 @@ export const USER_PROFILE_MESSAGES = {
         'Generate avatar upload url successfully',
     UPDATE_AVATAR_URL_SUCCESSFULLY: 'Update avatar url successfully',
     GET_NOTIFICATIONS_SUCCESSFULLY: 'Get notifications successfully',
+    GET_MY_AUCTIONS_SUCCESSFULLY: 'Get my auctions successfully',
 };
 
 export const USER_PROFILE_CONSTANTS = {

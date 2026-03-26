@@ -41,7 +41,11 @@ import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/notification/IGetUserNotificationsUsecase';
-import { IUserNotificationDto } from '@application/dtos/notification/notification.dto';
+import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
+import {
+    AuctionStatus,
+    AuctionType,
+} from '@domain/entities/auction/auction.entity';
 
 @injectable()
 export class UserController {
@@ -58,6 +62,8 @@ export class UserController {
         private readonly _updateAvatarUrlUseCase: IUpdateAvatarUrlUsecase,
         @inject(TYPES.IGetUserNotificationsUsecase)
         private readonly _getUserNotificationsUsecase: IGetUserNotificationsUsecase,
+        @inject(TYPES.IGetUserParticipatedAuctionsUsecase)
+        private readonly _getUserParticipatedAuctionsUsecase: IGetUserParticipatedAuctionsUsecase,
     ) {}
 
     /**
@@ -317,9 +323,17 @@ export class UserController {
                 );
             }
 
-            const result = await this._getUserNotificationsUsecase.execute(
-                req.user.id,
-            );
+            const pageRaw = req.query.page;
+            const limitRaw = req.query.limit;
+
+            const page = Number(pageRaw);
+            const limit = Number(limitRaw);
+
+            const result = await this._getUserNotificationsUsecase.execute({
+                userId: req.user.id,
+                page,
+                limit,
+            });
 
             if (result.isFailure) {
                 throw new AppError(
@@ -328,13 +342,7 @@ export class UserController {
                 );
             }
 
-            const notifications = result.getValue();
-            console.log('[notifications-get]', {
-                userId: req.user.id,
-                count: notifications.length,
-            });
-
-            ResponseHelper.success<IUserNotificationDto[]>(
+            ResponseHelper.success(
                 res,
                 result.getValue(),
                 USER_PROFILE_CONSTANTS.MESSAGES.GET_NOTIFICATIONS_SUCCESSFULLY,
@@ -342,6 +350,52 @@ export class UserController {
             );
         },
     );
+
+    getMyAuctions = expressAsyncHandler(async (req: Request, res: Response) => {
+        if (!req.user) {
+            throw new AppError(
+                USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        const page = Number(req.query.page);
+        const limit = Number(req.query.limit);
+        const search = String(req.query.search ?? '');
+        const auctionType = String(req.query.auctionType ?? 'ALL') as
+            | AuctionType
+            | 'ALL';
+        const status = String(req.query.status ?? 'ALL') as
+            | AuctionStatus
+            | 'ALL';
+        const sort = String(req.query.sort ?? 'startAt');
+        const order = String(req.query.order ?? 'desc') as 'asc' | 'desc';
+
+        const result = await this._getUserParticipatedAuctionsUsecase.execute({
+            userId: req.user.id,
+            page,
+            limit,
+            search,
+            auctionType,
+            status,
+            sort,
+            order,
+        });
+
+        if (result.isFailure) {
+            throw new AppError(
+                result.getError(),
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        ResponseHelper.success(
+            res,
+            result.getValue(),
+            USER_PROFILE_CONSTANTS.MESSAGES.GET_MY_AUCTIONS_SUCCESSFULLY,
+            USER_PROFILE_CONSTANTS.CODES.OK,
+        );
+    });
 
     streamNotifications = expressAsyncHandler(
         async (req: Request, res: Response) => {
@@ -362,20 +416,23 @@ export class UserController {
             const userId = req.user.id;
 
             const pushNotifications = async () => {
-                const notificationResult =
-                    await this._getUserNotificationsUsecase.execute(userId);
+                const streamPayloadResult =
+                    await this._getUserNotificationsUsecase.getStreamPayload(
+                        userId,
+                    );
 
-                if (notificationResult.isFailure) {
+                if (streamPayloadResult.isFailure) {
                     res.write(
                         `event: error\ndata: ${JSON.stringify({
-                            message: notificationResult.getError(),
+                            message: streamPayloadResult.getError(),
                         })}\n\n`,
                     );
                     return;
                 }
 
-                const notifications = notificationResult.getValue();
-                res.write(`data: ${JSON.stringify(notifications)}\n\n`);
+                res.write(
+                    `data: ${JSON.stringify(streamPayloadResult.getValue())}\n\n`,
+                );
             };
 
             await pushNotifications();

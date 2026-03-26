@@ -5,4 +5,5 @@ export interface IAuctionParticipantRepository {
     save(data: AuctionParticipant): Promise<Result<AuctionParticipant>>;
 
     findByAuctionId(auctionId: string): Promise<Result<AuctionParticipant[]>>;
+    findByUserId(userId: string): Promise<Result<AuctionParticipant[]>>;
 }

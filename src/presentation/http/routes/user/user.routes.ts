@@ -69,6 +69,13 @@ export class UserRoutes {
             this._userController.streamNotifications,
         );
 
+        this._router.get(
+            '/my-auctions',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.getMyAuctions,
+        );
+
         return this._router;
     }
 }

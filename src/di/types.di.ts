@@ -62,6 +62,9 @@ export const TYPES = {
     ),
     IUpdateAuctionUsecase: Symbol.for('IUpdateAuctionUsecase'),
     IGetBrowseAuctionsUsecase: Symbol.for('IGetBrowseAuctionsUsecase'),
+    IGetUserParticipatedAuctionsUsecase: Symbol.for(
+        'IGetUserParticipatedAuctionsUsecase',
+    ),
     IPublishAuctionUsecase: Symbol.for('IPublishAuctionUsecase'),
     IEndAuctionUsecase: Symbol.for('IEndAuctionUsecase'),
     AuctionController: Symbol.for('AuctionController'),
