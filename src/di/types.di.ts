@@ -62,6 +62,9 @@ export const TYPES = {
     ),
     IUpdateAuctionUsecase: Symbol.for('IUpdateAuctionUsecase'),
     IGetBrowseAuctionsUsecase: Symbol.for('IGetBrowseAuctionsUsecase'),
+    IGetUserParticipatedAuctionsUsecase: Symbol.for(
+        'IGetUserParticipatedAuctionsUsecase',
+    ),
     IPublishAuctionUsecase: Symbol.for('IPublishAuctionUsecase'),
     IEndAuctionUsecase: Symbol.for('IEndAuctionUsecase'),
     AuctionController: Symbol.for('AuctionController'),
@@ -116,4 +119,9 @@ export const TYPES = {
     PlaceLongAuctionBidStrategy: Symbol.for('PlaceLongAuctionBidStrategy'),
     PlaceSealedAuctionBidStrategy: Symbol.for('PlaceSealedAuctionBidStrategy'),
     PlaceBidPolicyService: Symbol.for('PlaceBidPolicyService'),
+    INotificationRepository: Symbol.for('INotificationRepository'),
+    IGetUserNotificationsUsecase: Symbol.for('IGetUserNotificationsUsecase'),
+    IEventBus: Symbol.for('IEventBus'),
+    OnAuctionEndHandler: Symbol.for('OnAuctionEndHandler'),
+    OnNotificationCreatedHandler: Symbol.for('OnNotificationCreatedHandler'),
 };

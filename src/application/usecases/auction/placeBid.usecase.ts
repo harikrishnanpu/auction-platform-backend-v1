@@ -63,6 +63,12 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
             const auction = auctionResult.getValue();
 
+            if (auction.getStartPrice() > input.amount) {
+                return Result.fail(
+                    `Bid must be at least ${auction.getStartPrice()}`,
+                );
+            }
+
             const latestBidResult = await this._bidRepo.findLatestByAuctionId(
                 input.auctionId,
             );
@@ -117,6 +123,7 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                 newBid.getValue(),
                 lastUserBidResult.getValue(),
             );
+
             if (canPlaceBidResult.isFailure) {
                 return Result.fail(canPlaceBidResult.getError());
             }

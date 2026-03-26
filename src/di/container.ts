@@ -22,6 +22,12 @@ import { PlaceLongAuctionBidStrategy } from '@application/strategies/auction/lon
 import { PlaceSealedAuctionBidStrategy } from '@application/strategies/auction/sealed-bid.placebid.startegy';
 import { IEncryptionService } from '@application/interfaces/services/IEncryptionService';
 import { EncryptService } from '@infrastructure/services/encrypt/encrypt.service';
+import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
+import { INotificationRepository } from '@domain/repositories/INotificationRepo';
+import { EventBus } from '@infrastructure/events/event-bus';
+import { IEventBus } from '@application/interfaces/events/IEventBus';
+import { OnAuctionEndHandler } from '@application/event-handlers/onAuctionEnd.handler';
+import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
 
 const container = new Container();
 
@@ -47,6 +53,17 @@ container
     .bind<IPlaceBidStrategy>(TYPES.PlaceSealedAuctionBidStrategy)
     .to(PlaceSealedAuctionBidStrategy);
 container.bind<IEncryptionService>(TYPES.IEncryptionService).to(EncryptService);
+container
+    .bind<INotificationRepository>(TYPES.INotificationRepository)
+    .to(PrismaNotificationRepo);
+
+container.bind<IEventBus>(TYPES.IEventBus).to(EventBus).inSingletonScope();
+container
+    .bind<OnAuctionEndHandler>(TYPES.OnAuctionEndHandler)
+    .to(OnAuctionEndHandler);
+container
+    .bind<OnNotificationCreatedHandler>(TYPES.OnNotificationCreatedHandler)
+    .to(OnNotificationCreatedHandler);
 
 container
     .bind<AuctionController>(TYPES.AuctionController)

@@ -7,25 +7,41 @@ import { inject, injectable } from 'inversify';
 import { OtpPurpose } from '@domain/entities/otp/otp.entity';
 
 export type EmailTemplate =
-  (typeof EMAIL_TEMPLATES)[keyof typeof EMAIL_TEMPLATES];
+    (typeof EMAIL_TEMPLATES)[keyof typeof EMAIL_TEMPLATES];
 
 @injectable()
 export class EmailService implements IEmailService {
-  constructor(
-    @inject(TYPES.EmailQueue)
-    private _emailQueue: EmailQueue,
-  ) {}
+    constructor(
+        @inject(TYPES.EmailQueue)
+        private _emailQueue: EmailQueue,
+    ) {}
 
-  async sendOtpEmail(
-    email: Email,
-    otp: string,
-    purpose: OtpPurpose,
-    template: EmailTemplate,
-  ): Promise<void> {
-    await this._emailQueue.addEmailJob({
-      email: email.getValue(),
-      otp,
-      template,
-    });
-  }
+    async sendOtpEmail(
+        email: Email,
+        otp: string,
+        purpose: OtpPurpose,
+        template: EmailTemplate,
+    ): Promise<void> {
+        await this._emailQueue.addVerificationEmailJob({
+            email: email.getValue(),
+            otp,
+            template,
+        });
+    }
+
+    async sendNotificationEmail(
+        email: Email,
+        template: EmailTemplate,
+        subject: string,
+        message: string,
+    ): Promise<void> {
+        console.log('Sending notification email to', email.getValue());
+
+        await this._emailQueue.addNotificationEmailJob({
+            email: email.getValue(),
+            template,
+            subject,
+            message: message,
+        });
+    }
 }

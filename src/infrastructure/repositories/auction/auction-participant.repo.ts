@@ -51,4 +51,22 @@ export class PrismaAuctionParticipantRepo implements IAuctionParticipantReposito
 
         return Result.ok(participants);
     }
+
+    async findByUserId(userId: string): Promise<Result<AuctionParticipant[]>> {
+        const rows = await this._prisma.auctionParticipant.findMany({
+            where: { userId },
+            orderBy: { joinedAt: 'desc' },
+        });
+
+        const participants: AuctionParticipant[] = [];
+
+        for (const row of rows) {
+            const result = AuctionParticipantMapper.toDomain(row);
+            if (result.isFailure)
+                return Result.fail<AuctionParticipant[]>(result.getError());
+            participants.push(result.getValue());
+        }
+
+        return Result.ok(participants);
+    }
 }
