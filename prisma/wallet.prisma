@@ -1,0 +1,29 @@
+model Wallet {
+  id           String              @id @default(uuid())
+  userId       String              @unique
+  currency     String              @default("INR")
+  mainBalance  Int                 @default(0)
+  heldBalance  Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id])
+  transactions WalletTransaction[]
+}
+
+enum WalletTransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  HOLD
+  RELEASE
+}
+
+model WalletTransaction {
+  id        String                @id @default(uuid())
+  walletId  String
+  amount    Int
+  type      WalletTransactionType
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  wallet    Wallet                @relation(fields: [walletId], references: [id])
+}

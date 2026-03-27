@@ -13,6 +13,7 @@ export const USER_PROFILE_MESSAGES = {
     UPDATE_AVATAR_URL_SUCCESSFULLY: 'Update avatar url successfully',
     GET_NOTIFICATIONS_SUCCESSFULLY: 'Get notifications successfully',
     GET_MY_AUCTIONS_SUCCESSFULLY: 'Get my auctions successfully',
+    GET_WALLET_SUCCESSFULLY: 'Get wallet successfully',
 };
 
 export const USER_PROFILE_CONSTANTS = {

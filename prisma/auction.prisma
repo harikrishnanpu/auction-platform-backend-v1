@@ -43,7 +43,7 @@ model Auction {
   assets             AuctionAsset[]
   bids               Bid[]
   participants       AuctionParticipant[]
-  chatMessages      AuctionChatMessage[]
+  chatMessages       AuctionChatMessage[]
   category           AuctionCategory      @relation(fields: [categoryId], references: [id])
 }
 
@@ -83,14 +83,14 @@ model AuctionAsset {
 }
 
 model Bid {
-  id        String   @id @default(uuid())
-  auctionId String
-  userId    String
-  amount    Float?   @default(0)
-  encryptedAmount String? @default("")
-  createdAt DateTime @default(now())
-  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  id              String   @id @default(uuid())
+  auctionId       String
+  userId          String
+  amount          Float?   @default(0)
+  encryptedAmount String?  @default("")
+  createdAt       DateTime @default(now())
+  auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id])
 }
 
 model AuctionParticipant {

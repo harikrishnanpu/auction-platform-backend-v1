@@ -121,7 +121,12 @@ export const TYPES = {
     PlaceBidPolicyService: Symbol.for('PlaceBidPolicyService'),
     INotificationRepository: Symbol.for('INotificationRepository'),
     IGetUserNotificationsUsecase: Symbol.for('IGetUserNotificationsUsecase'),
+    IWalletRepository: Symbol.for('IWalletRepository'),
+    IGetOrCreateWalletUsecase: Symbol.for('IGetOrCreateWalletUsecase'),
     IEventBus: Symbol.for('IEventBus'),
     OnAuctionEndHandler: Symbol.for('OnAuctionEndHandler'),
     OnNotificationCreatedHandler: Symbol.for('OnNotificationCreatedHandler'),
+    IWalletTransactionsRepository: Symbol.for('IWalletTransactionsRepository'),
+    ICreditWalletUsecase: Symbol.for('ICreditWalletUsecase'),
+    WalletController: Symbol.for('WalletController'),
 };

@@ -22,6 +22,7 @@ import { OnAuctionEndHandler } from '@application/event-handlers/onAuctionEnd.ha
 import { AuctionEnded } from '@domain/events/auction-end.event';
 import { NotificationCreated } from '@domain/events/notitificationCreated.event';
 import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
+import { WalletRouterFactory } from '@presentation/http/factories/wallet.router.factory';
 
 export const app = express();
 
@@ -72,5 +73,6 @@ app.use('/api/v1/kyc', KycRouterFactory.kycRouter(container));
 app.use('/api/v1/admin', AdminRouterFactory.adminRouter(container));
 app.use('/api/v1/auction', AuctionRouterFactory.auctionRouter(container));
 app.use('/api/v1/seller', SellerRouterFactory.sellerRouter(container));
+app.use('/api/v1/wallet', WalletRouterFactory.walletRouter(container));
 
 app.use(errorMiddleware);

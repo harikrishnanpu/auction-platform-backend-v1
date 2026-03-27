@@ -28,6 +28,8 @@ import { EventBus } from '@infrastructure/events/event-bus';
 import { IEventBus } from '@application/interfaces/events/IEventBus';
 import { OnAuctionEndHandler } from '@application/event-handlers/onAuctionEnd.handler';
 import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
+import { walletContainer } from './modules/wallet.container';
+import { WalletController } from '@presentation/http/controllers/wallet/wallet.controller';
 
 const container = new Container();
 
@@ -39,11 +41,13 @@ container.load(adminContainer);
 container.load(redisContainer);
 container.load(auctionContainer);
 container.load(sellerContainer);
+container.load(walletContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<SellerController>(TYPES.SellerController).to(SellerController);
+container.bind<WalletController>(TYPES.WalletController).to(WalletController);
 
 // --move for test only
 container

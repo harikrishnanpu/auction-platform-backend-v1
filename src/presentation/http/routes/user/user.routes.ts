@@ -76,6 +76,13 @@ export class UserRoutes {
             this._userController.getMyAuctions,
         );
 
+        this._router.get(
+            '/wallet',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.getWallet,
+        );
+
         return this._router;
     }
 }
