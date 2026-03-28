@@ -10,3 +10,7 @@ export const AUCTION_MESSAGES = {
         `Bid must be at least ${startPrice}`,
     ONLY_ONE_BID_PER_USER: 'Only one bid per user is allowed',
 };
+
+export const AUCTION_PAYMENT_AMOUNT_STRATEGY = {
+    DEPOSIT_PERCENTAGE: 0.25,
+};
