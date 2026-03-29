@@ -1,18 +1,17 @@
 import {
     Payments,
-    PaymentPhase,
     PaymentStatus,
 } from '@domain/entities/payments/payments.entity';
 import { Result } from '@domain/shared/result';
 
-export interface IFindUserPaymentsOptions {
-    status?: PaymentStatus;
-    page?: number;
-    limit?: number;
+export interface IFindUserPayments {
+    status: PaymentStatus;
+    page: number;
+    limit: number;
 }
 
 export interface IFindUserPaymentsResult {
-    items: Payments[];
+    payments: Payments[];
     total: number;
 }
 
@@ -26,14 +25,8 @@ export interface IPaymentRepository {
         userId: string,
     ): Promise<Result<Payments | null>>;
 
-    findByReferenceUserAndPhase(
-        referenceId: string,
-        userId: string,
-        phase: PaymentPhase,
-    ): Promise<Result<Payments | null>>;
-
     findByUserId(
         userId: string,
-        options?: IFindUserPaymentsOptions,
+        options: IFindUserPayments,
     ): Promise<Result<IFindUserPaymentsResult>>;
 }

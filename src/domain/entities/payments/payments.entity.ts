@@ -8,6 +8,7 @@ export enum PaymentStatus {
     PENDING = 'PENDING',
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
+    DECLINED = 'DECLINED',
 }
 
 export enum PaymentPhase {
@@ -77,6 +78,18 @@ export class Payments {
         }
 
         this.status = PaymentStatus.COMPLETED;
+        return Result.ok();
+    }
+
+    markAsDeclined(): Result<void> {
+        if (this.status === PaymentStatus.DECLINED) {
+            return Result.ok();
+        }
+        if (this.status !== PaymentStatus.PENDING) {
+            return Result.fail('Payment is not pending');
+        }
+
+        this.status = PaymentStatus.DECLINED;
         return Result.ok();
     }
 

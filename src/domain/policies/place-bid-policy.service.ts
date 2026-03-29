@@ -44,8 +44,8 @@ export class PlaceBidPolicyService {
             }
         }
 
-        if (AuctionType.SEALED !== auction.getAuctionType()) {
-            if (nextBidAmount <= (newBid?.getAmount() ?? 0)) {
+        if (auction.getAuctionType() !== AuctionType.SEALED) {
+            if (nextBidAmount > (newBid?.getAmount() ?? 0)) {
                 return Result.fail(
                     AUCTION_MESSAGES.BID_BELOW_MIN(
                         nextBidAmount,
