@@ -3,24 +3,18 @@ import { Wallet } from '@domain/entities/wallet/wallet.entity';
 import { IWalletRepository } from '@domain/repositories/IWalletRepository';
 import { Result } from '@domain/shared/result';
 import { WalletMapper } from '@infrastructure/mappers/wallet/wallet.mapper';
-import { PrismaBaseRepository } from '@infrastructure/repositories/base';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 
 @injectable()
-export class PrismaWalletRepository
-    extends PrismaBaseRepository
-    implements IWalletRepository
-{
+export class PrismaWalletRepository implements IWalletRepository {
     constructor(
         @inject(TYPES.PrismaClient)
-        prisma: PrismaClient,
-    ) {
-        super(prisma);
-    }
+        private readonly _prisma: PrismaClient,
+    ) {}
 
     async save(wallet: Wallet): Promise<Result<Wallet>> {
-        const result = await this.prisma.wallet.upsert({
+        const result = await this._prisma.wallet.upsert({
             where: { id: wallet.getId() },
             update: {
                 mainBalance: wallet.getMainBalance(),
@@ -39,7 +33,7 @@ export class PrismaWalletRepository
     }
 
     async findByUserId(userId: string): Promise<Result<Wallet | null>> {
-        const result = await this.prisma.wallet.findUnique({
+        const result = await this._prisma.wallet.findUnique({
             where: { userId },
         });
 
