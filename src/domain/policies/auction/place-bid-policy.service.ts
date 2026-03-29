@@ -8,13 +8,19 @@ import { Bid } from '@domain/entities/auction/bid.entity';
 import { Result } from '@domain/shared/result';
 
 export class PlaceBidPolicyService {
-    canPlaceBid(
-        auction: Auction,
-        userId: string,
-        nextBidAmount: number,
-        newBid: Bid,
-        latestBid: Bid | null,
-    ): Result<void> {
+    canPlaceBid({
+        auction,
+        userId,
+        userBidAmount,
+        latestBid,
+        userLatestBid,
+    }: {
+        auction: Auction;
+        userId: string;
+        userBidAmount: number;
+        latestBid: Bid | null;
+        userLatestBid: Bid | null;
+    }): Result<void> {
         if (auction.getStatus() !== AuctionStatus.ACTIVE) {
             return Result.fail(AUCTION_MESSAGES.AUCTION_NOT_ACTIVE);
         }
@@ -31,9 +37,9 @@ export class PlaceBidPolicyService {
             return Result.fail(AUCTION_MESSAGES.SELLER_CANNOT_PLACE_BID);
         }
 
-        if (latestBid) {
+        if (userLatestBid) {
             const now = new Date();
-            const diff = now.getTime() - latestBid.getCreatedAt().getTime();
+            const diff = now.getTime() - userLatestBid.getCreatedAt().getTime();
 
             if (diff < auction.getBidCooldownSeconds() * 1000) {
                 return Result.fail(
@@ -45,10 +51,14 @@ export class PlaceBidPolicyService {
         }
 
         if (auction.getAuctionType() !== AuctionType.SEALED) {
-            if (nextBidAmount > (newBid?.getAmount() ?? 0)) {
+            const latestBidAmount = latestBid?.getAmount() ?? 0;
+            const nextValidBidAmount =
+                latestBidAmount + auction.getMinIncrement();
+
+            if (userBidAmount < nextValidBidAmount) {
                 return Result.fail(
                     AUCTION_MESSAGES.BID_BELOW_MIN(
-                        nextBidAmount,
+                        userBidAmount,
                         auction.getMinIncrement(),
                     ),
                 );
@@ -56,7 +66,7 @@ export class PlaceBidPolicyService {
         }
 
         if (auction.getAuctionType() === AuctionType.SEALED) {
-            if (latestBid && latestBid.getUserId() === userId) {
+            if (userLatestBid && userLatestBid.getUserId() === userId) {
                 return Result.fail(AUCTION_MESSAGES.ONLY_ONE_BID_PER_USER);
             }
         }

@@ -1,111 +1,52 @@
 import { Result } from '@domain/shared/result';
 import { AuctionAsset } from './auction-asset.entity';
 import {
-  AuctionCategory,
-  AuctionCategoryStatus,
+    AuctionCategory,
+    AuctionCategoryStatus,
 } from './auction-category.entity';
 
 export enum AuctionStatus {
-  DRAFT = 'DRAFT',
-  ACTIVE = 'ACTIVE',
-  PAUSED = 'PAUSED',
-  ENDED = 'ENDED',
-  SOLD = 'SOLD',
-  CANCELLED = 'CANCELLED',
+    DRAFT = 'DRAFT',
+    ACTIVE = 'ACTIVE',
+    PAUSED = 'PAUSED',
+    ENDED = 'ENDED',
+    SOLD = 'SOLD',
+    CANCELLED = 'CANCELLED',
 }
 
 export enum AuctionType {
-  LONG = 'LONG',
-  LIVE = 'LIVE',
-  SEALED = 'SEALED',
+    LONG = 'LONG',
+    LIVE = 'LIVE',
+    SEALED = 'SEALED',
 }
 
 export class Auction {
-  constructor(
-    private readonly id: string,
-    private readonly sellerId: string,
-    private readonly auctionType: AuctionType,
-    private readonly title: string,
-    private readonly description: string,
-    private readonly category: AuctionCategory,
-    private readonly condition: string,
-    private readonly startPrice: number,
-    private readonly minIncrement: number,
-    private readonly startAt: Date,
-    private readonly endAt: Date,
-    private readonly status: AuctionStatus,
-    private readonly antiSnipSeconds: number,
-    private readonly extensionCount: number,
-    private readonly maxExtensionCount: number,
-    private readonly bidCooldownSeconds: number,
-    private readonly winnerId: string | null,
-    private readonly assets: AuctionAsset[] = [],
-  ) {}
+    constructor(
+        private readonly id: string,
+        private readonly sellerId: string,
+        private readonly auctionType: AuctionType,
+        private readonly title: string,
+        private readonly description: string,
+        private readonly category: AuctionCategory,
+        private readonly condition: string,
+        private readonly startPrice: number,
+        private readonly minIncrement: number,
+        private readonly startAt: Date,
+        private readonly endAt: Date,
+        private readonly status: AuctionStatus,
+        private readonly antiSnipSeconds: number,
+        private readonly extensionCount: number,
+        private readonly maxExtensionCount: number,
+        private readonly bidCooldownSeconds: number,
+        private readonly winnerId: string | null,
+        private readonly winAmount: number | null,
+        private readonly assets: AuctionAsset[] = [],
+    ) {}
 
-  static create({
-    id,
-    sellerId,
-    auctionType = AuctionType.LONG,
-    title,
-    description,
-    category,
-    condition,
-    startPrice,
-    minIncrement,
-    startAt,
-    endAt,
-    status = AuctionStatus.DRAFT,
-    antiSnipSeconds = 60,
-    extensionCount = 0,
-    maxExtensionCount = 3,
-    bidCooldownSeconds = 10,
-    winnerId = null,
-    assets = [],
-  }: {
-    id: string;
-    sellerId: string;
-    auctionType?: AuctionType;
-    title: string;
-    description: string;
-    category: AuctionCategory;
-    condition: string;
-    startPrice: number;
-    minIncrement: number;
-    startAt: Date;
-    endAt: Date;
-    status?: AuctionStatus;
-    antiSnipSeconds?: number;
-    extensionCount?: number;
-    maxExtensionCount?: number;
-    bidCooldownSeconds?: number;
-    winnerId?: string | null;
-    assets?: AuctionAsset[];
-  }): Result<Auction> {
-    if (category.getStatus() !== AuctionCategoryStatus.APPROVED) {
-      return Result.fail('Auction category is not approved');
-    }
-
-    if (startPrice < 500) {
-      return Result.fail('Start price must be greater than 500');
-    }
-
-    if (maxExtensionCount > 10) {
-      return Result.fail('Max extension count must be less than 10');
-    }
-
-    if (extensionCount > maxExtensionCount) {
-      return Result.fail('Extension count cannot exceed max extension count');
-    }
-
-    if (auctionType === AuctionType.LONG && minIncrement < 1) {
-      return Result.fail('Min increment must be greater than 1');
-    }
-
-    return Result.ok(
-      new Auction(
+    static create({
         id,
         sellerId,
-        auctionType,
+        auctionType = AuctionType.LONG,
         title,
         description,
         category,
@@ -114,90 +55,159 @@ export class Auction {
         minIncrement,
         startAt,
         endAt,
-        status,
-        antiSnipSeconds,
-        extensionCount,
-        maxExtensionCount,
-        bidCooldownSeconds,
-        winnerId,
-        assets,
-      ),
-    );
-  }
+        status = AuctionStatus.DRAFT,
+        antiSnipSeconds = 60,
+        extensionCount = 0,
+        maxExtensionCount = 3,
+        bidCooldownSeconds = 10,
+        winnerId = null,
+        winAmount = null,
+        assets = [],
+    }: {
+        id: string;
+        sellerId: string;
+        auctionType?: AuctionType;
+        title: string;
+        description: string;
+        category: AuctionCategory;
+        condition: string;
+        startPrice: number;
+        minIncrement: number;
+        startAt: Date;
+        endAt: Date;
+        status?: AuctionStatus;
+        antiSnipSeconds?: number;
+        extensionCount?: number;
+        maxExtensionCount?: number;
+        bidCooldownSeconds?: number;
+        winnerId?: string | null;
+        winAmount?: number | null;
+        assets?: AuctionAsset[];
+    }): Result<Auction> {
+        if (category.getStatus() !== AuctionCategoryStatus.APPROVED) {
+            return Result.fail('Auction category is not approved');
+        }
 
-  getId(): string {
-    return this.id;
-  }
+        if (startPrice < 500) {
+            return Result.fail('Start price must be greater than 500');
+        }
 
-  getSellerId(): string {
-    return this.sellerId;
-  }
+        if (maxExtensionCount > 10) {
+            return Result.fail('Max extension count must be less than 10');
+        }
 
-  getAuctionType(): AuctionType {
-    return this.auctionType;
-  }
+        if (extensionCount > maxExtensionCount) {
+            return Result.fail(
+                'Extension count cannot exceed max extension count',
+            );
+        }
 
-  getTitle(): string {
-    return this.title;
-  }
+        if (auctionType === AuctionType.LONG && minIncrement < 1) {
+            return Result.fail('Min increment must be greater than 1');
+        }
 
-  getDescription(): string {
-    return this.description;
-  }
+        return Result.ok(
+            new Auction(
+                id,
+                sellerId,
+                auctionType,
+                title,
+                description,
+                category,
+                condition,
+                startPrice,
+                minIncrement,
+                startAt,
+                endAt,
+                status,
+                antiSnipSeconds,
+                extensionCount,
+                maxExtensionCount,
+                bidCooldownSeconds,
+                winnerId,
+                winAmount,
+                assets,
+            ),
+        );
+    }
 
-  getCategoryId(): string {
-    return this.category.getId();
-  }
+    getId(): string {
+        return this.id;
+    }
 
-  getCondition(): string {
-    return this.condition;
-  }
+    getSellerId(): string {
+        return this.sellerId;
+    }
 
-  getStartPrice(): number {
-    return this.startPrice;
-  }
+    getAuctionType(): AuctionType {
+        return this.auctionType;
+    }
 
-  getMinIncrement(): number {
-    return this.minIncrement;
-  }
+    getTitle(): string {
+        return this.title;
+    }
 
-  getStartAt(): Date {
-    return this.startAt;
-  }
+    getDescription(): string {
+        return this.description;
+    }
 
-  getEndAt(): Date {
-    return this.endAt;
-  }
+    getCategoryId(): string {
+        return this.category.getId();
+    }
 
-  getStatus(): AuctionStatus {
-    return this.status;
-  }
+    getCondition(): string {
+        return this.condition;
+    }
 
-  getAssets(): AuctionAsset[] {
-    return this.assets;
-  }
+    getStartPrice(): number {
+        return this.startPrice;
+    }
 
-  getAntiSnipSeconds(): number {
-    return this.antiSnipSeconds;
-  }
+    getMinIncrement(): number {
+        return this.minIncrement;
+    }
 
-  getExtensionCount(): number {
-    return this.extensionCount;
-  }
+    getStartAt(): Date {
+        return this.startAt;
+    }
 
-  getMaxExtensionCount(): number {
-    return this.maxExtensionCount;
-  }
+    getEndAt(): Date {
+        return this.endAt;
+    }
 
-  getBidCooldownSeconds(): number {
-    return this.bidCooldownSeconds;
-  }
+    getStatus(): AuctionStatus {
+        return this.status;
+    }
 
-  getWinnerId(): string | null {
-    return this.winnerId;
-  }
+    getAssets(): AuctionAsset[] {
+        return this.assets;
+    }
 
-  getCategory(): AuctionCategory {
-    return this.category;
-  }
+    getAntiSnipSeconds(): number {
+        return this.antiSnipSeconds;
+    }
+
+    getExtensionCount(): number {
+        return this.extensionCount;
+    }
+
+    getMaxExtensionCount(): number {
+        return this.maxExtensionCount;
+    }
+
+    getBidCooldownSeconds(): number {
+        return this.bidCooldownSeconds;
+    }
+
+    getWinnerId(): string | null {
+        return this.winnerId;
+    }
+
+    getCategory(): AuctionCategory {
+        return this.category;
+    }
+
+    getWinAmount(): number | null {
+        return this.winAmount;
+    }
 }
