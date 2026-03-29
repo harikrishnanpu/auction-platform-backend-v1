@@ -12,19 +12,19 @@ import {
 } from '@domain/entities/auction/auction.entity';
 import { AuctionEnded } from '@domain/events/auction-end.event';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
-import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { AuctionWinnerStrategyFactory } from '@application/factories/auction-winner-policy.factory';
 
 @injectable()
 export class EndAuctionUsecase implements IEndAuctionUsecase {
     constructor(
         @inject(TYPES.IAuctionRepository)
         private readonly _auctionRepository: IAuctionRepository,
-        @inject(TYPES.IBidRepository)
-        private readonly _bidRepository: IBidRepository,
         @inject(TYPES.IEventBus)
         private readonly _eventBus: IEventBus,
+        @inject(TYPES.AuctionWinnerStrategyFactory)
+        private readonly _auctionWinnerStrategyFactory: AuctionWinnerStrategyFactory,
     ) {}
 
     async execute(input: IEndAuctionInput): Promise<Result<IEndAuctionOutput>> {
@@ -36,6 +36,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
 
         const auction = existing.getValue();
         const isAdmin = input.isAdmin ?? false;
+
         if (!isAdmin && auction.getSellerId() !== input.userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_END);
         }
@@ -47,15 +48,16 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
             return Result.fail(AUCTION_MESSAGES.ONLY_ACTIVE_CAN_BE_ENDED);
         }
 
-        const latestBidResult = await this._bidRepository.findLatestByAuctionId(
-            input.auctionId,
-        );
+        const getWinnerStrategy =
+            this._auctionWinnerStrategyFactory.getStrategy(
+                auction.getAuctionType(),
+            );
+        const winnerResult = await getWinnerStrategy.validateAndGetWinner({
+            auction,
+        });
+        if (winnerResult.isFailure) return Result.fail(winnerResult.getError());
 
-        if (latestBidResult.isFailure)
-            return Result.fail(latestBidResult.getError());
-
-        const latestBid = latestBidResult.getValue();
-        const winnerId = latestBid ? latestBid.getUserId() : null;
+        const { winnerId, winAmount } = winnerResult.getValue();
 
         const endedResult = Auction.create({
             id: auction.getId(),
@@ -75,6 +77,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
             maxExtensionCount: auction.getMaxExtensionCount(),
             bidCooldownSeconds: auction.getBidCooldownSeconds(),
             winnerId,
+            winAmount,
             assets: auction.getAssets(),
         });
 
@@ -87,7 +90,13 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         const saved = updateResult.getValue();
 
         this._eventBus.publish(
-            new AuctionEnded(saved.getId(), saved.getTitle(), winnerId),
+            new AuctionEnded(
+                saved.getId(),
+                saved.getTitle(),
+                winnerId,
+                winAmount,
+                new Date(),
+            ),
         );
 
         return Result.ok({
