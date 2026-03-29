@@ -19,4 +19,7 @@ export const AUCTION_MESSAGES = {
 
     SELLER_CANNOT_PLACE_BID: 'Seller cannot place bid',
     BID_BELOW_LATEST: 'Bid amount must be greater than the latest bid',
+    BID_BELOW_MIN: (min: number, increment: number) => {
+        return `Bid must be at least ${min} (min increment ${increment})`;
+    },
 } as const;

@@ -35,6 +35,7 @@ model Auction {
   maxExtensionCount  Int                  @default(3)
   bidCooldownSeconds Int                  @default(10)
   winnerId           String?
+  winAmount          Float?
   createdAt          DateTime             @default(now())
   updatedAt          DateTime             @updatedAt
   categoryId         String

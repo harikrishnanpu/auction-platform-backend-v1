@@ -95,7 +95,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
                 saved.getTitle(),
                 winnerId,
                 winAmount,
-                new Date(),
+                saved.getEndAt(),
             ),
         );
 

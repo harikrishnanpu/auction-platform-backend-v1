@@ -7,6 +7,8 @@ import { TYPES } from '@di/types.di';
 import type { ILogger } from '@application/interfaces/services/ILogger';
 import { errorMiddleware } from '@presentation/http/middlewares/error.middleware';
 import { logMiddleware } from '@presentation/http/middlewares/log.middleware';
+import { AuctionEndWorker } from '@infrastructure/workers/auctionEnd.worker';
+import { WinnerFallbackWorker } from '@infrastructure/workers/winnerFallback.worker';
 import { EmailWorker } from '@infrastructure/workers/email.worker';
 import { TemplateService } from '@infrastructure/services/template/template.service';
 import cookieParser from 'cookie-parser';
@@ -23,6 +25,7 @@ import { AuctionEnded } from '@domain/events/auction-end.event';
 import { NotificationCreated } from '@domain/events/notitificationCreated.event';
 import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
 import { WalletRouterFactory } from '@presentation/http/factories/wallet.router.factory';
+import { PaymentsRouterFactory } from '@presentation/http/factories/payments.router.factory';
 
 export const app = express();
 
@@ -43,6 +46,8 @@ app.use(passport.initialize());
 
 configureGoogleStrategy();
 new EmailWorker(new TemplateService());
+new AuctionEndWorker();
+new WinnerFallbackWorker();
 
 const eventBus = container.get<IEventBus>(TYPES.IEventBus);
 
@@ -74,5 +79,6 @@ app.use('/api/v1/admin', AdminRouterFactory.adminRouter(container));
 app.use('/api/v1/auction', AuctionRouterFactory.auctionRouter(container));
 app.use('/api/v1/seller', SellerRouterFactory.sellerRouter(container));
 app.use('/api/v1/wallet', WalletRouterFactory.walletRouter(container));
+app.use('/api/v1/payments', PaymentsRouterFactory.paymentsRouter(container));
 
 app.use(errorMiddleware);

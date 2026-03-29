@@ -15,10 +15,10 @@ import { UpdateAvatarUrlUseCase } from '@application/usecases/user/updateAvataru
 import { GetUserNotificationsUsecase } from '@application/usecases/notification/getUserNotifications.usecase';
 import { S3Client } from '@aws-sdk/client-s3';
 import { TYPES } from '@di/types.di';
-import { OtpPolicyService } from '@domain/policies/otp-policy.service';
 import { s3Client } from '@infrastructure/services/storage/s3.client';
 import { S3StorageService } from '@infrastructure/services/storage/storage.service';
 import { ContainerModule } from 'inversify';
+import { OtpPolicyService } from '@domain/policies/otp/otp-policy.service';
 
 export const userContainer = new ContainerModule(({ bind }) => {
     bind<ISendProfileChangePasswordOtpUsecase>(

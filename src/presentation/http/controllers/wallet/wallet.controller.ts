@@ -1,5 +1,4 @@
 import { TYPES } from '@di/types.di';
-import { IWalletRepository } from '@domain/repositories/IWalletRepository';
 import expressAsyncHandler from 'express-async-handler';
 import { inject, injectable } from 'inversify';
 import { Request, Response } from 'express';
@@ -8,16 +7,23 @@ import { AppError } from '@presentation/http/error/app.error';
 import { WALLET_CONSTANTS } from '@presentation/constants/wallet/wallet.constants';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ICreditWalletUsecase } from '@application/interfaces/usecases/wallet/ICreditWalletUsecase';
+import { IDebitWalletUsecase } from '@application/interfaces/usecases/wallet/IDebitWalletUsecase';
+import { ICreateWalletTopupSessionUsecase } from '@application/interfaces/usecases/wallet/ICreateWalletTopupSessionUsecase';
+import { IConfirmWalletTopupUsecase } from '@application/interfaces/usecases/wallet/IConfirmWalletTopupUsecase';
 
 @injectable()
 export class WalletController {
     constructor(
-        @inject(TYPES.IWalletRepository)
-        private readonly _walletRepository: IWalletRepository,
         @inject(TYPES.IGetOrCreateWalletUsecase)
         private readonly _getOrCreateWalletUsecase: IGetOrCreateWalletUsecase,
         @inject(TYPES.ICreditWalletUsecase)
         private readonly _creditWalletUsecase: ICreditWalletUsecase,
+        @inject(TYPES.IDebitWalletUsecase)
+        private readonly _debitWalletUsecase: IDebitWalletUsecase,
+        @inject(TYPES.ICreateWalletTopupSessionUsecase)
+        private readonly _createWalletTopupSessionUsecase: ICreateWalletTopupSessionUsecase,
+        @inject(TYPES.IConfirmWalletTopupUsecase)
+        private readonly _confirmWalletTopupUsecase: IConfirmWalletTopupUsecase,
     ) {}
 
     getWallet = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -71,6 +77,94 @@ export class WalletController {
             res,
             result.getValue(),
             WALLET_CONSTANTS.MESSAGES.CREDIT_WALLET_SUCCESSFULLY,
+            WALLET_CONSTANTS.CODES.OK,
+        );
+    });
+
+    debitWallet = expressAsyncHandler(async (req: Request, res: Response) => {
+        if (!req.user) {
+            throw new AppError(
+                WALLET_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                WALLET_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        const result = await this._debitWalletUsecase.execute({
+            userId: req.user.id,
+            amount: Number(req.body.amount),
+        });
+
+        if (result.isFailure) {
+            throw new AppError(
+                result.getError(),
+                WALLET_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        ResponseHelper.success(
+            res,
+            result.getValue(),
+            WALLET_CONSTANTS.MESSAGES.DEBIT_WALLET_SUCCESSFULLY,
+            WALLET_CONSTANTS.CODES.OK,
+        );
+    });
+
+    createTopupOrder = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    WALLET_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    WALLET_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const result = await this._createWalletTopupSessionUsecase.execute({
+                userId: req.user.id,
+                amount: Number(req.body.amount),
+            });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    WALLET_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success(
+                res,
+                result.getValue(),
+                WALLET_CONSTANTS.MESSAGES.CREATE_TOPUP_ORDER_SUCCESSFULLY,
+                WALLET_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    verifyTopup = expressAsyncHandler(async (req: Request, res: Response) => {
+        if (!req.user) {
+            throw new AppError(
+                WALLET_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                WALLET_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        const result = await this._confirmWalletTopupUsecase.execute({
+            userId: req.user.id,
+            orderId: String(req.body.orderId ?? ''),
+            paymentId: String(req.body.paymentId ?? ''),
+            signature: String(req.body.signature ?? ''),
+        });
+
+        if (result.isFailure) {
+            throw new AppError(
+                result.getError(),
+                WALLET_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        ResponseHelper.success(
+            res,
+            result.getValue(),
+            WALLET_CONSTANTS.MESSAGES.VERIFY_TOPUP_SUCCESSFULLY,
             WALLET_CONSTANTS.CODES.OK,
         );
     });

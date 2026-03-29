@@ -4,6 +4,7 @@ enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
+  DECLINED
 }
 
 enum PaymentFor {

@@ -75,4 +75,20 @@ export class PrismaBidRepo implements IBidRepository {
         }
         return Result.ok(bids);
     }
+
+    async findAllByAuctionId(auctionId: string): Promise<Result<Bid[]>> {
+        const result = await this._prisma.bid.findMany({
+            where: { auctionId },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        const bids: Bid[] = [];
+        for (const row of result) {
+            const result = BidMapper.toDomain(row);
+            if (result.isFailure) return Result.fail(result.getError());
+            bids.push(result.getValue());
+        }
+
+        return Result.ok(bids);
+    }
 }

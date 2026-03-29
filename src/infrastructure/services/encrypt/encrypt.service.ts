@@ -32,7 +32,7 @@ export class EncryptService implements IEncryptionService {
             return Result.ok(
                 this._encryptClient
                     .decrypt(data, this._encryptionSecret)
-                    .toString(),
+                    .toString(CryptoJS.enc.Utf8),
             );
         } catch (error) {
             console.log(error);

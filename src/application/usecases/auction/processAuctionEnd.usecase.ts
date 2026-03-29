@@ -4,7 +4,7 @@ import {
     IProcessAuctionEndInput,
     IProcessAuctionEndNotificationUsecase,
 } from '@application/interfaces/usecases/auction/IProcessAuctionEndUsecase';
-import { ICreatePendingAuctionInstallmentsUsecase } from '@application/interfaces/usecases/payments/ICreatePendingAuctionInstallmentsUsecase';
+import { ICreatePendingPaymentForAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePendingPaymentForUsecase';
 import { TYPES } from '@di/types.di';
 import { Notification } from '@domain/entities/notifications/notification.entity';
 import { NotificationCreated } from '@domain/events/notitificationCreated.event';
@@ -24,8 +24,8 @@ export class ProcessAuctionEndNotificationUsecase implements IProcessAuctionEndN
         private readonly _participantRepository: IAuctionParticipantRepository,
         @inject(TYPES.INotificationRepository)
         private readonly _notificationRepository: INotificationRepository,
-        @inject(TYPES.ICreatePendingAuctionInstallmentsUsecase)
-        private readonly _createPendingAuctionInstallmentsUsecase: ICreatePendingAuctionInstallmentsUsecase,
+        @inject(TYPES.ICreatePendingPaymentForAuctionUsecase)
+        private readonly _createPendingPaymentForAuctionUsecase: ICreatePendingPaymentForAuctionUsecase,
     ) {}
 
     async execute(input: IProcessAuctionEndInput): Promise<Result<void>> {
@@ -109,6 +109,18 @@ export class ProcessAuctionEndNotificationUsecase implements IProcessAuctionEndN
                     notify.getMessage(),
                 ),
             );
+        }
+
+        const createPendingPaymentForAuctionResult =
+            await this._createPendingPaymentForAuctionUsecase.execute({
+                userId: input.winnerId!,
+                auctionId: input.auctionId,
+                winAmount: input.winAmount,
+                endedAt: input.endedAt,
+            });
+
+        if (createPendingPaymentForAuctionResult.isFailure) {
+            return Result.fail(createPendingPaymentForAuctionResult.getError());
         }
 
         return Result.ok();

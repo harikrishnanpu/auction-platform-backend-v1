@@ -18,29 +18,25 @@ export class OnNotificationCreatedHandler {
     async handle(event: NotificationCreated): Promise<void> {
         console.log('OnNotificationCreatedHandler', event);
 
-        try {
-            const user = await this._userRepository.findById(event.userId);
+        const user = await this._userRepository.findById(event.userId);
 
-            if (user.isFailure) {
-                console.log(user.getError());
-                return;
-            }
-
-            const email = Email.create(user.getValue().getEmail().getValue());
-
-            if (email.isFailure) {
-                console.log(email.getError());
-                return;
-            }
-
-            await this._emailService.sendNotificationEmail(
-                email.getValue(),
-                EMAIL_TEMPLATES.AUCTION,
-                event.title,
-                event.message,
-            );
-        } catch (error) {
-            console.log('error', error);
+        if (user.isFailure) {
+            console.error(user.getError());
+            return;
         }
+
+        const email = Email.create(user.getValue().getEmail().getValue());
+
+        if (email.isFailure) {
+            console.error(email.getError());
+            return;
+        }
+
+        await this._emailService.sendNotificationEmail(
+            email.getValue(),
+            EMAIL_TEMPLATES.AUCTION,
+            event.title,
+            event.message,
+        );
     }
 }
