@@ -47,8 +47,6 @@ import { IAuctionWinnerStrategy } from '@domain/strategies/IAuctionWinnerStrateg
 import { LongAuctionWinnerStrategy } from '@application/strategies/auction/long-auction-winner.strategy';
 import { SealedAuctionWinnerStrategy } from '@application/strategies/auction/sealed-auction-winner.strategy';
 import { AuctionWinnerStrategyFactory } from '@application/factories/auction-winner-policy.factory';
-import { IAuctionBidLeaderboardService } from '@application/interfaces/services/IAuctionBidLeaderboardService';
-import { AuctionBidLeaderboardService } from '@infrastructure/services/auction/auction-bid-leaderboard.service';
 import { ProcessAuctionEndNotificationUsecase } from '@application/usecases/auction/processAuctionEnd.usecase';
 import { IProcessAuctionEndNotificationUsecase } from '@application/interfaces/usecases/auction/IProcessAuctionEndUsecase';
 import { IAuctionPaymentsStrategy } from '@application/interfaces/strategies/payments/IAuctionPaymentsStrategy';
@@ -60,6 +58,8 @@ import { LongAuctionCreatePolicy } from '@domain/policies/auction/longAuction.cr
 import { SealedAuctionCreatePolicy } from '@domain/policies/auction/sealedAuction.create.policy';
 import { IPlaceBidStrategy } from '@domain/strategies/IPlaceBidStrategy';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
+import { IGetFallBackAuctionWinnerStrategy } from '@application/interfaces/strategies/auction/getFallBackWinner.stratgy';
+import { GetFallBackAuctionWinnerStartegy } from '@application/strategies/auction/getFallBackAuctionWinnerStartegy';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -139,9 +139,6 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<AuctionWinnerStrategyFactory>(TYPES.AuctionWinnerStrategyFactory).to(
         AuctionWinnerStrategyFactory,
     );
-    bind<IAuctionBidLeaderboardService>(TYPES.IAuctionBidLeaderboardService).to(
-        AuctionBidLeaderboardService,
-    );
     bind<IProcessAuctionEndNotificationUsecase>(
         TYPES.IProcessAuctionEndNotificationUsecase,
     ).to(ProcessAuctionEndNotificationUsecase);
@@ -170,4 +167,8 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<AuctionCreatePolicyFactory>(TYPES.AuctionCreatePolicyFactory).to(
         AuctionCreatePolicyFactory,
     );
+
+    bind<IGetFallBackAuctionWinnerStrategy>(
+        TYPES.IGetFallBackAuctionWinnerStrategy,
+    ).to(GetFallBackAuctionWinnerStartegy);
 });

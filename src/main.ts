@@ -8,7 +8,7 @@ import type { ILogger } from '@application/interfaces/services/ILogger';
 import { errorMiddleware } from '@presentation/http/middlewares/error.middleware';
 import { logMiddleware } from '@presentation/http/middlewares/log.middleware';
 import { AuctionEndWorker } from '@infrastructure/workers/auctionEnd.worker';
-import { WinnerFallbackWorker } from '@infrastructure/workers/winnerFallback.worker';
+import { AuctionWinnerFallbackWorker } from '@infrastructure/workers/auctionWinnerFallback.worker';
 import { EmailWorker } from '@infrastructure/workers/email.worker';
 import { TemplateService } from '@infrastructure/services/template/template.service';
 import cookieParser from 'cookie-parser';
@@ -47,7 +47,7 @@ app.use(passport.initialize());
 configureGoogleStrategy();
 new EmailWorker(new TemplateService());
 new AuctionEndWorker();
-new WinnerFallbackWorker();
+new AuctionWinnerFallbackWorker();
 
 const eventBus = container.get<IEventBus>(TYPES.IEventBus);
 

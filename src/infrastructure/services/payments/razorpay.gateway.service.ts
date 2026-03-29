@@ -37,13 +37,15 @@ export class RazorpayGatewayService implements IPaymentGatewayService {
             return Result.fail('Amount must be greater than 0');
         }
 
-        const amountInPaise = Math.round(input.amount * 100);
+        const amountRupees = input.amount;
+        const amountInPaise = Math.round(amountRupees * 100);
+
         const order = await this._razorpay.orders.create({
             amount: amountInPaise,
             currency: 'INR',
             notes: {
                 userId: input.userId,
-                amount: input.amount.toString(),
+                amount: amountRupees.toString(),
                 paymentId: input.paymentId ?? '',
             },
         });

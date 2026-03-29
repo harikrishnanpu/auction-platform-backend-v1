@@ -109,6 +109,9 @@ export const TYPES = {
         'IGetAllSellerAuctionCategoryRequestUsecase',
     ),
     SellerController: Symbol.for('SellerController'),
+    IGetSellerAuctionPaymentsUsecase: Symbol.for(
+        'IGetSellerAuctionPaymentsUsecase',
+    ),
     IRejectAuctionCategoryUsecase: Symbol.for('IRejectAuctionCategoryUsecase'),
     IGetAllSellerAuctionsUsecase: Symbol.for('IGetAllSellerAuctionsUsecase'),
     Redis: Symbol.for('Redis'),
@@ -155,8 +158,13 @@ export const TYPES = {
     IVerifyPaymentUsecase: Symbol.for('IVerifyPaymentUsecase'),
     IDeclinePaymentUsecase: Symbol.for('IDeclinePaymentUsecase'),
     IAuctionBidLeaderboardService: Symbol.for('IAuctionBidLeaderboardService'),
-    IWinnerFallbackQueue: Symbol.for('IWinnerFallbackQueue'),
-    IProcessWinnerFallbackUsecase: Symbol.for('IProcessWinnerFallbackUsecase'),
+    IAuctionWinnerFallbackQueue: Symbol.for('IAuctionWinnerFallbackQueue'),
+    IProcessAuctionWinnerFallbackUsecase: Symbol.for(
+        'IProcessAuctionWinnerFallbackUsecase',
+    ),
+    IGetFallBackAuctionWinnerStrategy: Symbol.for(
+        'IGetFallBackAuctionWinnerStrategy',
+    ),
     PaymentsController: Symbol.for('PaymentsController'),
     LongAuctionCreatePolicy: Symbol.for('LongAuctionCreatePolicy'),
     SealedAuctionCreatePolicy: Symbol.for('SealedAuctionCreatePolicy'),

@@ -16,6 +16,22 @@ export interface IFindUserPaymentsResult {
     total: number;
 }
 
+export interface IFindSellerAuctionPaymentsOptions {
+    status: PaymentStatus | 'ALL';
+    page: number;
+    limit: number;
+}
+
+export interface ISellerAuctionPaymentRow {
+    payment: Payments;
+    auctionTitle: string;
+}
+
+export interface IFindSellerAuctionPaymentsResult {
+    items: ISellerAuctionPaymentRow[];
+    total: number;
+}
+
 export interface IPaymentRepository {
     create(payment: Payments): Promise<Result<Payments>>;
     update(payment: Payments): Promise<Result<Payments>>;
@@ -42,4 +58,9 @@ export interface IPaymentRepository {
         auctionId: string,
         userId: string,
     ): Promise<Result<void>>;
+
+    findBySellerAuctions(
+        sellerId: string,
+        options: IFindSellerAuctionPaymentsOptions,
+    ): Promise<Result<IFindSellerAuctionPaymentsResult>>;
 }

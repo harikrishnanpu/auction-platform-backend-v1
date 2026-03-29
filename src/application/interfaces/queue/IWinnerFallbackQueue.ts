@@ -1,9 +1,9 @@
-export interface WinnerFallbackJobPayload {
+export interface IAuctionWinnerFallbackJobPayload {
     auctionId: string;
     declinedUserId: string;
     paymentId: string;
 }
 
-export interface IWinnerFallbackQueue {
-    enqueue(payload: WinnerFallbackJobPayload): Promise<void>;
+export interface IAuctionWinnerFallbackQueue {
+    enqueue(payload: IAuctionWinnerFallbackJobPayload): Promise<void>;
 }

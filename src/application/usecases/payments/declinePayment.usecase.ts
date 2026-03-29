@@ -1,4 +1,4 @@
-import { IWinnerFallbackQueue } from '@application/interfaces/queue/IWinnerFallbackQueue';
+import { IAuctionWinnerFallbackQueue } from '@application/interfaces/queue/IWinnerFallbackQueue';
 import {
     IDeclinePaymentInputDto,
     IDeclinePaymentUsecase,
@@ -21,8 +21,8 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
         private readonly _paymentRepository: IPaymentRepository,
         @inject(TYPES.IAuctionRepository)
         private readonly _auctionRepository: IAuctionRepository,
-        @inject(TYPES.IWinnerFallbackQueue)
-        private readonly _winnerFallbackQueue: IWinnerFallbackQueue,
+        @inject(TYPES.IAuctionWinnerFallbackQueue)
+        private readonly _auctionWinnerFallbackQueue: IAuctionWinnerFallbackQueue,
     ) {}
 
     async execute(input: IDeclinePaymentInputDto): Promise<Result<void>> {
@@ -67,14 +67,16 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
             const auctionResult = await this._auctionRepository.findById(
                 payment.getReferenceId(),
             );
+
             if (auctionResult.isSuccess) {
                 const auction = auctionResult.getValue();
                 const status = auction.getStatus();
                 const ended =
                     status === AuctionStatus.ENDED ||
                     status === AuctionStatus.SOLD;
+
                 if (ended && auction.getWinnerId() === input.userId) {
-                    await this._winnerFallbackQueue.enqueue({
+                    await this._auctionWinnerFallbackQueue.enqueue({
                         auctionId: auction.getId(),
                         declinedUserId: input.userId,
                         paymentId: payment.getId(),

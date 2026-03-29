@@ -19,13 +19,12 @@ export class ConfirmWalletTopupUsecase implements IConfirmWalletTopupUsecase {
     async execute(
         input: IConfirmWalletTopupInputDto,
     ): Promise<Result<IWalletOutputDto>> {
-        const verifyResult =
-            await this._paymentGatewayService.verifyTopupPayment({
-                userId: input.userId,
-                orderId: input.orderId,
-                paymentId: input.paymentId,
-                signature: input.signature,
-            });
+        const verifyResult = await this._paymentGatewayService.verifyPayment({
+            userId: input.userId,
+            orderId: input.orderId,
+            paymentId: input.paymentId,
+            signature: input.signature,
+        });
 
         if (verifyResult.isFailure) return Result.fail(verifyResult.getError());
 

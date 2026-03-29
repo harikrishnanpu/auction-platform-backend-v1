@@ -34,8 +34,8 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
             return Result.fail('Only pending payments can be verified');
         }
 
-        const verify = await this._paymentGatewayService.verifyTopupPayment({
-            userId: input.userId,
+        const verify = await this._paymentGatewayService.verifyPayment({
+            userId: payment.getUserId(),
             orderId: input.orderId,
             paymentId: input.gatewayPaymentId,
             signature: input.signature,
@@ -46,9 +46,7 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
         const completed = payment.markAsCompleted();
         if (completed.isFailure) return Result.fail(completed.getError());
 
-        const updated = await this._paymentRepository.update(
-            completed.getValue(),
-        );
+        const updated = await this._paymentRepository.update(payment);
         if (updated.isFailure) return Result.fail(updated.getError());
 
         return Result.ok();

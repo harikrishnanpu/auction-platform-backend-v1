@@ -18,7 +18,7 @@ export class CreateWalletTopupSessionUsecase implements ICreateWalletTopupSessio
     async execute(
         input: ICreateWalletTopupSessionInputDto,
     ): Promise<Result<ICreateWalletTopupSessionOutputDto>> {
-        const orderResult = await this._paymentGatewayService.createTopupOrder({
+        const orderResult = await this._paymentGatewayService.createOrder({
             userId: input.userId,
             amount: input.amount,
         });
