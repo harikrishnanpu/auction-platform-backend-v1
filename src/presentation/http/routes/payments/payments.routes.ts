@@ -26,6 +26,7 @@ export class PaymentsRoutes {
             '/create-order',
             this._paymentsController.createPaymentOrder,
         );
+
         this._router.post('/verify', this._paymentsController.verifyPayment);
         this._router.post('/decline', this._paymentsController.declinePayment);
 

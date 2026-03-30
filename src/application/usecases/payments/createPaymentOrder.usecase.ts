@@ -44,6 +44,7 @@ export class CreatePaymentOrderUsecase implements ICreatePaymentOrderUsecase {
             amount: payment.getAmount(),
             paymentId: payment.getId(),
         });
+
         if (orderResult.isFailure) return Result.fail(orderResult.getError());
 
         const order = orderResult.getValue();

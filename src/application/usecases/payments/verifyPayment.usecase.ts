@@ -41,6 +41,7 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
             signature: input.signature,
             expectedPaymentId: payment.getId(),
         });
+
         if (verify.isFailure) return Result.fail(verify.getError());
 
         const completed = payment.markAsCompleted();
