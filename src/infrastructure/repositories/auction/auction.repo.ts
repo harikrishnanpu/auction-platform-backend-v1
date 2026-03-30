@@ -42,6 +42,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
                 maxExtensionCount: data.maxExtensionCount,
                 bidCooldownSeconds: data.bidCooldownSeconds,
                 winnerId: data.winnerId,
+                winAmount: data.winAmount,
                 assets: {
                     create: data.assets.map((a) => ({
                         id: a.id,
@@ -68,6 +69,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
                 maxExtensionCount: data.maxExtensionCount,
                 bidCooldownSeconds: data.bidCooldownSeconds,
                 winnerId: data.winnerId,
+                winAmount: data.winAmount,
                 assets: {
                     deleteMany: {},
                     create: data.assets.map((a) => ({

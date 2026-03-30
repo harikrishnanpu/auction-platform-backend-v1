@@ -89,10 +89,20 @@ export class EmailWorker {
 
             const html = await this._templateService.render(templateProps);
 
+            const mailSubject =
+                subject ??
+                (template === EMAIL_TEMPLATES.VERIFY_EMAIL
+                    ? 'Verify your email'
+                    : template === EMAIL_TEMPLATES.RESET_PASSWORD
+                      ? 'Reset your password'
+                      : template === EMAIL_TEMPLATES.CHANGE_PROFILE_PASSWORD
+                        ? 'Change your profile password'
+                        : template);
+
             await this._transporter.sendMail({
                 from: `"Auction Platform" ${process.env.MAIL_USER}`,
                 to: email,
-                subject: template,
+                subject: mailSubject,
                 html: html,
             });
 

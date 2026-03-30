@@ -42,6 +42,7 @@ import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/notification/IGetUserNotificationsUsecase';
 import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
+import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
 import {
     AuctionStatus,
     AuctionType,
@@ -64,6 +65,8 @@ export class UserController {
         private readonly _getUserNotificationsUsecase: IGetUserNotificationsUsecase,
         @inject(TYPES.IGetUserParticipatedAuctionsUsecase)
         private readonly _getUserParticipatedAuctionsUsecase: IGetUserParticipatedAuctionsUsecase,
+        @inject(TYPES.IGetOrCreateWalletUsecase)
+        private readonly _getOrCreateWalletUsecase: IGetOrCreateWalletUsecase,
     ) {}
 
     /**
@@ -393,6 +396,33 @@ export class UserController {
             res,
             result.getValue(),
             USER_PROFILE_CONSTANTS.MESSAGES.GET_MY_AUCTIONS_SUCCESSFULLY,
+            USER_PROFILE_CONSTANTS.CODES.OK,
+        );
+    });
+
+    getWallet = expressAsyncHandler(async (req: Request, res: Response) => {
+        if (!req.user) {
+            throw new AppError(
+                USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        const result = await this._getOrCreateWalletUsecase.execute({
+            userId: req.user.id,
+        });
+
+        if (result.isFailure) {
+            throw new AppError(
+                result.getError(),
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        ResponseHelper.success(
+            res,
+            result.getValue(),
+            USER_PROFILE_CONSTANTS.MESSAGES.GET_WALLET_SUCCESSFULLY,
             USER_PROFILE_CONSTANTS.CODES.OK,
         );
     });

@@ -25,6 +25,12 @@ export class Bid {
         encryptedAmount?: string | null;
         createdAt?: Date;
     }): Result<Bid> {
+        if (amount && encryptedAmount) {
+            return Result.fail(
+                'Amount and encrypted amount cannot be provided together',
+            );
+        }
+
         return Result.ok(
             new Bid(id, auctionId, userId, createdAt, amount, encryptedAmount),
         );

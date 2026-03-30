@@ -20,6 +20,8 @@ model User {
   auctionParticipants AuctionParticipant[]
   auctionCategories   AuctionCategory[]
   auctionChatMessages AuctionChatMessage[]
+  wallet              Wallet?
+  payments            Payments[]
 }
 
 model UserRole {

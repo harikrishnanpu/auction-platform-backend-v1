@@ -17,9 +17,6 @@ import { redisContainer } from './modules/redis.container';
 import { AuctionController } from '@presentation/http/controllers/auction/auction.controller';
 import { sellerContainer } from './modules/seller.container';
 import { SellerController } from '@presentation/http/controllers/seller/seller.controller';
-import { IPlaceBidStrategy } from '@application/interfaces/strategies/auction/placeBid.strategy';
-import { PlaceLongAuctionBidStrategy } from '@application/strategies/auction/long-bid.placebid.strategy';
-import { PlaceSealedAuctionBidStrategy } from '@application/strategies/auction/sealed-bid.placebid.startegy';
 import { IEncryptionService } from '@application/interfaces/services/IEncryptionService';
 import { EncryptService } from '@infrastructure/services/encrypt/encrypt.service';
 import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
@@ -28,6 +25,10 @@ import { EventBus } from '@infrastructure/events/event-bus';
 import { IEventBus } from '@application/interfaces/events/IEventBus';
 import { OnAuctionEndHandler } from '@application/event-handlers/onAuctionEnd.handler';
 import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
+import { walletContainer } from './modules/wallet.container';
+import { WalletController } from '@presentation/http/controllers/wallet/wallet.controller';
+import { paymentsContainer } from './modules/payments.container';
+import { PaymentsController } from '@presentation/http/controllers/payments/payments.controller';
 
 const container = new Container();
 
@@ -39,19 +40,20 @@ container.load(adminContainer);
 container.load(redisContainer);
 container.load(auctionContainer);
 container.load(sellerContainer);
+container.load(walletContainer);
+container.load(paymentsContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
 container.bind<AdminController>(TYPES.AdminController).to(AdminController);
 container.bind<SellerController>(TYPES.SellerController).to(SellerController);
+container.bind<WalletController>(TYPES.WalletController).to(WalletController);
+container
+    .bind<PaymentsController>(TYPES.PaymentsController)
+    .to(PaymentsController);
 
 // --move for test only
-container
-    .bind<IPlaceBidStrategy>(TYPES.PlaceLongAuctionBidStrategy)
-    .to(PlaceLongAuctionBidStrategy);
-container
-    .bind<IPlaceBidStrategy>(TYPES.PlaceSealedAuctionBidStrategy)
-    .to(PlaceSealedAuctionBidStrategy);
+
 container.bind<IEncryptionService>(TYPES.IEncryptionService).to(EncryptService);
 container
     .bind<INotificationRepository>(TYPES.INotificationRepository)

@@ -40,9 +40,26 @@ import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
 import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
-import { PlaceBidPolicyService } from '@domain/policies/place-bid-policy.service';
+import { PlaceBidPolicyService } from '@domain/policies/auction/place-bid-policy.service';
 import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { GetUserParticipatedAuctionsUsecase } from '@application/usecases/auction/getUserParticipatedAuctions.usecase';
+import { IAuctionWinnerStrategy } from '@domain/strategies/IAuctionWinnerStrategy';
+import { LongAuctionWinnerStrategy } from '@application/strategies/auction/long-auction-winner.strategy';
+import { SealedAuctionWinnerStrategy } from '@application/strategies/auction/sealed-auction-winner.strategy';
+import { AuctionWinnerStrategyFactory } from '@application/factories/auction-winner-policy.factory';
+import { ProcessAuctionEndNotificationUsecase } from '@application/usecases/auction/processAuctionEnd.usecase';
+import { IProcessAuctionEndNotificationUsecase } from '@application/interfaces/usecases/auction/IProcessAuctionEndUsecase';
+import { IAuctionPaymentsStrategy } from '@application/interfaces/strategies/payments/IAuctionPaymentsStrategy';
+import { AuctionPaymentStrategy } from '@application/strategies/payments/auctionPaymentStartegy';
+import { PlaceBidStartegyFactory } from '@application/factories/placeBidStartegy.factory';
+import { LongAuctionPlaceBidStrategy } from '@application/strategies/auction/long-auction.placeBid.strategy';
+import { SealedAuctionPlaceBidStartegy } from '@application/strategies/auction/sealedAuction.placeBid.startegy';
+import { LongAuctionCreatePolicy } from '@domain/policies/auction/longAuction.create.policy';
+import { SealedAuctionCreatePolicy } from '@domain/policies/auction/sealedAuction.create.policy';
+import { IPlaceBidStrategy } from '@domain/strategies/IPlaceBidStrategy';
+import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
+import { IGetFallBackAuctionWinnerStrategy } from '@application/interfaces/strategies/auction/getFallBackWinner.stratgy';
+import { GetFallBackAuctionWinnerStartegy } from '@application/strategies/auction/getFallBackAuctionWinnerStartegy';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -113,4 +130,45 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<PlaceBidPolicyService>(TYPES.PlaceBidPolicyService).to(
         PlaceBidPolicyService,
     );
+    bind<IAuctionWinnerStrategy>(TYPES.LongAuctionWinnerStrategy).to(
+        LongAuctionWinnerStrategy,
+    );
+    bind<IAuctionWinnerStrategy>(TYPES.SealedAuctionWinnerStrategy).to(
+        SealedAuctionWinnerStrategy,
+    );
+    bind<AuctionWinnerStrategyFactory>(TYPES.AuctionWinnerStrategyFactory).to(
+        AuctionWinnerStrategyFactory,
+    );
+    bind<IProcessAuctionEndNotificationUsecase>(
+        TYPES.IProcessAuctionEndNotificationUsecase,
+    ).to(ProcessAuctionEndNotificationUsecase);
+    bind<IAuctionPaymentsStrategy>(TYPES.IAuctionPaymentsStrategy).to(
+        AuctionPaymentStrategy,
+    );
+    bind<PlaceBidStartegyFactory>(TYPES.PlaceBidStartegyFactory).to(
+        PlaceBidStartegyFactory,
+    );
+
+    bind<LongAuctionCreatePolicy>(TYPES.LongAuctionCreatePolicy).to(
+        LongAuctionCreatePolicy,
+    );
+
+    bind<SealedAuctionCreatePolicy>(TYPES.SealedAuctionCreatePolicy).to(
+        SealedAuctionCreatePolicy,
+    );
+
+    bind<IPlaceBidStrategy>(TYPES.LongAuctionPlaceBidStrategy).to(
+        LongAuctionPlaceBidStrategy,
+    );
+    bind<IPlaceBidStrategy>(TYPES.SealedAuctionPlaceBidStartegy).to(
+        SealedAuctionPlaceBidStartegy,
+    );
+
+    bind<AuctionCreatePolicyFactory>(TYPES.AuctionCreatePolicyFactory).to(
+        AuctionCreatePolicyFactory,
+    );
+
+    bind<IGetFallBackAuctionWinnerStrategy>(
+        TYPES.IGetFallBackAuctionWinnerStrategy,
+    ).to(GetFallBackAuctionWinnerStartegy);
 });

@@ -10,3 +10,12 @@ export const AUCTION_MESSAGES = {
         `Bid must be at least ${startPrice}`,
     ONLY_ONE_BID_PER_USER: 'Only one bid per user is allowed',
 };
+
+export const AUCTION_PAYMENT_AMOUNT_SPLIT_STRATEGY = {
+    DEPOSIT_PERCENTAGE: 0.25,
+};
+
+export const AUCTION_PAYMENT_DUE_AT_STRATEGY = {
+    DEPOSIT_DAYS_MS: 24 * 60 * 60 * 1000,
+    BALANCE_MONTHS_MS: 30 * 24 * 60 * 60 * 1000,
+};
