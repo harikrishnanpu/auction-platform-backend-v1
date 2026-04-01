@@ -3,7 +3,7 @@ import {
     IAuctionWinnerFallbackJobPayload,
 } from '@application/interfaces/queue/IWinnerFallbackQueue';
 import { redisConfig } from '@config/redis.config';
-import { WINNER_FALLBACK_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/winnerFallback.queue.constants';
+import { WINNER_FALLBACK_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/auctionWinnerFallback.queue.constants';
 import { Queue } from 'bullmq';
 import { injectable } from 'inversify';
 
@@ -21,13 +21,10 @@ export class AuctionWinnerFallbackQueue implements IAuctionWinnerFallbackQueue {
     }
 
     async enqueue(payload: IAuctionWinnerFallbackJobPayload): Promise<void> {
-        const jobId = `winner-fallback:${payload.auctionId}:${payload.declinedUserId}:${payload.paymentId}`;
-
         await this._queue.add(
             WINNER_FALLBACK_QUEUE_CONSTANTS.WINNER_FALLBACK_JOB_NAME,
             payload,
             {
-                jobId,
                 removeOnComplete:
                     WINNER_FALLBACK_QUEUE_CONSTANTS.QUEUE_REMOVE_ON_COMPLETE,
                 removeOnFail:

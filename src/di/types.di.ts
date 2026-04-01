@@ -177,4 +177,5 @@ export const TYPES = {
         'IProcessAuctionEndNotificationUsecase',
     ),
     IAuctionPaymentsStrategy: Symbol.for('IAuctionPaymentsStrategy'),
+    IAuctionWinnerRepository: Symbol.for('IAuctionWinnerRepository'),
 };

@@ -60,6 +60,8 @@ import { IPlaceBidStrategy } from '@domain/strategies/IPlaceBidStrategy';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
 import { IGetFallBackAuctionWinnerStrategy } from '@application/interfaces/strategies/auction/getFallBackWinner.stratgy';
 import { GetFallBackAuctionWinnerStartegy } from '@application/strategies/auction/getFallBackAuctionWinnerStartegy';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
+import { PrismaAuctionWinnerRepository } from '@infrastructure/repositories/auction/auction-winner.repo';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -171,4 +173,7 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IGetFallBackAuctionWinnerStrategy>(
         TYPES.IGetFallBackAuctionWinnerStrategy,
     ).to(GetFallBackAuctionWinnerStartegy);
+    bind<IAuctionWinnerRepository>(TYPES.IAuctionWinnerRepository).to(
+        PrismaAuctionWinnerRepository,
+    );
 });

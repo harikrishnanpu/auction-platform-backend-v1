@@ -36,53 +36,54 @@ export class CreatePendingPaymentForAuctionUsecase implements ICreatePendingPaym
                 input.userId,
                 PaymentPhase.DEPOSIT,
             );
+
         if (existingDeposit.isFailure) {
             return Result.fail(existingDeposit.getError());
         }
+
         const existingBalance =
             await this._paymentRepository.findByReferenceUserAndPhase(
                 input.auctionId,
                 input.userId,
                 PaymentPhase.BALANCE,
             );
+
         if (existingBalance.isFailure) {
             return Result.fail(existingBalance.getError());
         }
 
-        if (existingDeposit.getValue() && existingBalance.getValue()) {
+        if (existingDeposit.getValue() || existingBalance.getValue()) {
             return Result.ok();
         }
 
-        if (!existingDeposit.getValue()) {
-            const depositPayment =
-                await this._auctionPaymentStrategy.createDepositPayment(
-                    strategyInput,
-                );
-            if (depositPayment.isFailure) {
-                return Result.fail(depositPayment.getError());
-            }
-            const created = await this._paymentRepository.create(
-                depositPayment.getValue(),
+        const depositPayment =
+            await this._auctionPaymentStrategy.createDepositPayment(
+                strategyInput,
             );
-            if (created.isFailure) {
-                return Result.fail(created.getError());
-            }
+        if (depositPayment.isFailure) {
+            return Result.fail(depositPayment.getError());
+        }
+        const createdDeposit = await this._paymentRepository.create(
+            depositPayment.getValue(),
+        );
+        if (createdDeposit.isFailure) {
+            return Result.fail(createdDeposit.getError());
         }
 
-        if (!existingBalance.getValue()) {
-            const balancePayment =
-                await this._auctionPaymentStrategy.createBalancePayment(
-                    strategyInput,
-                );
-            if (balancePayment.isFailure) {
-                return Result.fail(balancePayment.getError());
-            }
-            const created = await this._paymentRepository.create(
-                balancePayment.getValue(),
+        const balancePayment =
+            await this._auctionPaymentStrategy.createBalancePayment(
+                strategyInput,
             );
-            if (created.isFailure) {
-                return Result.fail(created.getError());
-            }
+        if (balancePayment.isFailure) {
+            return Result.fail(balancePayment.getError());
+        }
+
+        const createdBalance = await this._paymentRepository.create(
+            balancePayment.getValue(),
+        );
+
+        if (createdBalance.isFailure) {
+            return Result.fail(createdBalance.getError());
         }
 
         return Result.ok();

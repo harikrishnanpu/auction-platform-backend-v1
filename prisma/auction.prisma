@@ -46,6 +46,29 @@ model Auction {
   participants       AuctionParticipant[]
   chatMessages       AuctionChatMessage[]
   category           AuctionCategory      @relation(fields: [categoryId], references: [id])
+  winners            AuctionWinner[]
+}
+
+enum AuctionWinnerStatus {
+  PENDING
+  PARTIAL_PAYMENT_PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model AuctionWinner {
+  id              String              @id @default(uuid())
+  auctionId       String
+  userId          String
+  amount          Float
+  rank            Int
+  status          AuctionWinnerStatus @default(PENDING)
+  rejectionReason String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  auction         Auction             @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id])
 }
 
 enum AuctionCategoryStatus {
