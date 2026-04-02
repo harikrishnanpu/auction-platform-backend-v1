@@ -62,6 +62,10 @@ import { IGetFallBackAuctionWinnerStrategy } from '@application/interfaces/strat
 import { GetFallBackAuctionWinnerStartegy } from '@application/strategies/auction/getFallBackAuctionWinnerStartegy';
 import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
 import { PrismaAuctionWinnerRepository } from '@infrastructure/repositories/auction/auction-winner.repo';
+import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
+import { SendPublicFallbackNotificationUsecase } from '@application/usecases/auction/sendPublicFallbackNotification.usecase';
+import { IFailAuctionUsecase } from '@application/interfaces/usecases/auction/IFailAuctionUsecase';
+import { FailAuctionUsecase } from '@application/usecases/auction/failAuction.usecase';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -176,4 +180,9 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionWinnerRepository>(TYPES.IAuctionWinnerRepository).to(
         PrismaAuctionWinnerRepository,
     );
+    bind<ISendPublicFallbackPublicNotificationUsecase>(
+        TYPES.ISendPublicFallbackPublicNotificationUsecase,
+    ).to(SendPublicFallbackNotificationUsecase);
+
+    bind<IFailAuctionUsecase>(TYPES.IFailAuctionUsecase).to(FailAuctionUsecase);
 });

@@ -51,13 +51,23 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
             allAuctionWinners.length >=
             AUCTION_WINNER_FALLBACK_CONSTANTS.MAX_RANK
         ) {
-            return Result.ok({ winnerId: null, winAmount: null, rank: 0 });
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: true,
+            });
         }
 
         const nextRank = allAuctionWinners.length + 1;
 
         if (allAuctionWinners.length === 0) {
-            return Result.ok({ winnerId: null, winAmount: null, rank: 0 });
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: false,
+            });
         }
 
         const bidsResult = await this._bidRepository.findAllByAuctionId(
@@ -78,7 +88,12 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
             );
 
         if (eligibleBids.length === 0) {
-            return Result.ok({ winnerId: null, winAmount: null, rank: 0 });
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: false,
+            });
         }
 
         const auctionType = auctionResult.getValue().getAuctionType();
@@ -104,6 +119,7 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
             winnerId: winner.getUserId(),
             winAmount: Number(winner.getAmount()),
             rank,
+            isFallbackFailed: false,
         });
     }
 
@@ -135,13 +151,19 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
         }
 
         if (winnerId === null) {
-            return Result.ok({ winnerId: null, winAmount: null, rank: 0 });
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: false,
+            });
         }
 
         return Result.ok({
             winnerId,
             winAmount: maxAmount,
             rank,
+            isFallbackFailed: false,
         });
     }
 }

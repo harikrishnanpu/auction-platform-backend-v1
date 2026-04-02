@@ -92,6 +92,44 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
 
         const newWinner = fallbackResult.getValue();
 
+        if (newWinner.isFallbackFailed) {
+            const updatedAuctionResult = Auction.create({
+                id: auction.getId(),
+                sellerId: auction.getSellerId(),
+                auctionType: auction.getAuctionType(),
+                title: auction.getTitle(),
+                description: auction.getDescription(),
+                category: auction.getCategory(),
+                condition: auction.getCondition(),
+                startPrice: auction.getStartPrice(),
+                minIncrement: auction.getMinIncrement(),
+                startAt: auction.getStartAt(),
+                endAt: auction.getEndAt(),
+                status: AuctionStatus.FALLBACK_ENDED,
+                antiSnipSeconds: auction.getAntiSnipSeconds(),
+                extensionCount: auction.getExtensionCount(),
+                maxExtensionCount: auction.getMaxExtensionCount(),
+                bidCooldownSeconds: auction.getBidCooldownSeconds(),
+                winnerId: null,
+                winAmount: null,
+                assets: auction.getAssets(),
+            });
+
+            if (updatedAuctionResult.isFailure) {
+                return Result.fail(updatedAuctionResult.getError());
+            }
+
+            const saveResult = await this._auctionRepository.save(
+                updatedAuctionResult.getValue(),
+            );
+
+            if (saveResult.isFailure) {
+                return Result.fail(saveResult.getError());
+            }
+
+            return Result.ok();
+        }
+
         if (!newWinner.winnerId || !newWinner.winAmount) {
             return Result.ok();
         }

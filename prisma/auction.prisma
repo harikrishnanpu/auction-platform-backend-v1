@@ -5,6 +5,8 @@ enum AuctionStatus {
   ENDED
   SOLD
   CANCELLED
+  FALLBACK_ENDED
+  FAILED
 }
 
 enum AuctionType {

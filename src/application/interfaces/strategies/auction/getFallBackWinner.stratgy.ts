@@ -9,6 +9,7 @@ export interface IGetFallBackAuctionWinnerOutput {
     winnerId: string | null;
     winAmount: number | null;
     rank: number;
+    isFallbackFailed: boolean;
 }
 
 export interface IGetFallBackAuctionWinnerStrategy {

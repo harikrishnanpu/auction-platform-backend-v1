@@ -178,4 +178,8 @@ export const TYPES = {
     ),
     IAuctionPaymentsStrategy: Symbol.for('IAuctionPaymentsStrategy'),
     IAuctionWinnerRepository: Symbol.for('IAuctionWinnerRepository'),
+    IFailAuctionUsecase: Symbol.for('IFailAuctionUsecase'),
+    ISendPublicFallbackPublicNotificationUsecase: Symbol.for(
+        'ISendPublicFallbackPublicNotificationUsecase',
+    ),
 };

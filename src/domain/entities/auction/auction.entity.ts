@@ -12,6 +12,8 @@ export enum AuctionStatus {
     ENDED = 'ENDED',
     SOLD = 'SOLD',
     CANCELLED = 'CANCELLED',
+    FALLBACK_ENDED = 'FALLBACK_ENDED',
+    FAILED = 'FAILED',
 }
 
 export enum AuctionType {
@@ -33,7 +35,7 @@ export class Auction {
         private readonly minIncrement: number,
         private readonly startAt: Date,
         private readonly endAt: Date,
-        private readonly status: AuctionStatus,
+        private status: AuctionStatus,
         private readonly antiSnipSeconds: number,
         private readonly extensionCount: number,
         private readonly maxExtensionCount: number,
@@ -129,6 +131,25 @@ export class Auction {
                 assets,
             ),
         );
+    }
+
+    setStatus(status: AuctionStatus): Result<void> {
+        if (
+            this.status === AuctionStatus.ENDED &&
+            status !== AuctionStatus.FALLBACK_ENDED
+        ) {
+            return Result.fail('Auction is already ended');
+        }
+
+        if (
+            this.status === AuctionStatus.FALLBACK_ENDED &&
+            status !== AuctionStatus.FAILED
+        ) {
+            return Result.fail('Auction is already fallback ended');
+        }
+
+        this.status = status;
+        return Result.ok();
     }
 
     getId(): string {

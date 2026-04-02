@@ -19,6 +19,9 @@ import {
     placeBidSocketSchema,
     sendChatSocketSchema,
 } from '../validators';
+import { authorizeUser } from 'socket/utils/authorizeUser';
+import { IFailAuctionUsecase } from '@application/interfaces/usecases/auction/IFailAuctionUsecase';
+// import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
 
 export class AuctionHandler {
     constructor(
@@ -27,13 +30,14 @@ export class AuctionHandler {
         private readonly container: Container,
     ) {}
 
-    private assertSellerOrAdmin(user: AuthUser): SocketAckPayload | null {
-        const ok =
-            user.roles.includes(UserRoleType.SELLER) ||
-            user.roles.includes(UserRoleType.ADMIN);
-        if (!ok) {
+    private authorizeUser(
+        user: AuthUser,
+        allowedRoles: UserRoleType[],
+    ): SocketAckPayload | null {
+        if (!allowedRoles.some((role) => user.roles.includes(role))) {
             return { success: false, error: 'Unauthorized' };
         }
+
         return null;
     }
 
@@ -171,8 +175,11 @@ export class AuctionHandler {
 
     async handlePauseAuction(payload: unknown): Promise<SocketAckPayload> {
         const user = this.socket.data.user;
-        const denied = this.assertSellerOrAdmin(user);
-        if (denied) return denied;
+        const denied = authorizeUser(user, [
+            UserRoleType.SELLER,
+            UserRoleType.ADMIN,
+        ]);
+        if (denied) return { success: false, error: denied.error };
 
         const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
         if (!parsed.ok) {
@@ -209,7 +216,10 @@ export class AuctionHandler {
 
     async handleResumeAuction(payload: unknown): Promise<SocketAckPayload> {
         const user = this.socket.data.user;
-        const denied = this.assertSellerOrAdmin(user);
+        const denied = this.authorizeUser(user, [
+            UserRoleType.SELLER,
+            UserRoleType.ADMIN,
+        ]);
         if (denied) return denied;
 
         const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
@@ -247,7 +257,10 @@ export class AuctionHandler {
 
     async handleEndAuction(payload: unknown): Promise<SocketAckPayload> {
         const user = this.socket.data.user;
-        const denied = this.assertSellerOrAdmin(user);
+        const denied = this.authorizeUser(user, [
+            UserRoleType.SELLER,
+            UserRoleType.ADMIN,
+        ]);
         if (denied) return denied;
 
         const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
@@ -281,5 +294,60 @@ export class AuctionHandler {
             success: true,
             data: { auctionId: updated.id, status: updated.status },
         };
+    }
+
+    async handleFailAuction(payload: unknown): Promise<SocketAckPayload> {
+        const user = this.socket.data.user;
+        const denied = this.authorizeUser(user, [
+            UserRoleType.SELLER,
+            UserRoleType.ADMIN,
+        ]);
+        if (denied) return { success: false, error: denied.error };
+
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { auctionId } = parsed.data;
+
+        const failAuctionUsecase = this.container.get<IFailAuctionUsecase>(
+            TYPES.IFailAuctionUsecase,
+        );
+        const result = await failAuctionUsecase.execute({
+            auctionId,
+            reason: 'Seller choose Fail Auction',
+        });
+
+        if (result.isFailure) {
+            return { success: false, error: result.getError() };
+        }
+
+        const updated = result.getValue();
+        const roomId = `auction:${auctionId}`;
+
+        this.io.to(roomId).emit(SocketEvents.UPDATED, {
+            auctionId: updated.auctionId,
+            status: updated.status,
+        });
+
+        return {
+            success: true,
+            data: { auctionId: updated.auctionId, status: updated.status },
+        };
+    }
+
+    async handleSendFallbackPublicNotification(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { auctionId } = parsed.data;
+
+        return { success: true, data: { auctionId } };
     }
 }
