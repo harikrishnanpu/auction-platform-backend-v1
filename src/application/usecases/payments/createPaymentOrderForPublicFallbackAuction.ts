@@ -68,6 +68,12 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
 
         if (fallbackAuctionUserEntity) {
             if (
+                fallbackAuctionUserEntity.getStatus() ===
+                PublicAuctionFallbackParticipantsStatus.REJECTED
+            )
+                return Result.fail('Fallback auction user is rejected');
+
+            if (
                 fallbackAuctionUserEntity.getPaymentStatus() !==
                 PublicAuctionFallbackParticipantsPaymentStatus.PENDING
             )
@@ -85,6 +91,7 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
 
             return Result.ok({
                 orderId: order.orderId,
+                paymentId: order.orderId,
                 amountInPaise: order.amountInPaise,
                 currency: order.currency,
                 gatewayKey: order.gatewayKey,
@@ -121,6 +128,7 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
 
         return Result.ok({
             orderId: order.orderId,
+            paymentId: order.orderId,
             amountInPaise: order.amountInPaise,
             currency: order.currency,
             gatewayKey: order.gatewayKey,

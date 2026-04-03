@@ -74,6 +74,8 @@ import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallback
 import { PrismaFallbackAuctionParticipantsRepo } from '@infrastructure/repositories/auction/fallback-auction-participants';
 import { PrismaFallbackAuctionRepository } from '@infrastructure/repositories/auction/fallback-auction.repository';
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
+import { DeclinePublicFallbackAuctionUsecase } from '@application/usecases/auction/declinePublicfallbackAuction.usecase';
+import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/usecases/auction/IDeclinePublicFallbackAuctionUsecase';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -205,4 +207,7 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IFallbackAuctionRepo>(TYPES.IFallbackAuctionRepository).to(
         PrismaFallbackAuctionRepository,
     );
+    bind<IDeclinePublicFallbackAuctionUsecase>(
+        TYPES.IDeclinePublicFallbackAuctionUsecase,
+    ).to(DeclinePublicFallbackAuctionUsecase);
 });

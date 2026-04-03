@@ -25,6 +25,7 @@ import { ISendPublicFallbackPublicNotificationUsecase } from '@application/inter
 import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePaymentOrderForPublicFallbackAuctionUsecase';
 import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
 import { verifyFallbackAuctionPaymentSchema } from 'socket/validators/verifyFallbackAuctionPayment.schema';
+import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/usecases/auction/IDeclinePublicFallbackAuctionUsecase';
 // import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
 
 export class AuctionHandler {
@@ -424,6 +425,34 @@ export class AuctionHandler {
             await verifyPaymentForPublicFallbackAuctionUsecase.execute({
                 orderId: orderId,
                 signature: signature,
+                auctionId: auctionId,
+                userId: this.socket.data.user.id,
+            });
+
+        if (result.isFailure) {
+            return { success: false, error: result.getError() };
+        }
+
+        return { success: true, data: { success: true } };
+    }
+
+    async handleDeclinePaymentForPublicFallbackAuction(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        console.log(payload);
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { auctionId } = parsed.data;
+        const declinePaymentForPublicFallbackAuctionUsecase =
+            this.container.get<IDeclinePublicFallbackAuctionUsecase>(
+                TYPES.IDeclinePublicFallbackAuctionUsecase,
+            );
+
+        const result =
+            await declinePaymentForPublicFallbackAuctionUsecase.execute({
                 auctionId: auctionId,
                 userId: this.socket.data.user.id,
             });

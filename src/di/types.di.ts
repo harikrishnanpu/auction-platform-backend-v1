@@ -198,4 +198,7 @@ export const TYPES = {
     IVerifyFallbackPublicAuctionPaymentUsecase: Symbol.for(
         'IVerifyFallbackPublicAuctionPaymentUsecase',
     ),
+    IDeclinePublicFallbackAuctionUsecase: Symbol.for(
+        'IDeclinePublicFallbackAuctionUsecase',
+    ),
 };

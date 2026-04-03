@@ -111,6 +111,17 @@ export function setupSockets(
                 );
             },
         );
+
+        socket.on(
+            SocketEvents.DECLINE_PAYMENT_FOR_PUBLIC_FALLBACK_AUCTION,
+            (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleDeclinePaymentForPublicFallbackAuction(
+                        payload,
+                    ),
+                );
+            },
+        );
     });
 
     return io;
