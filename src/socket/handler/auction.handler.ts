@@ -403,6 +403,8 @@ export class AuctionHandler {
     async handleVerifyPaymentForPublicFallbackAuction(
         payload: unknown,
     ): Promise<SocketAckPayload> {
+        console.log(payload);
+
         const parsed = parseSocketPayload(
             verifyFallbackAuctionPaymentSchema,
             payload,
@@ -412,7 +414,7 @@ export class AuctionHandler {
             return { success: false, error: parsed.error };
         }
 
-        const { orderId, signature, paymentId } = parsed.data;
+        const { orderId, signature, auctionId } = parsed.data;
         const verifyPaymentForPublicFallbackAuctionUsecase =
             this.container.get<IVerifyFallbackPublicAuctionPaymentUsecase>(
                 TYPES.IVerifyFallbackPublicAuctionPaymentUsecase,
@@ -422,7 +424,7 @@ export class AuctionHandler {
             await verifyPaymentForPublicFallbackAuctionUsecase.execute({
                 orderId: orderId,
                 signature: signature,
-                paymentId: paymentId,
+                auctionId: auctionId,
                 userId: this.socket.data.user.id,
             });
 

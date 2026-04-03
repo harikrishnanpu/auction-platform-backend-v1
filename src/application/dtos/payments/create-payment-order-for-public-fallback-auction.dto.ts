@@ -5,6 +5,7 @@ export interface ICreatePaymentOrderForPublicFallbackAuctionInputDto {
 
 export interface ICreatePaymentOrderForPublicFallbackAuctionOutputDto {
     orderId: string;
+    paymentId: string;
     amountInPaise: number;
     currency: string;
     gatewayKey: string;

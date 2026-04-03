@@ -2,7 +2,7 @@ export interface IVerifyPublicFallbackAuctionPaymentInputDto {
     userId: string;
     orderId: string;
     signature: string;
-    paymentId: string;
+    auctionId: string;
 }
 
 export interface IVerifyPublicFallbackAuctionPaymentOutputDto {
