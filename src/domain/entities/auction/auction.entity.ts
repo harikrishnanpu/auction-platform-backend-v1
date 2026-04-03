@@ -14,6 +14,7 @@ export enum AuctionStatus {
     CANCELLED = 'CANCELLED',
     FALLBACK_ENDED = 'FALLBACK_ENDED',
     FAILED = 'FAILED',
+    FALLBACK_PUBLIC_NOTIFICATION = 'FALLBACK_PUBLIC_NOTIFICATION',
 }
 
 export enum AuctionType {
@@ -143,9 +144,12 @@ export class Auction {
 
         if (
             this.status === AuctionStatus.FALLBACK_ENDED &&
-            status !== AuctionStatus.FAILED
+            ![
+                AuctionStatus.FAILED,
+                AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
+            ].includes(status)
         ) {
-            return Result.fail('Auction is already fallback ended');
+            return Result.fail('Invalid status for fallback ended auction');
         }
 
         this.status = status;

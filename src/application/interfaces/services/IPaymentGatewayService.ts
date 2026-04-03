@@ -3,7 +3,7 @@ import { Result } from '@domain/shared/result';
 export interface CreateOrderInput {
     userId: string;
     amount: number;
-    paymentId?: string;
+    referenceId: string;
 }
 
 export interface CreateOrderOutput {
@@ -18,7 +18,7 @@ export interface VerifyPaymentInput {
     orderId: string;
     paymentId: string;
     signature: string;
-    expectedPaymentId?: string;
+    referenceId: string;
 }
 
 export interface VerifyPaymentOutput {

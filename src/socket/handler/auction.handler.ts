@@ -21,6 +21,10 @@ import {
 } from '../validators';
 import { authorizeUser } from 'socket/utils/authorizeUser';
 import { IFailAuctionUsecase } from '@application/interfaces/usecases/auction/IFailAuctionUsecase';
+import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
+import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePaymentOrderForPublicFallbackAuctionUsecase';
+import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
+import { verifyFallbackAuctionPaymentSchema } from 'socket/validators/verifyFallbackAuctionPayment.schema';
 // import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
 
 export class AuctionHandler {
@@ -347,7 +351,85 @@ export class AuctionHandler {
         }
 
         const { auctionId } = parsed.data;
+        const sendFallbackPublicNotificationUsecase =
+            this.container.get<ISendPublicFallbackPublicNotificationUsecase>(
+                TYPES.ISendPublicFallbackPublicNotificationUsecase,
+            );
+
+        const result =
+            await sendFallbackPublicNotificationUsecase.execute(auctionId);
+
+        if (result.isFailure) {
+            return { success: false, error: result.getError() };
+        }
 
         return { success: true, data: { auctionId } };
+    }
+
+    async handleCreatePaymentOrderForPublicFallbackAuction(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { auctionId } = parsed.data;
+        const createPaymentOrderForPublicFallbackAuctionUsecase =
+            this.container.get<ICreatePaymentOrderForPublicFallbackAuctionUsecase>(
+                TYPES.ICreatePaymentOrderForPublicFallbackAuctionUsecase,
+            );
+
+        const result =
+            await createPaymentOrderForPublicFallbackAuctionUsecase.execute({
+                auctionId,
+                userId: this.socket.data.user.id,
+            });
+
+        if (result.isFailure) {
+            return { success: false, error: result.getError() };
+        }
+
+        const responsePayment = {
+            orderId: result.getValue().orderId,
+            amountInPaise: result.getValue().amountInPaise,
+            currency: result.getValue().currency,
+            gatewayKey: result.getValue().gatewayKey,
+        };
+
+        return { success: true, data: responsePayment };
+    }
+
+    async handleVerifyPaymentForPublicFallbackAuction(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(
+            verifyFallbackAuctionPaymentSchema,
+            payload,
+        );
+
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { orderId, signature, paymentId } = parsed.data;
+        const verifyPaymentForPublicFallbackAuctionUsecase =
+            this.container.get<IVerifyFallbackPublicAuctionPaymentUsecase>(
+                TYPES.IVerifyFallbackPublicAuctionPaymentUsecase,
+            );
+
+        const result =
+            await verifyPaymentForPublicFallbackAuctionUsecase.execute({
+                orderId: orderId,
+                signature: signature,
+                paymentId: paymentId,
+                userId: this.socket.data.user.id,
+            });
+
+        if (result.isFailure) {
+            return { success: false, error: result.getError() };
+        }
+
+        return { success: true, data: { success: true } };
     }
 }

@@ -22,6 +22,10 @@ import { AuctionEndQueue } from '@infrastructure/queue/auctionEnd.queue';
 import { AuctionWinnerFallbackQueue } from '@infrastructure/queue/AuctionWinnerFallback.queue';
 import { PrismaPaymentRepository } from '@infrastructure/repositories/payments/payments.repo';
 import { ContainerModule } from 'inversify';
+import { CreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/usecases/payments/createPaymentOrderForPublicFallbackAuction';
+import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePaymentOrderForPublicFallbackAuctionUsecase';
+import { VerifyPublicAuctionPaymentUsecase } from '@application/usecases/payments/verifyPublicAuctionPayment.usecase';
+import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
 
 export const paymentsContainer = new ContainerModule(({ bind }) => {
     bind<IPaymentRepository>(TYPES.IPaymentRepository).to(
@@ -56,4 +60,10 @@ export const paymentsContainer = new ContainerModule(({ bind }) => {
     bind<IProcessAuctionWinnerFallbackUsecase>(
         TYPES.IProcessAuctionWinnerFallbackUsecase,
     ).to(ProcessAuctionWinnerFallbackUsecase);
+    bind<ICreatePaymentOrderForPublicFallbackAuctionUsecase>(
+        TYPES.ICreatePaymentOrderForPublicFallbackAuctionUsecase,
+    ).to(CreatePaymentOrderForPublicFallbackAuctionUsecase);
+    bind<IVerifyFallbackPublicAuctionPaymentUsecase>(
+        TYPES.IVerifyFallbackPublicAuctionPaymentUsecase,
+    ).to(VerifyPublicAuctionPaymentUsecase);
 });

@@ -182,4 +182,20 @@ export const TYPES = {
     ISendPublicFallbackPublicNotificationUsecase: Symbol.for(
         'ISendPublicFallbackPublicNotificationUsecase',
     ),
+    IProcessFallbackPublicNotificationUsecase: Symbol.for(
+        'IProcessFallbackPublicNotificationUsecase',
+    ),
+    IFallbackPublicNotificationQueue: Symbol.for(
+        'IFallbackPublicNotificationQueue',
+    ),
+    IFallbackAuctionParticipantsRepo: Symbol.for(
+        'IFallbackAuctionParticipantsRepo',
+    ),
+    IFallbackAuctionRepository: Symbol.for('IFallbackAuctionRepository'),
+    ICreatePaymentOrderForPublicFallbackAuctionUsecase: Symbol.for(
+        'ICreatePaymentOrderForPublicFallbackAuctionUsecase',
+    ),
+    IVerifyFallbackPublicAuctionPaymentUsecase: Symbol.for(
+        'IVerifyFallbackPublicAuctionPaymentUsecase',
+    ),
 };

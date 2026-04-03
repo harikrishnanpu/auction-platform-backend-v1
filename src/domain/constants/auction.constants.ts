@@ -21,5 +21,5 @@ export const AUCTION_PAYMENT_DUE_AT_STRATEGY = {
 };
 
 export const AUCTION_WINNER_FALLBACK_CONSTANTS = {
-    MAX_RANK: 3,
+    MAX_RANK: 1, // --change --
 };

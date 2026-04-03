@@ -17,4 +17,8 @@ export enum SocketEvents {
 
     FAIL_AUCTION = 'auction:failAuction',
     SEND_FALLBACK_PUBLIC_NOTIFICATION = 'auction:sendFallbackPublicNotification',
+
+    CREATE_PAYMENT_ORDER_FOR_PUBLIC_FALLBACK_AUCTION = 'auction:createPaymentOrderForPublicFallbackAuction',
+    VERIFY_PAYMENT_FOR_PUBLIC_FALLBACK_AUCTION = 'auction:verifyPaymentForPublicFallbackAuction',
+    DECLINE_PAYMENT_FOR_PUBLIC_FALLBACK_AUCTION = 'auction:declinePaymentForPublicFallbackAuction',
 }

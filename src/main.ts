@@ -26,6 +26,7 @@ import { NotificationCreated } from '@domain/events/notitificationCreated.event'
 import { OnNotificationCreatedHandler } from '@application/event-handlers/onNotificationCreated.handler';
 import { WalletRouterFactory } from '@presentation/http/factories/wallet.router.factory';
 import { PaymentsRouterFactory } from '@presentation/http/factories/payments.router.factory';
+import { FallbackPublicNotificationWorker } from '@infrastructure/workers/fallbackPublicNotification.worker';
 
 export const app = express();
 
@@ -48,6 +49,7 @@ configureGoogleStrategy();
 new EmailWorker(new TemplateService());
 new AuctionEndWorker();
 new AuctionWinnerFallbackWorker();
+new FallbackPublicNotificationWorker();
 
 const eventBus = container.get<IEventBus>(TYPES.IEventBus);
 

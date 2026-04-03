@@ -66,6 +66,14 @@ import { ISendPublicFallbackPublicNotificationUsecase } from '@application/inter
 import { SendPublicFallbackNotificationUsecase } from '@application/usecases/auction/sendPublicFallbackNotification.usecase';
 import { IFailAuctionUsecase } from '@application/interfaces/usecases/auction/IFailAuctionUsecase';
 import { FailAuctionUsecase } from '@application/usecases/auction/failAuction.usecase';
+import { ProcessFallbackPublicNotificationUsecase } from '@application/usecases/auction/processFallbackPublicNotification.usecase';
+import { IFallbackPublicNotificationQueue } from '@application/interfaces/queue/IFallbackPublicNotificationQueue';
+import { FallbackPublicNotificationQueue } from '@infrastructure/queue/fallbackPublicNotificationQueue';
+import { IProcessFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/IProcessFallbackPublicNotificationUsecase';
+import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
+import { PrismaFallbackAuctionParticipantsRepo } from '@infrastructure/repositories/auction/fallback-auction-participants';
+import { PrismaFallbackAuctionRepository } from '@infrastructure/repositories/auction/fallback-auction.repository';
+import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -185,4 +193,16 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     ).to(SendPublicFallbackNotificationUsecase);
 
     bind<IFailAuctionUsecase>(TYPES.IFailAuctionUsecase).to(FailAuctionUsecase);
+    bind<IProcessFallbackPublicNotificationUsecase>(
+        TYPES.IProcessFallbackPublicNotificationUsecase,
+    ).to(ProcessFallbackPublicNotificationUsecase);
+    bind<IFallbackPublicNotificationQueue>(
+        TYPES.IFallbackPublicNotificationQueue,
+    ).to(FallbackPublicNotificationQueue);
+    bind<IFallbackAuctionParticipantsRepo>(
+        TYPES.IFallbackAuctionParticipantsRepo,
+    ).to(PrismaFallbackAuctionParticipantsRepo);
+    bind<IFallbackAuctionRepo>(TYPES.IFallbackAuctionRepository).to(
+        PrismaFallbackAuctionRepository,
+    );
 });

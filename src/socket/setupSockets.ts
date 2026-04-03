@@ -89,6 +89,28 @@ export function setupSockets(
                 );
             },
         );
+
+        socket.on(
+            SocketEvents.CREATE_PAYMENT_ORDER_FOR_PUBLIC_FALLBACK_AUCTION,
+            (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleCreatePaymentOrderForPublicFallbackAuction(
+                        payload,
+                    ),
+                );
+            },
+        );
+
+        socket.on(
+            SocketEvents.VERIFY_PAYMENT_FOR_PUBLIC_FALLBACK_AUCTION,
+            (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleVerifyPaymentForPublicFallbackAuction(
+                        payload,
+                    ),
+                );
+            },
+        );
     });
 
     return io;
