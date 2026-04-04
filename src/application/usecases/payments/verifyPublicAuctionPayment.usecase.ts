@@ -92,6 +92,15 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
         );
         if (setAuctionPaymentStatusResult.isFailure)
             return Result.fail(setAuctionPaymentStatusResult.getError());
+
+        const setAuctionWinnerResult = auction.setWinner(
+            fallbackAuctionPaymentParticipantEntity.getUserId(),
+            fallbackAuction.getAmount(),
+        );
+
+        if (setAuctionWinnerResult.isFailure)
+            return Result.fail(setAuctionWinnerResult.getError());
+
         await this._auctionRepository.save(auction);
 
         return Result.ok({ success: true });

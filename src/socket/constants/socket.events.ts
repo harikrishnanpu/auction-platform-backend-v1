@@ -12,6 +12,7 @@ export enum SocketEvents {
     BID_PLACED = 'auction:bidPlaced',
     CHAT_MESSAGE = 'auction:chatMessage',
     UPDATED = 'auction:updated',
+    FALLBACK_STATS_UPDATED = 'auction:fallbackStatsUpdated',
     PARTICIPANTS_UPDATED = 'auction:participantsUpdated',
     ERROR = 'auction:error',
 

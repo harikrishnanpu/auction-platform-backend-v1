@@ -26,7 +26,9 @@ import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application
 import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
 import { verifyFallbackAuctionPaymentSchema } from 'socket/validators/verifyFallbackAuctionPayment.schema';
 import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/usecases/auction/IDeclinePublicFallbackAuctionUsecase';
-// import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
+import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
+import { PublicAuctionFallbackParticipantsStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 
 export class AuctionHandler {
     constructor(
@@ -345,6 +347,10 @@ export class AuctionHandler {
     async handleSendFallbackPublicNotification(
         payload: unknown,
     ): Promise<SocketAckPayload> {
+        const user = this.socket.data.user;
+        const denied = this.authorizeUser(user, [UserRoleType.SELLER]);
+        if (denied) return denied;
+
         const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
 
         if (!parsed.ok) {
@@ -352,6 +358,18 @@ export class AuctionHandler {
         }
 
         const { auctionId } = parsed.data;
+
+        const auctionRepo = this.container.get<IAuctionRepository>(
+            TYPES.IAuctionRepository,
+        );
+        const auctionRes = await auctionRepo.findById(auctionId);
+        if (auctionRes.isFailure) {
+            return { success: false, error: auctionRes.getError() };
+        }
+        if (auctionRes.getValue().getSellerId() !== user.id) {
+            return { success: false, error: 'Unauthorized' };
+        }
+
         const sendFallbackPublicNotificationUsecase =
             this.container.get<ISendPublicFallbackPublicNotificationUsecase>(
                 TYPES.ISendPublicFallbackPublicNotificationUsecase,
@@ -433,6 +451,8 @@ export class AuctionHandler {
             return { success: false, error: result.getError() };
         }
 
+        await this.emitFallbackPublicParticipantStats(auctionId);
+
         return { success: true, data: { success: true } };
     }
 
@@ -461,6 +481,33 @@ export class AuctionHandler {
             return { success: false, error: result.getError() };
         }
 
+        await this.emitFallbackPublicParticipantStats(auctionId);
+
         return { success: true, data: { success: true } };
+    }
+
+    private async emitFallbackPublicParticipantStats(auctionId: string) {
+        const repo = this.container.get<IFallbackAuctionParticipantsRepo>(
+            TYPES.IFallbackAuctionParticipantsRepo,
+        );
+        const listRes = await repo.findByAuctionId(auctionId);
+        if (listRes.isFailure) return;
+
+        let pending = 0;
+        let rejected = 0;
+        for (const p of listRes.getValue()) {
+            const s = p.getStatus();
+            if (s === PublicAuctionFallbackParticipantsStatus.PENDING) {
+                pending += 1;
+            } else if (s === PublicAuctionFallbackParticipantsStatus.REJECTED) {
+                rejected += 1;
+            }
+        }
+
+        const roomId = `auction:${auctionId}`;
+        this.io.to(roomId).emit(SocketEvents.FALLBACK_STATS_UPDATED, {
+            auctionId,
+            fallbackPublicParticipantStats: { pending, rejected },
+        });
     }
 }

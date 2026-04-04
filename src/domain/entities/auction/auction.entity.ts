@@ -41,8 +41,8 @@ export class Auction {
         private readonly extensionCount: number,
         private readonly maxExtensionCount: number,
         private readonly bidCooldownSeconds: number,
-        private readonly winnerId: string | null,
-        private readonly winAmount: number | null,
+        private winnerId: string | null,
+        private winAmount: number | null,
         private readonly assets: AuctionAsset[] = [],
     ) {}
 
@@ -153,6 +153,20 @@ export class Auction {
         }
 
         this.status = status;
+        return Result.ok();
+    }
+
+    public setWinner(userId: string, winAmount: number): Result<void> {
+        if (this.status === AuctionStatus.SOLD) {
+            return Result.fail('Auction is already sold');
+        }
+
+        if (winAmount < this.startPrice) {
+            return Result.fail('Win amount must be greater than start price');
+        }
+
+        this.winnerId = userId;
+        this.winAmount = winAmount;
         return Result.ok();
     }
 
