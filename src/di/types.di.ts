@@ -201,4 +201,8 @@ export const TYPES = {
     IDeclinePublicFallbackAuctionUsecase: Symbol.for(
         'IDeclinePublicFallbackAuctionUsecase',
     ),
+    IAddAuctionParticipantUsecase: Symbol.for('IAddAuctionParticipantUsecase'),
+    IReleaseParticipantsWalletUsecase: Symbol.for(
+        'IReleaseParticipantsWalletUsecase',
+    ),
 };

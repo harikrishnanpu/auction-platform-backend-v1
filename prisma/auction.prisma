@@ -121,11 +121,17 @@ model Bid {
   user            User     @relation(fields: [userId], references: [id])
 }
 
+enum AuctionParticipantPaymentStatus {
+  PENDING
+  PAID
+}
+
 model AuctionParticipant {
   id        String   @id @default(uuid())
   auctionId String
   userId    String
   userName  String
+  intialAmount  AuctionParticipantPaymentStatus @default(PENDING)
   joinedAt  DateTime @default(now())
   auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])

@@ -76,6 +76,10 @@ import { PrismaFallbackAuctionRepository } from '@infrastructure/repositories/au
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
 import { DeclinePublicFallbackAuctionUsecase } from '@application/usecases/auction/declinePublicfallbackAuction.usecase';
 import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/usecases/auction/IDeclinePublicFallbackAuctionUsecase';
+import { AddAuctionParticipantUsecase } from '@application/usecases/auction/addAuctionParticipant.usecase';
+import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
+import { ReleaseParticipantsWalletUsecase } from '@application/usecases/auction/releaseParticipantsWallet.usecase';
+import { IReleaseParticipantsWalletUsecase } from '@application/interfaces/usecases/auction/IReleaseParticipantsWalletUsecase';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -210,4 +214,10 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IDeclinePublicFallbackAuctionUsecase>(
         TYPES.IDeclinePublicFallbackAuctionUsecase,
     ).to(DeclinePublicFallbackAuctionUsecase);
+    bind<IAddAuctionParticipantUsecase>(TYPES.IAddAuctionParticipantUsecase).to(
+        AddAuctionParticipantUsecase,
+    );
+    bind<IReleaseParticipantsWalletUsecase>(
+        TYPES.IReleaseParticipantsWalletUsecase,
+    ).to(ReleaseParticipantsWalletUsecase);
 });

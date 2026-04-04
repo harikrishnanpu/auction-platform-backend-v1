@@ -25,8 +25,12 @@ export class PrismaAuctionParticipantRepo implements IAuctionParticipantReposito
                 auctionId: data.getAuctionId(),
                 userId: data.getUserId(),
                 userName: data.getUserName(),
+                intialAmount: data.getIntialAmount(),
             },
-            update: { userName: data.getUserName() },
+            update: {
+                userName: data.getUserName(),
+                intialAmount: data.getIntialAmount(),
+            },
         });
 
         return AuctionParticipantMapper.toDomain(res);

@@ -29,6 +29,7 @@ import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/us
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { PublicAuctionFallbackParticipantsStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
+import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
 
 export class AuctionHandler {
     constructor(
@@ -141,10 +142,6 @@ export class AuctionHandler {
             endAt: out.endAt,
             extensionCount: out.extensionCount,
         });
-
-        this.io
-            .to(roomId)
-            .emit(SocketEvents.PARTICIPANTS_UPDATED, out.participants);
 
         return { success: true, data: { bidId: out.id } };
     }
@@ -509,5 +506,41 @@ export class AuctionHandler {
             auctionId,
             fallbackPublicParticipantStats: { pending, rejected },
         });
+    }
+
+    async handleAddAuctionParticipant(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { auctionId } = parsed.data;
+        const addAuctionParticipantUsecase =
+            this.container.get<IAddAuctionParticipantUsecase>(
+                TYPES.IAddAuctionParticipantUsecase,
+            );
+
+        const result = await addAuctionParticipantUsecase.execute({
+            auctionId,
+            userId: this.socket.data.user.id,
+        });
+
+        if (result.isFailure) {
+            return { success: false, error: result.getError() };
+        }
+
+        const roomId = `auction:${auctionId}`;
+        const output = result.getValue();
+
+        this.io
+            .to(roomId)
+            .emit(
+                SocketEvents.PARTICIPANTS_UPDATED,
+                output.auctionParticipants,
+            );
+
+        return { success: true, data: output };
     }
 }

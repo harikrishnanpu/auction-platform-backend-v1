@@ -122,6 +122,12 @@ export function setupSockets(
                 );
             },
         );
+
+        socket.on(SocketEvents.ADD_AUCTION_PARTICIPANT, (payload, cl) => {
+            hanldeSocketCallback(cl, () =>
+                auctionHandler.handleAddAuctionParticipant(payload),
+            );
+        });
     });
 
     return io;
