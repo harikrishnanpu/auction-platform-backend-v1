@@ -5,6 +5,7 @@ import { TYPES } from '@di/types.di';
 import { AUCTION_END_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/auctionEnd.queue.constants';
 import { Job, Worker } from 'bullmq';
 import { IAuctionEndQueuePayload } from '@application/interfaces/queue/IAuctionEndQueue';
+import { IReleaseParticipantsWalletUsecase } from '@application/interfaces/usecases/auction/IReleaseParticipantsWalletUsecase';
 
 export class AuctionEndWorker {
     private readonly _worker: Worker;
@@ -30,6 +31,22 @@ export class AuctionEndWorker {
             container.get<IProcessAuctionEndNotificationUsecase>(
                 TYPES.IProcessAuctionEndNotificationUsecase,
             );
+
+        const releaseAuctionParticipantsWalletUsecase =
+            container.get<IReleaseParticipantsWalletUsecase>(
+                TYPES.IReleaseParticipantsWalletUsecase,
+            );
+
+        const releaseAuctionParticipantsWalletResult =
+            await releaseAuctionParticipantsWalletUsecase.execute({
+                auctionId: job.data.auctionId,
+            });
+
+        if (releaseAuctionParticipantsWalletResult.isFailure) {
+            console.log(
+                `Auction end job ${job.id} failed: ${releaseAuctionParticipantsWalletResult.getError()}`,
+            );
+        }
 
         const processAuctionEndNotificationResult =
             await processAuctionEndNotificationUsecase.execute({

@@ -5,9 +5,7 @@ import {
 import { redisConfig } from '@config/redis.config';
 import { AUCTION_END_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/auctionEnd.queue.constants';
 import { Queue } from 'bullmq';
-import { injectable } from 'inversify';
 
-@injectable()
 export class AuctionEndQueue implements IAuctionEndQueue {
     private readonly _queue: Queue;
 

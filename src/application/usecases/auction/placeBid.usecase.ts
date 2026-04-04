@@ -15,7 +15,7 @@ import { Auction } from '@domain/entities/auction/auction.entity';
 import { PlaceBidStartegyFactory } from '@application/factories/placeBidStartegy.factory';
 import { BID_LOCK_TTL_SECONDS } from '@application/constants/auction/bid.constants';
 import { PlaceBidPolicyService } from '@domain/policies/auction/place-bid-policy.service';
-import { AuctionParticipant } from '@domain/entities/auction/auction-participant.entity';
+import { AuctionParticipantPaymentStatus } from '@domain/entities/auction/auction-participant.entity';
 import { ShouldExtendAuctionPolicy } from '@domain/policies/auction/should-extend-auction.policy';
 
 @injectable()
@@ -79,6 +79,27 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
             if (lastUserBidResult.isFailure) {
                 return Result.fail(lastUserBidResult.getError());
+            }
+
+            const participantsResult =
+                await this._participantRepo.findByAuctionId(input.auctionId);
+            if (participantsResult.isFailure) {
+                return Result.fail(participantsResult.getError());
+            }
+
+            console.log('participantsResult', participantsResult.getValue());
+
+            const participant = participantsResult
+                .getValue()
+                .find((p) => p.getUserId() === input.userId);
+            if (
+                !participant ||
+                participant.getIntialAmount() !==
+                    AuctionParticipantPaymentStatus.PAID
+            ) {
+                return Result.fail(
+                    'Participant not found or not paid inital amount',
+                );
             }
 
             const placeBidStrategy = this._placeBidStartegyFactory.getStrategy(
@@ -153,32 +174,6 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
             if (createBidResult.isFailure) {
                 return Result.fail(createBidResult.getError());
-            }
-
-            const participantEntity = AuctionParticipant.create({
-                id: this._idGeneratingService.generateId(),
-                auctionId: input.auctionId,
-                userId: input.userId,
-                userName: input.userName,
-                joinedAt: new Date(),
-            });
-
-            if (participantEntity.isFailure) {
-                return Result.fail(participantEntity.getError());
-            }
-
-            const participantResult = await this._participantRepo.save(
-                participantEntity.getValue(),
-            );
-
-            if (participantResult.isFailure) {
-                return Result.fail(participantResult.getError());
-            }
-
-            const participantsResult =
-                await this._participantRepo.findByAuctionId(input.auctionId);
-            if (participantsResult.isFailure) {
-                return Result.fail(participantsResult.getError());
             }
 
             const output: IPlaceBidOutput = {

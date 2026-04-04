@@ -15,6 +15,12 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { AuctionWinnerStrategyFactory } from '@application/factories/auction-winner-policy.factory';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
+import {
+    AuctionWinner,
+    AuctionWinnerStatus,
+} from '@domain/entities/auction/auction-winner.entity';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 
 @injectable()
 export class EndAuctionUsecase implements IEndAuctionUsecase {
@@ -25,6 +31,10 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         private readonly _eventBus: IEventBus,
         @inject(TYPES.AuctionWinnerStrategyFactory)
         private readonly _auctionWinnerStrategyFactory: AuctionWinnerStrategyFactory,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
+        @inject(TYPES.IIdGeneratingService)
+        private readonly _idGeneratingService: IIdGeneratingService,
     ) {}
 
     async execute(input: IEndAuctionInput): Promise<Result<IEndAuctionOutput>> {
@@ -58,6 +68,27 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         if (winnerResult.isFailure) return Result.fail(winnerResult.getError());
 
         const { winnerId, winAmount } = winnerResult.getValue();
+
+        if (!winnerId) {
+            return Result.ok();
+        }
+
+        const AuctionWinnerEntity = AuctionWinner.create({
+            id: this._idGeneratingService.generateId(),
+            auctionId: auction.getId(),
+            userId: winnerId,
+            amount: winAmount,
+            rank: 1,
+            status: AuctionWinnerStatus.PENDING,
+        });
+
+        if (AuctionWinnerEntity.isFailure)
+            return Result.fail(AuctionWinnerEntity.getError());
+        const auctionWinnerResult = AuctionWinnerEntity.getValue();
+
+        const saveResult =
+            await this._auctionWinnerRepository.save(auctionWinnerResult);
+        if (saveResult.isFailure) return Result.fail(saveResult.getError());
 
         const endedResult = Auction.create({
             id: auction.getId(),

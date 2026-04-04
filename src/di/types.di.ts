@@ -177,4 +177,32 @@ export const TYPES = {
         'IProcessAuctionEndNotificationUsecase',
     ),
     IAuctionPaymentsStrategy: Symbol.for('IAuctionPaymentsStrategy'),
+    IAuctionWinnerRepository: Symbol.for('IAuctionWinnerRepository'),
+    IFailAuctionUsecase: Symbol.for('IFailAuctionUsecase'),
+    ISendPublicFallbackPublicNotificationUsecase: Symbol.for(
+        'ISendPublicFallbackPublicNotificationUsecase',
+    ),
+    IProcessFallbackPublicNotificationUsecase: Symbol.for(
+        'IProcessFallbackPublicNotificationUsecase',
+    ),
+    IFallbackPublicNotificationQueue: Symbol.for(
+        'IFallbackPublicNotificationQueue',
+    ),
+    IFallbackAuctionParticipantsRepo: Symbol.for(
+        'IFallbackAuctionParticipantsRepo',
+    ),
+    IFallbackAuctionRepository: Symbol.for('IFallbackAuctionRepository'),
+    ICreatePaymentOrderForPublicFallbackAuctionUsecase: Symbol.for(
+        'ICreatePaymentOrderForPublicFallbackAuctionUsecase',
+    ),
+    IVerifyFallbackPublicAuctionPaymentUsecase: Symbol.for(
+        'IVerifyFallbackPublicAuctionPaymentUsecase',
+    ),
+    IDeclinePublicFallbackAuctionUsecase: Symbol.for(
+        'IDeclinePublicFallbackAuctionUsecase',
+    ),
+    IAddAuctionParticipantUsecase: Symbol.for('IAddAuctionParticipantUsecase'),
+    IReleaseParticipantsWalletUsecase: Symbol.for(
+        'IReleaseParticipantsWalletUsecase',
+    ),
 };

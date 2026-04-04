@@ -18,6 +18,11 @@ import { INotificationRepository } from '@domain/repositories/INotificationRepo'
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import {
+    AuctionWinner,
+    AuctionWinnerStatus,
+} from '@domain/entities/auction/auction-winner.entity';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
 
 @injectable()
 export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinnerFallbackUsecase {
@@ -36,11 +41,17 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
         private readonly _idGeneratingService: IIdGeneratingService,
         @inject(TYPES.IGetFallBackAuctionWinnerStrategy)
         private readonly _getFallBackAuctionWinnerStrategy: IGetFallBackAuctionWinnerStrategy,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
     ) {}
 
     async execute(
         input: IProcessAuctionWinnerFallbackInput,
     ): Promise<Result<void>> {
+        console.log(
+            `auxtion fallback winnner: ${input.auctionId} // ${input.declinedUserId}`,
+        );
+
         const auctionResult = await this._auctionRepository.findById(
             input.auctionId,
         );
@@ -51,7 +62,7 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
 
         const auction = auctionResult.getValue();
         const status = auction.getStatus();
-        if (status !== AuctionStatus.ENDED && status !== AuctionStatus.SOLD) {
+        if (status !== AuctionStatus.ENDED) {
             return Result.ok();
         }
 
@@ -79,7 +90,62 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
             return Result.fail(fallbackResult.getError());
         }
 
-        const next = fallbackResult.getValue();
+        const newWinner = fallbackResult.getValue();
+
+        if (newWinner.isFallbackFailed) {
+            const updatedAuctionResult = Auction.create({
+                id: auction.getId(),
+                sellerId: auction.getSellerId(),
+                auctionType: auction.getAuctionType(),
+                title: auction.getTitle(),
+                description: auction.getDescription(),
+                category: auction.getCategory(),
+                condition: auction.getCondition(),
+                startPrice: auction.getStartPrice(),
+                minIncrement: auction.getMinIncrement(),
+                startAt: auction.getStartAt(),
+                endAt: auction.getEndAt(),
+                status: AuctionStatus.FALLBACK_ENDED,
+                antiSnipSeconds: auction.getAntiSnipSeconds(),
+                extensionCount: auction.getExtensionCount(),
+                maxExtensionCount: auction.getMaxExtensionCount(),
+                bidCooldownSeconds: auction.getBidCooldownSeconds(),
+                winnerId: null,
+                winAmount: null,
+                assets: auction.getAssets(),
+            });
+
+            if (updatedAuctionResult.isFailure) {
+                return Result.fail(updatedAuctionResult.getError());
+            }
+
+            const saveResult = await this._auctionRepository.save(
+                updatedAuctionResult.getValue(),
+            );
+
+            if (saveResult.isFailure) {
+                return Result.fail(saveResult.getError());
+            }
+
+            return Result.ok();
+        }
+
+        if (!newWinner.winnerId || !newWinner.winAmount) {
+            return Result.ok();
+        }
+
+        const newWinnerEntity = AuctionWinner.create({
+            id: this._idGeneratingService.generateId(),
+            auctionId: auction.getId(),
+            userId: newWinner.winnerId,
+            amount: newWinner.winAmount ?? 0,
+            rank: newWinner.rank,
+            status: AuctionWinnerStatus.PENDING,
+        });
+
+        if (newWinnerEntity.isFailure) {
+            return Result.fail(newWinnerEntity.getError());
+        }
 
         const updatedAuctionResult = Auction.create({
             id: auction.getId(),
@@ -98,8 +164,8 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
             extensionCount: auction.getExtensionCount(),
             maxExtensionCount: auction.getMaxExtensionCount(),
             bidCooldownSeconds: auction.getBidCooldownSeconds(),
-            winnerId: next.winnerId,
-            winAmount: next.winningAmount,
+            winnerId: newWinner.winnerId,
+            winAmount: newWinner.winAmount,
             assets: auction.getAssets(),
         });
 
@@ -110,19 +176,24 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
         const saveResult = await this._auctionRepository.save(
             updatedAuctionResult.getValue(),
         );
+
         if (saveResult.isFailure) {
             return Result.fail(saveResult.getError());
         }
 
-        if (!next.winnerId) {
-            return Result.ok();
+        const savedNewWinnerResult = await this._auctionWinnerRepository.save(
+            newWinnerEntity.getValue(),
+        );
+
+        if (savedNewWinnerResult.isFailure) {
+            return Result.fail(savedNewWinnerResult.getError());
         }
 
         const pendingPaymentsResult =
             await this._createPendingPaymentForAuctionUsecase.execute({
-                userId: next.winnerId,
+                userId: newWinner.winnerId,
                 auctionId: input.auctionId,
-                winAmount: next.winningAmount ?? 0,
+                winAmount: newWinner.winAmount,
                 endedAt: auction.getEndAt(),
             });
 
@@ -135,7 +206,7 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
             id: this._idGeneratingService.generateId(),
             title,
             message: title,
-            userId: next.winnerId,
+            userId: newWinner.winnerId,
         });
 
         if (winnerNotification.isFailure) {

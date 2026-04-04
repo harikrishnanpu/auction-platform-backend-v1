@@ -1,0 +1,36 @@
+enum AuctionPublicFallbackStatus {
+  ACCEPTED
+  REJECTED
+  PENDING
+}
+
+enum AuctionPublicFallbackPaymentStatus {
+  PAID
+  PENDING
+}
+
+model PublicFallbackAuction {
+  id                                String                              @id @default(uuid())
+  auctionId                         String                              @unique
+  amount                            Float                            
+  status                            AuctionPublicFallbackStatus         @default(PENDING)
+  paymentStatus                     AuctionPublicFallbackPaymentStatus  @default(PENDING)
+  createdAt                         DateTime                            @default(now())
+  updatedAt                         DateTime                            @updatedAt
+  auction                           Auction                             @relation(fields: [auctionId], references: [id])
+  publicFallbackAuctionParticipants PublicFallbackAuctionParticipants[]
+}
+
+model PublicFallbackAuctionParticipants {
+  id                      String                             @id @default(uuid())
+  publicFallbackAuctionId String
+  userId                  String
+  status                  AuctionPublicFallbackStatus
+  paymentStatus           AuctionPublicFallbackPaymentStatus @default(PENDING)
+  createdAt               DateTime                           @default(now())
+  updatedAt               DateTime                           @updatedAt
+  publicFallbackAuction   PublicFallbackAuction              @relation(fields: [publicFallbackAuctionId], references: [auctionId])
+  user                    User                               @relation(fields: [userId], references: [id])
+
+  @@unique([publicFallbackAuctionId, userId])
+}

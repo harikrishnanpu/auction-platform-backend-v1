@@ -3,7 +3,7 @@ import { IProcessAuctionWinnerFallbackUsecase } from '@application/interfaces/us
 import { redisConfig } from '@config/redis.config';
 import { container } from '@di/container';
 import { TYPES } from '@di/types.di';
-import { WINNER_FALLBACK_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/winnerFallback.queue.constants';
+import { WINNER_FALLBACK_QUEUE_CONSTANTS } from '@infrastructure/constants/queue/auctionWinnerFallback.queue.constants';
 import { Job, Worker } from 'bullmq';
 
 export class AuctionWinnerFallbackWorker {
@@ -30,17 +30,26 @@ export class AuctionWinnerFallbackWorker {
     private async processJob(
         job: Job<IAuctionWinnerFallbackJobPayload>,
     ): Promise<void> {
-        const usecase = container.get<IProcessAuctionWinnerFallbackUsecase>(
-            TYPES.IProcessAuctionWinnerFallbackUsecase,
-        );
+        try {
+            const processAuctionWinnerFallbackUsecase =
+                container.get<IProcessAuctionWinnerFallbackUsecase>(
+                    TYPES.IProcessAuctionWinnerFallbackUsecase,
+                );
 
-        const result = await usecase.execute({
-            auctionId: job.data.auctionId,
-            declinedUserId: job.data.declinedUserId,
-        });
+            const result = await processAuctionWinnerFallbackUsecase.execute({
+                auctionId: job.data.auctionId,
+                declinedUserId: job.data.declinedUserId,
+            });
 
-        if (result.isFailure) {
-            throw new Error(result.getError());
+            if (result.isFailure) {
+                console.log(
+                    `Winner fallback job ${job.id} failed: ${result.getError()}`,
+                );
+            }
+        } catch (error) {
+            console.error(`Winner fallback job ${job.id} failed: ${error}`);
+        } finally {
+            console.log(`Winner fallback job ${job.id} completed`);
         }
     }
 }

@@ -10,6 +10,23 @@ import { ICreditWalletUsecase } from '@application/interfaces/usecases/wallet/IC
 import { IDebitWalletUsecase } from '@application/interfaces/usecases/wallet/IDebitWalletUsecase';
 import { ICreateWalletTopupSessionUsecase } from '@application/interfaces/usecases/wallet/ICreateWalletTopupSessionUsecase';
 import { IConfirmWalletTopupUsecase } from '@application/interfaces/usecases/wallet/IConfirmWalletTopupUsecase';
+import {
+    creditWalletSchema,
+    ZodCreditWalletInputType,
+} from '@presentation/validators/schemas/wallet/creditWallet.schema';
+import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
+import {
+    debitWalletSchema,
+    ZodDebitWalletInputType,
+} from '@presentation/validators/schemas/wallet/debitWallt.schema';
+import {
+    createWalletTopupSchema,
+    ZodCreateWalletTopupInputType,
+} from '@presentation/validators/schemas/wallet/createWalletTopup.schema';
+import {
+    verifyWalletTopupSchema,
+    ZodVerifyWalletTopupInputType,
+} from '@presentation/validators/schemas/wallet/verifyTopUp.schema';
 
 @injectable()
 export class WalletController {
@@ -61,9 +78,15 @@ export class WalletController {
             );
         }
 
+        const validationResult =
+            ValidationHelper.validate<ZodCreditWalletInputType>(
+                creditWalletSchema,
+                req.body,
+            );
+
         const result = await this._creditWalletUsecase.execute({
             userId: req.user.id,
-            amount: req.body.amount,
+            amount: validationResult.amount,
         });
 
         if (result.isFailure) {
@@ -89,9 +112,15 @@ export class WalletController {
             );
         }
 
+        const validationResult =
+            ValidationHelper.validate<ZodDebitWalletInputType>(
+                debitWalletSchema,
+                req.body,
+            );
+
         const result = await this._debitWalletUsecase.execute({
             userId: req.user.id,
-            amount: Number(req.body.amount),
+            amount: validationResult.amount,
         });
 
         if (result.isFailure) {
@@ -118,9 +147,15 @@ export class WalletController {
                 );
             }
 
+            const validationResult =
+                ValidationHelper.validate<ZodCreateWalletTopupInputType>(
+                    createWalletTopupSchema,
+                    req.body,
+                );
+
             const result = await this._createWalletTopupSessionUsecase.execute({
                 userId: req.user.id,
-                amount: Number(req.body.amount),
+                amount: validationResult.amount,
             });
 
             if (result.isFailure) {
@@ -147,11 +182,17 @@ export class WalletController {
             );
         }
 
+        const validationResult =
+            ValidationHelper.validate<ZodVerifyWalletTopupInputType>(
+                verifyWalletTopupSchema,
+                req.body,
+            );
+
         const result = await this._confirmWalletTopupUsecase.execute({
             userId: req.user.id,
-            orderId: String(req.body.orderId ?? ''),
-            paymentId: String(req.body.paymentId ?? ''),
-            signature: String(req.body.signature ?? ''),
+            orderId: validationResult.orderId,
+            paymentId: validationResult.paymentId,
+            signature: validationResult.signature,
         });
 
         if (result.isFailure) {

@@ -1,49 +1,75 @@
 import { Result } from '@domain/shared/result';
 
+export enum AuctionParticipantPaymentStatus {
+    PENDING = 'PENDING',
+    PAID = 'PAID',
+}
+
 export class AuctionParticipant {
-  constructor(
-    private readonly id: string,
-    private readonly auctionId: string,
-    private readonly userId: string,
-    private readonly userName: string,
-    private readonly joinedAt: Date,
-  ) {}
+    constructor(
+        private readonly id: string,
+        private readonly auctionId: string,
+        private readonly userId: string,
+        private intialAmount: AuctionParticipantPaymentStatus,
+        private readonly userName: string,
+        private readonly joinedAt: Date,
+    ) {}
 
-  static create({
-    id,
-    auctionId,
-    userId,
-    userName,
-    joinedAt = new Date(),
-  }: {
-    id: string;
-    auctionId: string;
-    userId: string;
-    userName: string;
-    joinedAt?: Date;
-  }): Result<AuctionParticipant> {
-    return Result.ok(
-      new AuctionParticipant(id, auctionId, userId, userName, joinedAt),
-    );
-  }
+    static create({
+        id,
+        auctionId,
+        userId,
+        userName,
+        intialAmount,
+        joinedAt = new Date(),
+    }: {
+        id: string;
+        auctionId: string;
+        userId: string;
+        userName: string;
+        intialAmount: AuctionParticipantPaymentStatus;
+        joinedAt?: Date;
+    }): Result<AuctionParticipant> {
+        return Result.ok(
+            new AuctionParticipant(
+                id,
+                auctionId,
+                userId,
+                intialAmount,
+                userName,
+                joinedAt,
+            ),
+        );
+    }
 
-  getId(): string {
-    return this.id;
-  }
+    public setInitialAmount(
+        status: AuctionParticipantPaymentStatus,
+    ): Result<void> {
+        this.intialAmount = status;
+        return Result.ok();
+    }
 
-  getAuctionId(): string {
-    return this.auctionId;
-  }
+    getId(): string {
+        return this.id;
+    }
 
-  getUserId(): string {
-    return this.userId;
-  }
+    getAuctionId(): string {
+        return this.auctionId;
+    }
 
-  getUserName(): string {
-    return this.userName;
-  }
+    getUserId(): string {
+        return this.userId;
+    }
 
-  getJoinedAt(): Date {
-    return this.joinedAt;
-  }
+    getUserName(): string {
+        return this.userName;
+    }
+
+    getJoinedAt(): Date {
+        return this.joinedAt;
+    }
+
+    getIntialAmount(): AuctionParticipantPaymentStatus {
+        return this.intialAmount;
+    }
 }

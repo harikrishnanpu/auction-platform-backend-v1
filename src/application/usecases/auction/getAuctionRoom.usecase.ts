@@ -1,10 +1,14 @@
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
+import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { TYPES } from '@di/types.di';
 import { inject, injectable } from 'inversify';
 import { Result } from '@domain/shared/result';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
+import { PublicAuctionFallbackParticipantsStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
 import {
@@ -23,6 +27,12 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
         private readonly _bidRepository: IBidRepository,
         @inject(TYPES.IAuctionParticipantRepository)
         private readonly _participantRepository: IAuctionParticipantRepository,
+        @inject(TYPES.IFallbackAuctionParticipantsRepo)
+        private readonly _fallbackParticipantsRepo: IFallbackAuctionParticipantsRepo,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
     ) {}
 
     async execute(
@@ -105,6 +115,65 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
             participants,
         };
 
+        const status = auction.getStatus();
+        const mode = input.mode;
+
+        if (
+            status === AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION &&
+            (mode === 'SELLER' || mode === 'ADMIN')
+        ) {
+            const statsRes = await this.buildFallbackPublicStats(
+                input.auctionId,
+            );
+            if (statsRes) {
+                result.fallbackPublicParticipantStats = statsRes;
+            }
+        }
+
+        if (status === AuctionStatus.SOLD) {
+            const winAmount = auction.getWinAmount() ?? 0;
+            const winnerId = auction.getWinnerId() ?? undefined;
+            if (!winnerId) return Result.fail('Winner not found');
+            const soldRes = await this.buildSoldSummary(winnerId, winAmount);
+            if (soldRes) {
+                result.soldSummary = soldRes;
+            }
+        }
+
         return Result.ok(result);
+    }
+
+    private async buildFallbackPublicStats(auctionId: string) {
+        const listResult =
+            await this._fallbackParticipantsRepo.findByAuctionId(auctionId);
+        if (listResult.isFailure) return undefined;
+
+        let pending = 0;
+        let rejected = 0;
+
+        for (const participant of listResult.getValue()) {
+            const status = participant.getStatus();
+            if (status === PublicAuctionFallbackParticipantsStatus.PENDING) {
+                pending += 1;
+            } else if (
+                status === PublicAuctionFallbackParticipantsStatus.REJECTED
+            ) {
+                rejected += 1;
+            }
+        }
+
+        return { pending, rejected };
+    }
+
+    private async buildSoldSummary(winnedId: string, winAmount: number) {
+        const userResult = await this._userRepository.findById(winnedId);
+        if (userResult.isFailure) return undefined;
+        const user = userResult.getValue();
+
+        return {
+            winnerUserName: user.getName(),
+            winnerUserId: user.getId(),
+            soldAmount: winAmount,
+        };
     }
 }

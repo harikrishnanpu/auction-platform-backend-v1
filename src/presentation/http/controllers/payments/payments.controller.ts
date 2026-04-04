@@ -15,6 +15,18 @@ import {
 } from '@presentation/validators/schemas/payments/getUsersPayments.schema';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
 import { PaymentsMapperProfile } from '@application/mappers/payments/paymentsProfile.mapper';
+import {
+    createPaymentOrderSchema,
+    ZodCreatePaymentOrderInputType,
+} from '@presentation/validators/schemas/payments/createPayementOrder.schema';
+import {
+    verifyPaymentSchema,
+    ZodVerifyPaymentInputType,
+} from '@presentation/validators/schemas/payments/verifyPayment.schema';
+import {
+    declinePaymentSchema,
+    ZodDeclinePaymentInputType,
+} from '@presentation/validators/schemas/payments/declinePayments.schema';
 
 @injectable()
 export class PaymentsController {
@@ -76,9 +88,15 @@ export class PaymentsController {
                 );
             }
 
+            const validationResult =
+                ValidationHelper.validate<ZodCreatePaymentOrderInputType>(
+                    createPaymentOrderSchema,
+                    req.body,
+                );
+
             const result = await this._createPaymentOrderUsecase.execute({
                 userId: req.user.id,
-                paymentId: String(req.body.paymentId),
+                paymentId: validationResult.paymentId,
             });
 
             if (result.isFailure) {
@@ -105,12 +123,18 @@ export class PaymentsController {
             );
         }
 
+        const validationResult =
+            ValidationHelper.validate<ZodVerifyPaymentInputType>(
+                verifyPaymentSchema,
+                req.body,
+            );
+
         const result = await this._verifyPaymentUsecase.execute({
             userId: req.user.id,
-            paymentId: String(req.body.paymentId ?? ''),
-            orderId: String(req.body.orderId ?? ''),
-            gatewayPaymentId: String(req.body.gatewayPaymentId ?? ''),
-            signature: String(req.body.signature ?? ''),
+            paymentId: validationResult.paymentId,
+            orderId: validationResult.orderId,
+            gatewayPaymentId: validationResult.gatewayPaymentId,
+            signature: validationResult.signature,
         });
 
         if (result.isFailure) {
@@ -137,9 +161,15 @@ export class PaymentsController {
                 );
             }
 
+            const validationResult =
+                ValidationHelper.validate<ZodDeclinePaymentInputType>(
+                    declinePaymentSchema,
+                    req.body,
+                );
+
             const result = await this._declinePaymentUsecase.execute({
                 userId: req.user.id,
-                paymentId: String(req.body.paymentId ?? ''),
+                paymentId: validationResult.paymentId,
             });
 
             if (result.isFailure) {

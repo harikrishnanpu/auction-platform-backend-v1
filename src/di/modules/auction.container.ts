@@ -60,6 +60,26 @@ import { IPlaceBidStrategy } from '@domain/strategies/IPlaceBidStrategy';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
 import { IGetFallBackAuctionWinnerStrategy } from '@application/interfaces/strategies/auction/getFallBackWinner.stratgy';
 import { GetFallBackAuctionWinnerStartegy } from '@application/strategies/auction/getFallBackAuctionWinnerStartegy';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
+import { PrismaAuctionWinnerRepository } from '@infrastructure/repositories/auction/auction-winner.repo';
+import { ISendPublicFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/ISendPublicFallbackPublicNotificationUsecase';
+import { SendPublicFallbackNotificationUsecase } from '@application/usecases/auction/sendPublicFallbackNotification.usecase';
+import { IFailAuctionUsecase } from '@application/interfaces/usecases/auction/IFailAuctionUsecase';
+import { FailAuctionUsecase } from '@application/usecases/auction/failAuction.usecase';
+import { ProcessFallbackPublicNotificationUsecase } from '@application/usecases/auction/processFallbackPublicNotification.usecase';
+import { IFallbackPublicNotificationQueue } from '@application/interfaces/queue/IFallbackPublicNotificationQueue';
+import { FallbackPublicNotificationQueue } from '@infrastructure/queue/fallbackPublicNotificationQueue';
+import { IProcessFallbackPublicNotificationUsecase } from '@application/interfaces/usecases/auction/IProcessFallbackPublicNotificationUsecase';
+import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
+import { PrismaFallbackAuctionParticipantsRepo } from '@infrastructure/repositories/auction/fallback-auction-participants';
+import { PrismaFallbackAuctionRepository } from '@infrastructure/repositories/auction/fallback-auction.repository';
+import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
+import { DeclinePublicFallbackAuctionUsecase } from '@application/usecases/auction/declinePublicfallbackAuction.usecase';
+import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/usecases/auction/IDeclinePublicFallbackAuctionUsecase';
+import { AddAuctionParticipantUsecase } from '@application/usecases/auction/addAuctionParticipant.usecase';
+import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
+import { ReleaseParticipantsWalletUsecase } from '@application/usecases/auction/releaseParticipantsWallet.usecase';
+import { IReleaseParticipantsWalletUsecase } from '@application/interfaces/usecases/auction/IReleaseParticipantsWalletUsecase';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -171,4 +191,33 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IGetFallBackAuctionWinnerStrategy>(
         TYPES.IGetFallBackAuctionWinnerStrategy,
     ).to(GetFallBackAuctionWinnerStartegy);
+    bind<IAuctionWinnerRepository>(TYPES.IAuctionWinnerRepository).to(
+        PrismaAuctionWinnerRepository,
+    );
+    bind<ISendPublicFallbackPublicNotificationUsecase>(
+        TYPES.ISendPublicFallbackPublicNotificationUsecase,
+    ).to(SendPublicFallbackNotificationUsecase);
+
+    bind<IFailAuctionUsecase>(TYPES.IFailAuctionUsecase).to(FailAuctionUsecase);
+    bind<IProcessFallbackPublicNotificationUsecase>(
+        TYPES.IProcessFallbackPublicNotificationUsecase,
+    ).to(ProcessFallbackPublicNotificationUsecase);
+    bind<IFallbackPublicNotificationQueue>(
+        TYPES.IFallbackPublicNotificationQueue,
+    ).to(FallbackPublicNotificationQueue);
+    bind<IFallbackAuctionParticipantsRepo>(
+        TYPES.IFallbackAuctionParticipantsRepo,
+    ).to(PrismaFallbackAuctionParticipantsRepo);
+    bind<IFallbackAuctionRepo>(TYPES.IFallbackAuctionRepository).to(
+        PrismaFallbackAuctionRepository,
+    );
+    bind<IDeclinePublicFallbackAuctionUsecase>(
+        TYPES.IDeclinePublicFallbackAuctionUsecase,
+    ).to(DeclinePublicFallbackAuctionUsecase);
+    bind<IAddAuctionParticipantUsecase>(TYPES.IAddAuctionParticipantUsecase).to(
+        AddAuctionParticipantUsecase,
+    );
+    bind<IReleaseParticipantsWalletUsecase>(
+        TYPES.IReleaseParticipantsWalletUsecase,
+    ).to(ReleaseParticipantsWalletUsecase);
 });

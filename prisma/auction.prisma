@@ -5,6 +5,9 @@ enum AuctionStatus {
   ENDED
   SOLD
   CANCELLED
+  FALLBACK_ENDED
+  FALLBACK_PUBLIC_NOTIFICATION
+  FAILED
 }
 
 enum AuctionType {
@@ -19,33 +22,57 @@ enum AuctionAssetType {
 }
 
 model Auction {
-  id                 String               @id @default(uuid())
-  sellerId           String
-  auctionType        AuctionType          @default(LONG)
-  title              String
-  description        String
-  condition          String
-  startPrice         Float
-  minIncrement       Float
-  startAt            DateTime
-  endAt              DateTime
-  status             AuctionStatus        @default(DRAFT)
-  antiSnipSeconds    Int                  @default(60)
-  extensionCount     Int                  @default(0)
-  maxExtensionCount  Int                  @default(3)
-  bidCooldownSeconds Int                  @default(10)
-  winnerId           String?
-  winAmount          Float?
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
-  categoryId         String
-  seller             User                 @relation("SellerAuctions", fields: [sellerId], references: [id])
-  winner             User?                @relation("WonAuctions", fields: [winnerId], references: [id])
-  assets             AuctionAsset[]
-  bids               Bid[]
-  participants       AuctionParticipant[]
-  chatMessages       AuctionChatMessage[]
-  category           AuctionCategory      @relation(fields: [categoryId], references: [id])
+  id                    String                 @id @default(uuid())
+  sellerId              String
+  auctionType           AuctionType            @default(LONG)
+  title                 String
+  description           String
+  condition             String
+  startPrice            Float
+  minIncrement          Float
+  startAt               DateTime
+  endAt                 DateTime
+  status                AuctionStatus          @default(DRAFT)
+  antiSnipSeconds       Int                    @default(60)
+  extensionCount        Int                    @default(0)
+  maxExtensionCount     Int                    @default(3)
+  bidCooldownSeconds    Int                    @default(10)
+  winnerId              String?
+  winAmount             Float?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  categoryId            String
+  seller                User                   @relation("SellerAuctions", fields: [sellerId], references: [id])
+  winner                User?                  @relation("WonAuctions", fields: [winnerId], references: [id])
+  assets                AuctionAsset[]
+  bids                  Bid[]
+  participants          AuctionParticipant[]
+  chatMessages          AuctionChatMessage[]
+  category              AuctionCategory        @relation(fields: [categoryId], references: [id])
+  winners               AuctionWinner[]
+  publicFallbackAuction PublicFallbackAuction?
+}
+
+enum AuctionWinnerStatus {
+  PENDING
+  PARTIAL_PAYMENT_PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model AuctionWinner {
+  id              String              @id @default(uuid())
+  auctionId       String
+  userId          String
+  amount          Float
+  rank            Int
+  status          AuctionWinnerStatus @default(PENDING)
+  rejectionReason String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  auction         Auction             @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user            User                @relation(fields: [userId], references: [id])
 }
 
 enum AuctionCategoryStatus {
@@ -94,11 +121,17 @@ model Bid {
   user            User     @relation(fields: [userId], references: [id])
 }
 
+enum AuctionParticipantPaymentStatus {
+  PENDING
+  PAID
+}
+
 model AuctionParticipant {
   id        String   @id @default(uuid())
   auctionId String
   userId    String
   userName  String
+  intialAmount  AuctionParticipantPaymentStatus @default(PENDING)
   joinedAt  DateTime @default(now())
   auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])

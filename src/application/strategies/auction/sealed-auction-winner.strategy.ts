@@ -44,6 +44,7 @@ export class SealedAuctionWinnerStrategy implements IAuctionWinnerStrategy {
             if (decrypted.isFailure) return Result.fail(decrypted.getError());
 
             const amount = Number(decrypted.getValue());
+
             if (!Number.isFinite(amount)) {
                 return Result.fail('Invalid decrypted sealed bid amount');
             }

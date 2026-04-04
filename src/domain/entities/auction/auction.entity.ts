@@ -12,6 +12,9 @@ export enum AuctionStatus {
     ENDED = 'ENDED',
     SOLD = 'SOLD',
     CANCELLED = 'CANCELLED',
+    FALLBACK_ENDED = 'FALLBACK_ENDED',
+    FAILED = 'FAILED',
+    FALLBACK_PUBLIC_NOTIFICATION = 'FALLBACK_PUBLIC_NOTIFICATION',
 }
 
 export enum AuctionType {
@@ -33,13 +36,13 @@ export class Auction {
         private readonly minIncrement: number,
         private readonly startAt: Date,
         private readonly endAt: Date,
-        private readonly status: AuctionStatus,
+        private status: AuctionStatus,
         private readonly antiSnipSeconds: number,
         private readonly extensionCount: number,
         private readonly maxExtensionCount: number,
         private readonly bidCooldownSeconds: number,
-        private readonly winnerId: string | null,
-        private readonly winAmount: number | null,
+        private winnerId: string | null,
+        private winAmount: number | null,
         private readonly assets: AuctionAsset[] = [],
     ) {}
 
@@ -129,6 +132,42 @@ export class Auction {
                 assets,
             ),
         );
+    }
+
+    setStatus(status: AuctionStatus): Result<void> {
+        if (
+            this.status === AuctionStatus.ENDED &&
+            status !== AuctionStatus.FALLBACK_ENDED
+        ) {
+            return Result.fail('Auction is already ended');
+        }
+
+        if (
+            this.status === AuctionStatus.FALLBACK_ENDED &&
+            ![
+                AuctionStatus.FAILED,
+                AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
+            ].includes(status)
+        ) {
+            return Result.fail('Invalid status for fallback ended auction');
+        }
+
+        this.status = status;
+        return Result.ok();
+    }
+
+    public setWinner(userId: string, winAmount: number): Result<void> {
+        if (this.status === AuctionStatus.SOLD) {
+            return Result.fail('Auction is already sold');
+        }
+
+        if (winAmount < this.startPrice) {
+            return Result.fail('Win amount must be greater than start price');
+        }
+
+        this.winnerId = userId;
+        this.winAmount = winAmount;
+        return Result.ok();
     }
 
     getId(): string {

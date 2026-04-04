@@ -11,6 +11,8 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
+import { AUCTION_WINNER_FALLBACK_CONSTANTS } from '@domain/constants/auction.constants';
 
 @injectable()
 export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinnerStrategy {
@@ -21,6 +23,8 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
         private readonly _bidRepository: IBidRepository,
         @inject(TYPES.IEncryptionService)
         private readonly _encryptionService: IEncryptionService,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
     ) {}
 
     async execute(
@@ -29,36 +33,81 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
         const auctionResult = await this._auctionRepository.findById(
             input.auctionId,
         );
-        if (auctionResult.isFailure) {
-            return Result.fail(auctionResult.getError());
+
+        const allAuctionWinnersResult =
+            await this._auctionWinnerRepository.findAllByAuctionId(
+                input.auctionId,
+            );
+
+        if (auctionResult.isFailure || allAuctionWinnersResult.isFailure) {
+            return Result.fail(
+                auctionResult.getError() || allAuctionWinnersResult.getError(),
+            );
+        }
+
+        const allAuctionWinners = allAuctionWinnersResult.getValue();
+
+        if (
+            allAuctionWinners.length >=
+            AUCTION_WINNER_FALLBACK_CONSTANTS.MAX_RANK
+        ) {
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: true,
+            });
+        }
+
+        const nextRank = allAuctionWinners.length + 1;
+
+        if (allAuctionWinners.length === 0) {
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: false,
+            });
         }
 
         const bidsResult = await this._bidRepository.findAllByAuctionId(
             input.auctionId,
         );
+
         if (bidsResult.isFailure) {
             return Result.fail(bidsResult.getError());
         }
 
         const eligibleBids = bidsResult
             .getValue()
-            .filter((b) => b.getUserId() !== input.declinedUserId);
+            .filter(
+                (b) =>
+                    !allAuctionWinners.some(
+                        (winner) => winner.getUserId() === b.getUserId(),
+                    ),
+            );
 
         if (eligibleBids.length === 0) {
-            return Result.ok({ winnerId: null, winningAmount: null });
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: false,
+            });
         }
 
         const auctionType = auctionResult.getValue().getAuctionType();
 
         if (auctionType === AuctionType.SEALED) {
-            return this.resolveSealedWinner(eligibleBids);
+            return this.resolveSealedWinner(eligibleBids, nextRank);
         }
 
-        return this.resolveAuctionWinner(eligibleBids);
+        return this.resolveAuctionWinner(eligibleBids, nextRank);
     }
 
     private resolveAuctionWinner(
         bids: Bid[],
+        rank: number,
     ): Result<IGetFallBackAuctionWinnerOutput> {
         const winner = bids.reduce(
             (maxBid, bid) =>
@@ -68,12 +117,15 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
 
         return Result.ok({
             winnerId: winner.getUserId(),
-            winningAmount: Number(winner.getAmount()),
+            winAmount: Number(winner.getAmount()),
+            rank,
+            isFallbackFailed: false,
         });
     }
 
     private resolveSealedWinner(
         bids: Bid[],
+        rank: number,
     ): Result<IGetFallBackAuctionWinnerOutput> {
         let maxAmount = 0;
         let winnerId: string | null = null;
@@ -99,12 +151,19 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
         }
 
         if (winnerId === null) {
-            return Result.ok({ winnerId: null, winningAmount: null });
+            return Result.ok({
+                winnerId: null,
+                winAmount: null,
+                rank: 0,
+                isFallbackFailed: false,
+            });
         }
 
         return Result.ok({
             winnerId,
-            winningAmount: maxAmount,
+            winAmount: maxAmount,
+            rank,
+            isFallbackFailed: false,
         });
     }
 }

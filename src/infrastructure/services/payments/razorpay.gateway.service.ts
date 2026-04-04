@@ -7,10 +7,8 @@ import {
 } from '@application/interfaces/services/IPaymentGatewayService';
 import { Result } from '@domain/shared/result';
 import { createHmac } from 'crypto';
-import { injectable } from 'inversify';
 import Razorpay from 'razorpay';
 
-@injectable()
 export class RazorpayGatewayService implements IPaymentGatewayService {
     private readonly _razorpay: Razorpay;
     private readonly _keyId: string;
@@ -46,7 +44,7 @@ export class RazorpayGatewayService implements IPaymentGatewayService {
             notes: {
                 userId: input.userId,
                 amount: amountRupees.toString(),
-                paymentId: input.paymentId ?? '',
+                referenceId: input.referenceId,
             },
         });
 
@@ -71,21 +69,14 @@ export class RazorpayGatewayService implements IPaymentGatewayService {
 
         const order = await this._razorpay.orders.fetch(input.orderId);
         const orderUserId = order.notes?.userId;
-        const orderPaymentId = order.notes?.paymentId;
+        const orderReferenceId = order.notes?.referenceId;
         const amount = Number(order.notes?.amount ?? 0);
 
         if (!orderUserId || orderUserId !== input.userId) {
             return Result.fail('Invalid payment order');
         }
 
-        if (amount <= 0) {
-            return Result.fail('Invalid payment amount');
-        }
-
-        if (
-            input.expectedPaymentId &&
-            orderPaymentId !== input.expectedPaymentId
-        ) {
+        if (input.referenceId && orderReferenceId !== input.referenceId) {
             return Result.fail('Invalid payment reference');
         }
 

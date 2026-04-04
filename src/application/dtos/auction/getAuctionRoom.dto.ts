@@ -10,11 +10,24 @@ export interface IAuctionRoomBidDto {
     createdAt: string;
 }
 
+export interface IFallbackPublicParticipantStatsDto {
+    pending: number;
+    rejected: number;
+}
+
+export interface IAuctionSoldSummaryDto {
+    winnerUserName: string;
+    winnerUserId: string;
+    soldAmount: number;
+}
+
 export interface IAuctionRoomResultDto {
     auction: IAuctionDto;
     currentBid: IAuctionRoomBidDto | null;
     liveFeed: IAuctionRoomBidDto[];
     participants: IAuctionRoomParticipantDto[];
+    fallbackPublicParticipantStats?: IFallbackPublicParticipantStatsDto;
+    soldSummary?: IAuctionSoldSummaryDto;
 }
 
 export interface IAuctionRoomParticipantDto {

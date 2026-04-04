@@ -25,6 +25,7 @@ export class CreatePaymentOrderUsecase implements ICreatePaymentOrderUsecase {
         const paymentResult = await this._paymentRepository.findById(
             input.paymentId,
         );
+
         if (paymentResult.isFailure)
             return Result.fail(paymentResult.getError());
 
@@ -42,8 +43,9 @@ export class CreatePaymentOrderUsecase implements ICreatePaymentOrderUsecase {
         const orderResult = await this._paymentGatewayService.createOrder({
             userId: input.userId,
             amount: payment.getAmount(),
-            paymentId: payment.getId(),
+            referenceId: payment.getId(),
         });
+
         if (orderResult.isFailure) return Result.fail(orderResult.getError());
 
         const order = orderResult.getValue();

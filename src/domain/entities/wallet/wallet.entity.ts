@@ -75,6 +75,9 @@ export class Wallet {
     }
 
     holdFromMainBalance(amount: number): Result<void> {
+        if (this.mainBalance < amount) {
+            return Result.fail('Insufficient wallet balance');
+        }
         this.mainBalance -= amount;
         this.heldBalance += amount;
         return Result.ok();

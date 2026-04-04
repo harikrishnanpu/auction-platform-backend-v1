@@ -19,3 +19,11 @@ export const AUCTION_PAYMENT_DUE_AT_STRATEGY = {
     DEPOSIT_DAYS_MS: 24 * 60 * 60 * 1000,
     BALANCE_MONTHS_MS: 30 * 24 * 60 * 60 * 1000,
 };
+
+export const AUCTION_WINNER_FALLBACK_CONSTANTS = {
+    MAX_RANK: 1, // --change --
+};
+
+export const AUCTION_INTIAL_DEPOSIT_AMOUNT = {
+    PERCENTAGE: 0.1,
+};
