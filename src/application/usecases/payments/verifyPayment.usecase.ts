@@ -39,7 +39,7 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
             orderId: input.orderId,
             paymentId: input.gatewayPaymentId,
             signature: input.signature,
-            expectedPaymentId: payment.getId(),
+            referenceId: payment.getReferenceId(),
         });
 
         if (verify.isFailure) return Result.fail(verify.getError());

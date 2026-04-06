@@ -73,6 +73,7 @@ model AuctionWinner {
   updatedAt       DateTime            @updatedAt
   auction         Auction             @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   user            User                @relation(fields: [userId], references: [id])
+  @@unique([auctionId, userId])
 }
 
 enum AuctionCategoryStatus {
@@ -127,14 +128,14 @@ enum AuctionParticipantPaymentStatus {
 }
 
 model AuctionParticipant {
-  id        String   @id @default(uuid())
-  auctionId String
-  userId    String
-  userName  String
-  intialAmount  AuctionParticipantPaymentStatus @default(PENDING)
-  joinedAt  DateTime @default(now())
-  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id])
+  id           String                          @id @default(uuid())
+  auctionId    String
+  userId       String
+  userName     String
+  intialAmount AuctionParticipantPaymentStatus @default(PENDING)
+  joinedAt     DateTime                        @default(now())
+  auction      Auction                         @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user         User                            @relation(fields: [userId], references: [id])
 
   @@unique([auctionId, userId])
 }

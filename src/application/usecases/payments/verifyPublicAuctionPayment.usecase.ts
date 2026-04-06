@@ -2,11 +2,22 @@ import {
     IVerifyPublicFallbackAuctionPaymentInputDto,
     IVerifyPublicFallbackAuctionPaymentOutputDto,
 } from '@application/dtos/payments/verify-public-fallback-auction-payment.dto';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
 import { TYPES } from '@di/types.di';
+import {
+    AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY,
+    AUCTION_PAYMENT_DUE_AT_STRATEGY,
+} from '@domain/constants/auction.constants';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { PublicAuctionFallbackParticipantsPaymentStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { AuctionPublicFallbackPaymentStatus } from '@domain/entities/auction/public-fallback-auction.entity';
+import {
+    PaymentFor,
+    PaymentPhase,
+    Payments,
+    PaymentStatus,
+} from '@domain/entities/payments/payments.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
@@ -25,6 +36,8 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
         private readonly _publicFallbackAuctionRepository: IFallbackAuctionRepo,
         @inject(TYPES.IAuctionRepository)
         private readonly _auctionRepository: IAuctionRepository,
+        @inject(TYPES.IIdGeneratingService)
+        private readonly _idGeneratingService: IIdGeneratingService,
     ) {}
 
     async execute(
@@ -34,6 +47,7 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
             await this._publicFallbackAuctionRepository.findByAuctionId(
                 input.auctionId,
             );
+
         const fallbackAuctionPaymentParticipant =
             await this._fallbackAuctionParticipantsRepo.findByAuctionIdAndUserId(
                 input.auctionId,
@@ -87,12 +101,6 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
             return Result.fail(setPaymentStatusResult.getError());
         await this._publicFallbackAuctionRepository.save(fallbackAuction);
 
-        const setAuctionPaymentStatusResult = auction.setStatus(
-            AuctionStatus.SOLD,
-        );
-        if (setAuctionPaymentStatusResult.isFailure)
-            return Result.fail(setAuctionPaymentStatusResult.getError());
-
         const setAuctionWinnerResult = auction.setWinner(
             fallbackAuctionPaymentParticipantEntity.getUserId(),
             fallbackAuction.getAmount(),
@@ -100,6 +108,36 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
 
         if (setAuctionWinnerResult.isFailure)
             return Result.fail(setAuctionWinnerResult.getError());
+
+        const remaningPaymentCreate = Payments.create({
+            id: this._idGeneratingService.generateId(),
+            userId: fallbackAuctionPaymentParticipantEntity.getUserId(),
+            amount:
+                fallbackAuction.getAmount() *
+                AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY.REMAINING_AMOUNT_PERCENTAGE,
+            currency: 'INR',
+            status: PaymentStatus.PENDING,
+            forPayment: PaymentFor.AUCTION,
+            referenceId: fallbackAuction.getAuctionId(),
+            phase: PaymentPhase.BALANCE,
+            dueAt: new Date(
+                Date.now() + AUCTION_PAYMENT_DUE_AT_STRATEGY.BALANCE_MONTHS_MS,
+            ),
+        });
+
+        if (remaningPaymentCreate.isFailure)
+            return Result.fail(remaningPaymentCreate.getError());
+
+        const remaningPayment = remaningPaymentCreate.getValue();
+
+        const setAuctionPaymentStatusResult = auction.setStatus(
+            AuctionStatus.SOLD,
+        );
+
+        if (setAuctionPaymentStatusResult.isFailure)
+            return Result.fail(setAuctionPaymentStatusResult.getError());
+
+        await this._paymentRepository.create(remaningPayment);
 
         await this._auctionRepository.save(auction);
 

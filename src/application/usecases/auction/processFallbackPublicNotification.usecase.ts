@@ -12,6 +12,7 @@ import { Notification } from '@domain/entities/notifications/notification.entity
 import { NotificationCreated } from '@domain/events/notitificationCreated.event';
 import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
 import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { Result } from '@domain/shared/result';
@@ -32,6 +33,8 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
         private readonly _eventBus: IEventBus,
         @inject(TYPES.IFallbackAuctionRepository)
         private readonly _publicFallbackAuctionRepository: IFallbackAuctionRepo,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
     ) {}
 
     async execute(auctionId: string): Promise<Result<void>> {
@@ -50,6 +53,16 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
             if (auction.getStatus() !== AuctionStatus.FALLBACK_ENDED) {
                 throw new Error('Auction is not ended');
             }
+
+            const auctionWinnersResult =
+                await this._auctionWinnerRepository.findAllByAuctionId(
+                    auctionId,
+                );
+            if (auctionWinnersResult.isFailure) {
+                return Result.fail(auctionWinnersResult.getError());
+            }
+
+            const auctionWinners = auctionWinnersResult.getValue();
 
             const setStatusResult = auction.setStatus(
                 AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
@@ -90,6 +103,15 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
             const participants = participantsResult.getValue();
 
             for (const participant of participants) {
+                if (
+                    auctionWinners.some(
+                        (winner) =>
+                            winner.getUserId() === participant.getUserId(),
+                    )
+                ) {
+                    continue;
+                }
+
                 const notificationEntity = Notification.create({
                     id: this._idGeneratingService.generateId(),
                     title: `You got another chance to win the auction: ${auction.getTitle()}`,

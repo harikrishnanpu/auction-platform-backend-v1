@@ -150,6 +150,77 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             where,
             include: { assets: true, category: true },
             orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
+            take: filters.limit,
+            skip: (filters.page - 1) * filters.limit,
+        });
+
+        const result: Auction[] = [];
+
+        for (const raw of list) {
+            const r = AuctionMapper.toDomain(raw);
+            if (r.isFailure) return Result.fail(r.getError());
+            result.push(r.getValue());
+        }
+
+        return Result.ok(result);
+    }
+
+    async findAllForUsers(
+        filters: IFindAllAuctionsFilters,
+    ): Promise<Result<Auction[]>> {
+        const safePage = Number(filters.page) > 0 ? Number(filters.page) : 1;
+        const safeLimit =
+            Number(filters.limit) > 0 ? Number(filters.limit) : 10;
+
+        const where: Prisma.AuctionWhereInput = {};
+
+        where.endAt = {
+            gte: new Date(),
+        };
+
+        if (filters.status) {
+            if (filters.status === 'ALL') {
+                where.status = {
+                    in: [
+                        PrismaAuctionStatus.ACTIVE,
+                        PrismaAuctionStatus.PAUSED,
+                    ],
+                };
+            } else {
+                where.status = filters.status as PrismaAuctionStatus;
+            }
+        } else {
+            where.status = {
+                in: [
+                    PrismaAuctionStatus.ACTIVE,
+                    PrismaAuctionStatus.PAUSED,
+                    PrismaAuctionStatus.ENDED,
+                    PrismaAuctionStatus.SOLD,
+                    PrismaAuctionStatus.CANCELLED,
+                    PrismaAuctionStatus.FALLBACK_ENDED,
+                    PrismaAuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
+                    PrismaAuctionStatus.FAILED,
+                ],
+            };
+        }
+
+        if (filters.search?.trim()) {
+            const term = filters.search.trim();
+            where.OR = [
+                { title: { contains: term, mode: 'insensitive' } },
+                { description: { contains: term, mode: 'insensitive' } },
+            ];
+        }
+
+        const sortField = filters.sort ?? 'createdAt';
+        const sortOrder = filters.order === 'asc' ? 'asc' : 'desc';
+
+        const list = await this._prisma.auction.findMany({
+            where,
+            include: { assets: true, category: true },
+            orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
+            skip: (safePage - 1) * safeLimit,
+            take: safeLimit,
         });
 
         const result: Auction[] = [];

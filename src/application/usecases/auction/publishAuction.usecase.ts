@@ -1,13 +1,13 @@
 import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import {
-  IPublishAuctionInput,
-  IPublishAuctionOutput,
+    IPublishAuctionInput,
+    IPublishAuctionOutput,
 } from '@application/dtos/auction/publish-auction.dto';
 import { IPublishAuctionUsecase } from '@application/interfaces/usecases/auction/IPublishAuctionUsecase';
 import { TYPES } from '@di/types.di';
 import {
-  Auction,
-  AuctionStatus,
+    Auction,
+    AuctionStatus,
 } from '@domain/entities/auction/auction.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
@@ -15,73 +15,76 @@ import { inject, injectable } from 'inversify';
 
 @injectable()
 export class PublishAuctionUsecase implements IPublishAuctionUsecase {
-  constructor(
-    @inject(TYPES.IAuctionRepository)
-    private readonly _auctionRepository: IAuctionRepository,
-  ) {}
+    constructor(
+        @inject(TYPES.IAuctionRepository)
+        private readonly _auctionRepository: IAuctionRepository,
+    ) {}
 
-  async execute(
-    input: IPublishAuctionInput,
-  ): Promise<Result<IPublishAuctionOutput>> {
-    const existing = await this._auctionRepository.findById(input.auctionId);
-    if (existing.isFailure) {
-      return Result.fail(existing.getError());
+    async execute(
+        input: IPublishAuctionInput,
+    ): Promise<Result<IPublishAuctionOutput>> {
+        const existing = await this._auctionRepository.findById(
+            input.auctionId,
+        );
+
+        if (existing.isFailure) {
+            return Result.fail(existing.getError());
+        }
+
+        const auction = existing.getValue();
+
+        if (auction.getSellerId() !== input.userId) {
+            return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_PUBLISH);
+        }
+
+        if (auction.getStatus() !== AuctionStatus.DRAFT) {
+            return Result.fail(AUCTION_MESSAGES.ONLY_DRAFT_CAN_BE_PUBLISHED);
+        }
+
+        const now = new Date();
+        if (auction.getEndAt() <= now) {
+            return Result.fail(AUCTION_MESSAGES.END_TIME_ALREADY_PASSED);
+        }
+
+        const publishedResult = Auction.create({
+            id: auction.getId(),
+            sellerId: auction.getSellerId(),
+            auctionType: auction.getAuctionType(),
+            title: auction.getTitle(),
+            description: auction.getDescription(),
+            category: auction.getCategory(),
+            condition: auction.getCondition(),
+            startPrice: auction.getStartPrice(),
+            minIncrement: auction.getMinIncrement(),
+            startAt: auction.getStartAt(),
+            endAt: auction.getEndAt(),
+            status: AuctionStatus.ACTIVE,
+            antiSnipSeconds: auction.getAntiSnipSeconds(),
+            extensionCount: auction.getExtensionCount(),
+            maxExtensionCount: auction.getMaxExtensionCount(),
+            bidCooldownSeconds: auction.getBidCooldownSeconds(),
+            winnerId: auction.getWinnerId(),
+            assets: auction.getAssets(),
+        });
+
+        if (publishedResult.isFailure) {
+            return Result.fail(publishedResult.getError());
+        }
+
+        const published = publishedResult.getValue();
+
+        const updateResult = await this._auctionRepository.save(published);
+        if (updateResult.isFailure) {
+            return Result.fail(updateResult.getError());
+        }
+
+        const saved = updateResult.getValue();
+
+        const output: IPublishAuctionOutput = {
+            id: saved.getId(),
+            status: saved.getStatus(),
+        };
+
+        return Result.ok(output);
     }
-
-    const auction = existing.getValue();
-
-    if (auction.getSellerId() !== input.userId) {
-      return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_PUBLISH);
-    }
-
-    if (auction.getStatus() !== AuctionStatus.DRAFT) {
-      return Result.fail(AUCTION_MESSAGES.ONLY_DRAFT_CAN_BE_PUBLISHED);
-    }
-
-    const now = new Date();
-    if (auction.getEndAt() <= now) {
-      return Result.fail(AUCTION_MESSAGES.END_TIME_ALREADY_PASSED);
-    }
-
-    const publishedResult = Auction.create({
-      id: auction.getId(),
-      sellerId: auction.getSellerId(),
-      auctionType: auction.getAuctionType(),
-      title: auction.getTitle(),
-      description: auction.getDescription(),
-      category: auction.getCategory(),
-      condition: auction.getCondition(),
-      startPrice: auction.getStartPrice(),
-      minIncrement: auction.getMinIncrement(),
-      startAt: auction.getStartAt(),
-      endAt: auction.getEndAt(),
-      status: AuctionStatus.ACTIVE,
-      antiSnipSeconds: auction.getAntiSnipSeconds(),
-      extensionCount: auction.getExtensionCount(),
-      maxExtensionCount: auction.getMaxExtensionCount(),
-      bidCooldownSeconds: auction.getBidCooldownSeconds(),
-      winnerId: auction.getWinnerId(),
-      assets: auction.getAssets(),
-    });
-
-    if (publishedResult.isFailure) {
-      return Result.fail(publishedResult.getError());
-    }
-
-    const published = publishedResult.getValue();
-
-    const updateResult = await this._auctionRepository.save(published);
-    if (updateResult.isFailure) {
-      return Result.fail(updateResult.getError());
-    }
-
-    const saved = updateResult.getValue();
-
-    const output: IPublishAuctionOutput = {
-      id: saved.getId(),
-      status: saved.getStatus(),
-    };
-
-    return Result.ok(output);
-  }
 }

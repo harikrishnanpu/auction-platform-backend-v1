@@ -65,6 +65,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         const winnerResult = await getWinnerStrategy.validateAndGetWinner({
             auction,
         });
+
         if (winnerResult.isFailure) return Result.fail(winnerResult.getError());
 
         const { winnerId, winAmount } = winnerResult.getValue();

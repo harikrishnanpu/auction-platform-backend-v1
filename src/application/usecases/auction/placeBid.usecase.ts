@@ -120,54 +120,56 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
             const newBid = newBidEntity.getValue();
 
+            const auctionEntity = auctionResult.getValue();
+            const remainingMs = auctionEntity.getEndAt().getTime() - Date.now();
+
             const shouldExtend = ShouldExtendAuctionPolicy.shouldExtendAuction(
-                auctionResult.getValue(),
-                auctionResult.getValue().getEndAt().getTime() - Date.now(),
+                auctionEntity,
+                remainingMs,
             );
 
+            let auctionForOutput = auctionEntity;
+
             if (shouldExtend) {
+                const nextExtensionCount =
+                    auctionEntity.getExtensionCount() + 1;
                 const updatedAuctionRes = Auction.create({
-                    id: auctionResult.getValue().getId(),
-                    sellerId: auctionResult.getValue().getSellerId(),
-                    auctionType: auctionResult.getValue().getAuctionType(),
-                    title: auctionResult.getValue().getTitle(),
-                    description: auctionResult.getValue().getDescription(),
-                    category: auctionResult.getValue().getCategory(),
-                    condition: auctionResult.getValue().getCondition(),
-                    startPrice: auctionResult.getValue().getStartPrice(),
-                    minIncrement: auctionResult.getValue().getMinIncrement(),
-                    startAt: auctionResult.getValue().getStartAt(),
+                    id: auctionEntity.getId(),
+                    sellerId: auctionEntity.getSellerId(),
+                    auctionType: auctionEntity.getAuctionType(),
+                    title: auctionEntity.getTitle(),
+                    description: auctionEntity.getDescription(),
+                    category: auctionEntity.getCategory(),
+                    condition: auctionEntity.getCondition(),
+                    startPrice: auctionEntity.getStartPrice(),
+                    minIncrement: auctionEntity.getMinIncrement(),
+                    startAt: auctionEntity.getStartAt(),
                     endAt: new Date(
-                        auctionResult.getValue().getEndAt().getTime() +
-                            auctionResult.getValue().getAntiSnipSeconds() *
-                                1000,
+                        auctionEntity.getEndAt().getTime() +
+                            auctionEntity.getAntiSnipSeconds() * 1000,
                     ),
-                    antiSnipSeconds: auctionResult
-                        .getValue()
-                        .getAntiSnipSeconds(),
-                    extensionCount: auctionResult
-                        .getValue()
-                        .getExtensionCount(),
-                    maxExtensionCount: auctionResult
-                        .getValue()
-                        .getMaxExtensionCount(),
-                    bidCooldownSeconds: auctionResult
-                        .getValue()
-                        .getBidCooldownSeconds(),
-                    status: auctionResult.getValue().getStatus(),
-                    winnerId: auctionResult.getValue().getWinnerId(),
-                    assets: auctionResult.getValue().getAssets(),
+                    antiSnipSeconds: auctionEntity.getAntiSnipSeconds(),
+                    extensionCount: nextExtensionCount,
+                    maxExtensionCount: auctionEntity.getMaxExtensionCount(),
+                    bidCooldownSeconds: auctionEntity.getBidCooldownSeconds(),
+                    status: auctionEntity.getStatus(),
+                    winnerId: auctionEntity.getWinnerId(),
+                    winAmount: auctionEntity.getWinAmount(),
+                    assets: auctionEntity.getAssets(),
                 });
 
                 if (updatedAuctionRes.isFailure) {
                     return Result.fail(updatedAuctionRes.getError());
                 }
 
-                const updatedAuction = updatedAuctionRes.getValue();
-                const saveRes = await this._auctionRepo.save(updatedAuction);
+                const saveRes = await this._auctionRepo.save(
+                    updatedAuctionRes.getValue(),
+                );
                 if (saveRes.isFailure) {
                     return Result.fail(saveRes.getError());
                 }
+
+                auctionForOutput = saveRes.getValue();
             }
 
             const createBidResult = await this._bidRepo.create(newBid);
@@ -185,8 +187,8 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                     .getValue()
                     .getCreatedAt()
                     .toISOString(),
-                endAt: auctionResult.getValue().getEndAt().toISOString(),
-                extensionCount: auctionResult.getValue().getExtensionCount(),
+                endAt: auctionForOutput.getEndAt().toISOString(),
+                extensionCount: auctionForOutput.getExtensionCount(),
                 participants: participantsResult.getValue().map((p) => ({
                     id: p.getId(),
                     auctionId: p.getAuctionId(),

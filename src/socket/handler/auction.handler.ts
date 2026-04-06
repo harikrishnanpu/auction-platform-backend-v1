@@ -30,6 +30,7 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { PublicAuctionFallbackParticipantsStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
+import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 
 export class AuctionHandler {
     constructor(
@@ -379,6 +380,13 @@ export class AuctionHandler {
             return { success: false, error: result.getError() };
         }
 
+        const roomId = `auction:${auctionId}`;
+
+        this.io.to(roomId).emit(SocketEvents.UPDATED, {
+            auctionId: auctionId,
+            status: AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
+        });
+
         return { success: true, data: { auctionId } };
     }
 
@@ -449,6 +457,13 @@ export class AuctionHandler {
         }
 
         await this.emitFallbackPublicParticipantStats(auctionId);
+
+        const roomId = `auction:${auctionId}`;
+
+        this.io.to(roomId).emit(SocketEvents.UPDATED, {
+            auctionId: auctionId,
+            status: AuctionStatus.SOLD,
+        });
 
         return { success: true, data: { success: true } };
     }

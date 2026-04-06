@@ -21,7 +21,7 @@ export class PaymentsMapperProfile {
     public static toGetUserPaymentsOutputDto(data: Payments): IUserPaymentDto {
         return {
             id: data.getId(),
-            amount: data.getAmount() / 100,
+            amount: data.getAmount(),
             currency: data.getCurrency(),
             status: data.getStatus(),
             referenceId: data.getReferenceId(),

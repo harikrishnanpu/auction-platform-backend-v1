@@ -139,12 +139,8 @@ export class PrismaPaymentRepository implements IPaymentRepository {
                 },
             });
             return Result.ok();
-        } catch (e) {
-            return Result.fail(
-                e instanceof Error
-                    ? e.message
-                    : 'Failed to decline pending payments',
-            );
+        } catch {
+            return Result.fail('unexpected error payment');
         }
     }
 
@@ -200,12 +196,8 @@ export class PrismaPaymentRepository implements IPaymentRepository {
             }
 
             return Result.ok({ items, total });
-        } catch (e) {
-            return Result.fail(
-                e instanceof Error
-                    ? e.message
-                    : 'Failed to load seller auction payments',
-            );
+        } catch {
+            return Result.fail('unexpected error!! payment seller');
         }
     }
 }
