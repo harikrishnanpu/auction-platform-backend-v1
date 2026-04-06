@@ -1,10 +1,8 @@
 import { TYPES } from '@di/types.di';
 import { Notification } from '@domain/entities/notifications/notification.entity';
-import {
-    IFindNotificationsOptions,
-    INotificationRepository,
-} from '@domain/repositories/INotificationRepo';
+import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { Result } from '@domain/shared/result';
+import { IFindNotificationsOptions } from '@domain/types/notifications.type';
 import { NotificationMapper } from '@infrastructure/mappers/notification/notification.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject } from 'inversify';

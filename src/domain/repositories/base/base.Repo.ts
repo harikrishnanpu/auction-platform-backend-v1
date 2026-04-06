@@ -1,5 +1,20 @@
 import { Result } from '@domain/shared/result';
 
-export interface IBaseRepository<TSave, TResponse> {
-    save(data: TSave): Promise<Result<TResponse>>;
+export interface IWrite<T> {
+    create(data: T): Promise<Result<void>>;
+    update(id: string, data: T): Promise<Result<void>>;
+    delete(id: string): Promise<Result<void>>;
+}
+
+export interface IReadFiltersInput {
+    page: number;
+    limit: number;
+    sort: string;
+    orderBy: 'asc' | 'desc';
+    search: string;
+}
+
+export interface IRead<T, IReadFiltersInput> {
+    findAll(data: IReadFiltersInput): Promise<Result<T[]>>;
+    findById(id: string): Promise<Result<T>>;
 }
