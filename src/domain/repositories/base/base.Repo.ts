@@ -6,14 +6,6 @@ export interface IWrite<T> {
     delete(id: string): Promise<Result<void>>;
 }
 
-export interface IReadFiltersInput {
-    page: number;
-    limit: number;
-    sort: string;
-    orderBy: 'asc' | 'desc';
-    search: string;
-}
-
 export interface IRead<T, IReadFiltersInput> {
     findAll(data: IReadFiltersInput): Promise<Result<T[]>>;
     findById(id: string): Promise<Result<T>>;

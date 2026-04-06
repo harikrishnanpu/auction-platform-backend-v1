@@ -2,6 +2,7 @@ import {
     AuctionCategory,
     AuctionCategoryStatus,
 } from '@domain/entities/auction/auction-category.entity';
+// import { IMapper } from '@domain/mappers/IMapper';
 import { Result } from '@domain/shared/result';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
 import { AuctionCategory as PrismaAuctionCategory } from '@prisma/client';
@@ -33,5 +34,19 @@ export class AuctionCategoryMapper {
         });
 
         return Result.ok(auctionCategoryEntity.getValue());
+    }
+
+    static toPersistence(entity: AuctionCategory) {
+        return {
+            id: entity.getId(),
+            name: entity.getName(),
+            slug: entity.getSlug().getValue(),
+            parentId: entity.getParentId(),
+            isVerified: entity.getIsVerified(),
+            isActive: entity.getIsActive(),
+            status: entity.getStatus(),
+            submittedBy: entity.getSubmittedBy(),
+            rejectionReason: entity.getRejectionReason(),
+        };
     }
 }
