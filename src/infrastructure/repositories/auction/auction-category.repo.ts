@@ -6,57 +6,29 @@ import {
 } from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
-import { AuctionCategoryMapper } from '@infrastructure/mappers/auction/auctionCategory.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 import { BaseRepository } from '../base/base.Repo';
 import { AuctionCategory as PrismaAuctionCategory } from '@prisma/client';
-// import { IMapper } from '@domain/mappers/IMapper';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 
 @injectable()
 export class PrismaAuctionCategoryRepository
     extends BaseRepository<
         AuctionCategory,
         PrismaAuctionCategory,
-        AuctionCategoryFilter
+        AuctionCategoryFilter,
+        IDbMapper<AuctionCategory, PrismaAuctionCategory>
     >
     implements IAuctionCategoryRepository
 {
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
+        @inject(TYPES.AuctionCategoryMapper)
+        readonly mapper: IDbMapper<AuctionCategory, PrismaAuctionCategory>,
     ) {
-        super(_prisma.auctionCategory, AuctionCategoryMapper);
-    }
-
-    async save(category: AuctionCategory): Promise<Result<void>> {
-        await this._prisma.auctionCategory.upsert({
-            where: {
-                id: category.getId(),
-            },
-            create: {
-                id: category.getId(),
-                name: category.getName(),
-                slug: category.getSlug().getValue(),
-                isVerified: category.getIsVerified(),
-                parentId: category.getParentId(),
-                isActive: category.getIsActive(),
-                status: category.getStatus(),
-                rejectionReason: category.getRejectionReason(),
-                submittedBy: category.getSubmittedBy(),
-            },
-            update: {
-                name: category.getName(),
-                slug: category.getSlug().getValue(),
-                isVerified: category.getIsVerified(),
-                isActive: category.getIsActive(),
-                status: category.getStatus(),
-                parentId: category.getParentId(),
-                rejectionReason: category.getRejectionReason(),
-            },
-        });
-
-        return Result.ok();
+        super(_prisma.auctionCategory, mapper);
     }
 
     async findBySlug(
@@ -73,7 +45,7 @@ export class PrismaAuctionCategoryRepository
 
         if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
 
-        const result = AuctionCategoryMapper.toDomain(auctionCategory);
+        const result = this.mapper.toDomain(auctionCategory);
 
         if (result.isFailure) return Result.fail(result.getError());
         return Result.ok<AuctionCategory>(result.getValue());

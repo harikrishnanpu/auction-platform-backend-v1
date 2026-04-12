@@ -7,6 +7,6 @@ export interface IWrite<T> {
 }
 
 export interface IRead<T, IReadFiltersInput> {
-    findAll(data: IReadFiltersInput): Promise<Result<T[]>>;
-    findById(id: string): Promise<Result<T>>;
+    findAll(data: IReadFiltersInput): Promise<Result<T[] | []>>;
+    findById(id: string): Promise<Result<T | null>>;
 }

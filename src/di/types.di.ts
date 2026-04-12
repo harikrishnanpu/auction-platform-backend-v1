@@ -205,4 +205,6 @@ export const TYPES = {
     IReleaseParticipantsWalletUsecase: Symbol.for(
         'IReleaseParticipantsWalletUsecase',
     ),
+    AuctionParticipantMapper: Symbol.for('AuctionParticipantMapper'),
+    AuctionCategoryMapper: Symbol.for('AuctionCategoryMapper'),
 };

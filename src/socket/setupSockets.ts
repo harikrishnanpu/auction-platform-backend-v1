@@ -31,9 +31,7 @@ export function setupSockets(
     io.use(createSocketAuthMiddleware(container));
 
     io.on('connection_error', (err) => {
-        logger.error(
-            `Socket.IO connection error: ${err instanceof Error ? err.message : String(err)}`,
-        );
+        logger.error(`Socket.IO connection error: ${err}`);
     });
 
     io.on(SocketEvents.CONNECTION, (socket) => {

@@ -2,11 +2,15 @@ import {
     AuctionParticipant,
     AuctionParticipantPaymentStatus,
 } from '@domain/entities/auction/auction-participant.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { Result } from '@domain/shared/result';
 import { AuctionParticipant as PrismaAuctionParticipant } from '@prisma/client';
 
-export class AuctionParticipantMapper {
-    static toDomain(raw: PrismaAuctionParticipant): Result<AuctionParticipant> {
+export class AuctionParticipantMapper implements IDbMapper<
+    AuctionParticipant,
+    PrismaAuctionParticipant
+> {
+    toDomain(raw: PrismaAuctionParticipant): Result<AuctionParticipant> {
         return AuctionParticipant.create({
             id: raw.id,
             auctionId: raw.auctionId,
@@ -17,13 +21,13 @@ export class AuctionParticipantMapper {
         });
     }
 
-    static toPersistence(participant: AuctionParticipant) {
+    toPersistence(participant: AuctionParticipant): PrismaAuctionParticipant {
         return {
             id: participant.getId(),
             auctionId: participant.getAuctionId(),
             userId: participant.getUserId(),
             userName: participant.getUserName(),
-            initialAmount: participant.getIntialAmount(),
+            intialAmount: participant.getIntialAmount(),
             joinedAt: participant.getJoinedAt(),
         };
     }

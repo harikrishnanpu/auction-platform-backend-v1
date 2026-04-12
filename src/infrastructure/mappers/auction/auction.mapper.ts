@@ -9,19 +9,35 @@ import {
 } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import {
+    AuctionCategory,
     Auction as PrismaAuction,
     AuctionAsset as PrismaAuctionAsset,
     AuctionCategory as PrismaAuctionCategory,
 } from '@prisma/client';
-import { AuctionCategoryMapper } from './auctionCategory.mapper';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
+import { inject } from 'inversify';
+import { TYPES } from '@di/types.di';
+import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
+import { AuctionCategoryStatus } from '@domain/entities/auction/auction-category.entity';
 
 export type PrismaAuctionWithAssets = PrismaAuction & {
     assets: PrismaAuctionAsset[];
-    category: PrismaAuctionCategory;
+    category: PrismaAuctionCategory & { submittedByUser: { name: string } };
 };
 
-export class AuctionMapper {
-    static toDomain(raw: PrismaAuctionWithAssets): Result<Auction> {
+export class AuctionMapper implements IDbMapper<
+    Auction,
+    PrismaAuctionWithAssets
+> {
+    constructor(
+        @inject(TYPES.AuctionCategoryMapper)
+        private readonly auctionCategoryMapper: IDbMapper<
+            AuctionCategory,
+            PrismaAuctionCategory
+        >,
+    ) {}
+
+    toDomain(raw: PrismaAuctionWithAssets): Result<Auction> {
         const assets = raw.assets.map((a) =>
             AuctionAsset.create({
                 id: a.id,
@@ -33,7 +49,13 @@ export class AuctionMapper {
             }),
         );
 
-        const category = AuctionCategoryMapper.toDomain(raw.category);
+        const category = this.auctionCategoryMapper.toDomain(raw.category);
+
+        const auctionCategorySLug = AuctionCategorySlug.create(
+            category.getValue().slug,
+        );
+        if (auctionCategorySLug.isFailure)
+            return Result.fail(auctionCategorySLug.getError());
 
         return Auction.create({
             id: raw.id,
@@ -41,7 +63,18 @@ export class AuctionMapper {
             auctionType: (raw.auctionType as AuctionType) ?? AuctionType.LONG,
             title: raw.title,
             description: raw.description,
-            category: category.getValue(),
+            category: {
+                id: category.getValue().id,
+                name: category.getValue().name,
+                slug: auctionCategorySLug.getValue(),
+                parentId: category.getValue().parentId,
+                isVerified: category.getValue().isVerified,
+                isActive: category.getValue().isActive,
+                status: category.getValue().status as AuctionCategoryStatus,
+                submittedBy: category.getValue().submittedBy,
+                rejectionReason: category.getValue().rejectionReason,
+                submittedByUser: category.getValue().submittedByUser,
+            },
             condition: raw.condition,
             startPrice: raw.startPrice,
             minIncrement: raw.minIncrement,
@@ -58,7 +91,7 @@ export class AuctionMapper {
         });
     }
 
-    static toPersistence(auction: Auction) {
+    toPersistence(auction: Auction) {
         return {
             id: auction.getId(),
             sellerId: auction.getSellerId(),

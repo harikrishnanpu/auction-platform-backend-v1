@@ -2,6 +2,7 @@ import {
     AuctionCategory,
     AuctionCategoryStatus,
 } from '@domain/entities/auction/auction-category.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 // import { IMapper } from '@domain/mappers/IMapper';
 import { Result } from '@domain/shared/result';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
@@ -13,8 +14,11 @@ interface PrismaAuctionCategoryWithSubmittedByUser extends PrismaAuctionCategory
     };
 }
 
-export class AuctionCategoryMapper {
-    static toDomain(
+export class AuctionCategoryMapper implements IDbMapper<
+    AuctionCategory,
+    PrismaAuctionCategoryWithSubmittedByUser
+> {
+    toDomain(
         raw: PrismaAuctionCategoryWithSubmittedByUser,
     ): Result<AuctionCategory> {
         const slugVo = AuctionCategorySlug.create(raw.slug);
@@ -36,7 +40,7 @@ export class AuctionCategoryMapper {
         return Result.ok(auctionCategoryEntity.getValue());
     }
 
-    static toPersistence(entity: AuctionCategory) {
+    toPersistence(entity: AuctionCategory) {
         return {
             id: entity.getId(),
             name: entity.getName(),
