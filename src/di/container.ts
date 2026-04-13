@@ -29,6 +29,7 @@ import { walletContainer } from './modules/wallet.container';
 import { WalletController } from '@presentation/http/controllers/wallet/wallet.controller';
 import { paymentsContainer } from './modules/payments.container';
 import { PaymentsController } from '@presentation/http/controllers/payments/payments.controller';
+import { dbMappersContainer } from './modules/mappers.container';
 
 const container = new Container();
 
@@ -42,6 +43,7 @@ container.load(auctionContainer);
 container.load(sellerContainer);
 container.load(walletContainer);
 container.load(paymentsContainer);
+container.load(dbMappersContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);

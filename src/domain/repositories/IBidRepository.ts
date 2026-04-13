@@ -2,8 +2,7 @@ import { Bid } from '@domain/entities/auction/bid.entity';
 import { Result } from '@domain/shared/result';
 
 export interface IBidRepository {
-    create(data: Bid): Promise<Result<Bid>>;
-
+    create(data: Bid): Promise<Result<void>>;
     findLatestByAuctionId(auctionId: string): Promise<Result<Bid | null>>;
 
     findLastBidsByUser(

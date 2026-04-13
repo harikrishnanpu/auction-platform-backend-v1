@@ -5,10 +5,12 @@ export interface IFallbackAuctionParticipantsRepo {
     save(
         publicAuctionFallbackParticipants: PublicAuctionFallbackParticipants,
     ): Promise<Result<void>>;
+
     findByAuctionIdAndUserId(
         auctionId: string,
         userId: string,
     ): Promise<Result<PublicAuctionFallbackParticipants | null>>;
+
     findByAuctionId(
         auctionId: string,
     ): Promise<Result<PublicAuctionFallbackParticipants[]>>;

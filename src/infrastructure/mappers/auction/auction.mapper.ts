@@ -9,7 +9,6 @@ import {
 } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import {
-    AuctionCategory,
     Auction as PrismaAuction,
     AuctionAsset as PrismaAuctionAsset,
     AuctionCategory as PrismaAuctionCategory,
@@ -18,7 +17,7 @@ import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { inject } from 'inversify';
 import { TYPES } from '@di/types.di';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
-import { AuctionCategoryStatus } from '@domain/entities/auction/auction-category.entity';
+import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
 
 export type PrismaAuctionWithAssets = PrismaAuction & {
     assets: PrismaAuctionAsset[];
@@ -33,7 +32,7 @@ export class AuctionMapper implements IDbMapper<
         @inject(TYPES.AuctionCategoryMapper)
         private readonly auctionCategoryMapper: IDbMapper<
             AuctionCategory,
-            PrismaAuctionCategory
+            PrismaAuctionCategory & { submittedByUser: { name: string } }
         >,
     ) {}
 
@@ -50,10 +49,12 @@ export class AuctionMapper implements IDbMapper<
         );
 
         const category = this.auctionCategoryMapper.toDomain(raw.category);
+        if (category.isFailure) return Result.fail(category.getError());
 
         const auctionCategorySLug = AuctionCategorySlug.create(
-            category.getValue().slug,
+            category.getValue().getSlug().getValue(),
         );
+
         if (auctionCategorySLug.isFailure)
             return Result.fail(auctionCategorySLug.getError());
 
@@ -63,18 +64,7 @@ export class AuctionMapper implements IDbMapper<
             auctionType: (raw.auctionType as AuctionType) ?? AuctionType.LONG,
             title: raw.title,
             description: raw.description,
-            category: {
-                id: category.getValue().id,
-                name: category.getValue().name,
-                slug: auctionCategorySLug.getValue(),
-                parentId: category.getValue().parentId,
-                isVerified: category.getValue().isVerified,
-                isActive: category.getValue().isActive,
-                status: category.getValue().status as AuctionCategoryStatus,
-                submittedBy: category.getValue().submittedBy,
-                rejectionReason: category.getValue().rejectionReason,
-                submittedByUser: category.getValue().submittedByUser,
-            },
+            category: category.getValue(),
             condition: raw.condition,
             startPrice: raw.startPrice,
             minIncrement: raw.minIncrement,

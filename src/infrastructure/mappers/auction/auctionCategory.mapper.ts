@@ -9,8 +9,8 @@ import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug
 import { AuctionCategory as PrismaAuctionCategory } from '@prisma/client';
 
 interface PrismaAuctionCategoryWithSubmittedByUser extends PrismaAuctionCategory {
-    submittedByUser?: {
-        name?: string;
+    submittedByUser: {
+        name: string;
     };
 }
 
@@ -22,6 +22,7 @@ export class AuctionCategoryMapper implements IDbMapper<
         raw: PrismaAuctionCategoryWithSubmittedByUser,
     ): Result<AuctionCategory> {
         const slugVo = AuctionCategorySlug.create(raw.slug);
+        console.log('slugVo', slugVo);
         if (slugVo.isFailure) return Result.fail(slugVo.getError());
 
         const auctionCategoryEntity = AuctionCategory.create({
@@ -34,13 +35,13 @@ export class AuctionCategoryMapper implements IDbMapper<
             status: raw.status as AuctionCategoryStatus,
             rejectionReason: raw.rejectionReason,
             submittedBy: raw.submittedBy,
-            submittedByUser: raw.submittedByUser?.name,
+            submittedByUser: raw.submittedByUser.name,
         });
 
         return Result.ok(auctionCategoryEntity.getValue());
     }
 
-    toPersistence(entity: AuctionCategory) {
+    toPersistence(entity: AuctionCategory): unknown {
         return {
             id: entity.getId(),
             name: entity.getName(),

@@ -1,9 +1,10 @@
 import { Bid } from '@domain/entities/auction/bid.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { Result } from '@domain/shared/result';
 import { Bid as PrismaBid } from '@prisma/client';
 
-export class BidMapper {
-    static toDomain(raw: PrismaBid): Result<Bid> {
+export class BidMapper implements IDbMapper<Bid, PrismaBid> {
+    toDomain(raw: PrismaBid): Result<Bid> {
         return Bid.create({
             id: raw.id,
             auctionId: raw.auctionId,
@@ -14,7 +15,7 @@ export class BidMapper {
         });
     }
 
-    static toPersistence(bid: Bid) {
+    toPersistence(bid: Bid): unknown {
         return {
             id: bid.getId(),
             auctionId: bid.getAuctionId(),

@@ -1,9 +1,9 @@
 import { TYPES } from '@di/types.di';
 import { Auction } from '@domain/entities/auction/auction.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { IFindAllAuctionsFilters } from '@domain/types/auctionRepo.types';
-import { AuctionMapper } from '@infrastructure/mappers/auction/auction.mapper';
 import {
     AuctionStatus as PrismaAuctionStatus,
     AuctionType,
@@ -11,16 +11,30 @@ import {
     PrismaClient,
 } from '@prisma/client';
 import { inject, injectable } from 'inversify';
+import {
+    Auction as PrismaAuction,
+    AuctionAsset as PrismaAuctionAsset,
+    AuctionCategory as PrismaAuctionCategory,
+} from '@prisma/client';
+
+type PrismaAuctionWithAssets = PrismaAuction & {
+    assets: PrismaAuctionAsset[];
+    category: PrismaAuctionCategory & { submittedByUser: { name: string } };
+};
 
 @injectable()
 export class PrismaAuctionRepo implements IAuctionRepository {
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
+        @inject(TYPES.AuctionMapper)
+        readonly mapper: IDbMapper<Auction, PrismaAuction>,
     ) {}
 
     async save(auction: Auction): Promise<Result<Auction>> {
-        const data = AuctionMapper.toPersistence(auction);
+        const data = this.mapper.toPersistence(
+            auction,
+        ) as PrismaAuctionWithAssets;
 
         const raw = await this._prisma.auction.upsert({
             where: { id: data.id },
@@ -81,34 +95,55 @@ export class PrismaAuctionRepo implements IAuctionRepository {
                 },
             },
 
-            include: { assets: true, category: true },
+            include: {
+                assets: true,
+                category: {
+                    include: {
+                        submittedByUser: true,
+                    },
+                },
+            },
         });
 
-        return AuctionMapper.toDomain(raw);
+        return this.mapper.toDomain(raw);
     }
 
     async findById(id: string): Promise<Result<Auction>> {
         const raw = await this._prisma.auction.findUnique({
             where: { id },
-            include: { assets: true, category: true },
+            include: {
+                assets: true,
+                category: {
+                    include: {
+                        submittedByUser: true,
+                    },
+                },
+            },
         });
 
         if (!raw) return Result.fail('Auction not found');
 
-        return AuctionMapper.toDomain(raw);
+        return this.mapper.toDomain(raw);
     }
 
     async findBySellerId(sellerId: string): Promise<Result<Auction[]>> {
         const list = await this._prisma.auction.findMany({
             where: { sellerId },
-            include: { assets: true, category: true },
+            include: {
+                assets: true,
+                category: {
+                    include: {
+                        submittedByUser: true,
+                    },
+                },
+            },
             orderBy: { createdAt: 'desc' },
         });
 
         const result: Auction[] = [];
 
         for (const raw of list) {
-            const r = AuctionMapper.toDomain(raw);
+            const r = this.mapper.toDomain(raw);
             if (r.isFailure) return Result.fail(r.getError());
             result.push(r.getValue());
         }
@@ -148,7 +183,14 @@ export class PrismaAuctionRepo implements IAuctionRepository {
 
         const list = await this._prisma.auction.findMany({
             where,
-            include: { assets: true, category: true },
+            include: {
+                assets: true,
+                category: {
+                    include: {
+                        submittedByUser: true,
+                    },
+                },
+            },
             orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
             take: filters.limit,
             skip: (filters.page - 1) * filters.limit,
@@ -157,7 +199,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         const result: Auction[] = [];
 
         for (const raw of list) {
-            const r = AuctionMapper.toDomain(raw);
+            const r = this.mapper.toDomain(raw);
             if (r.isFailure) return Result.fail(r.getError());
             result.push(r.getValue());
         }
@@ -217,7 +259,12 @@ export class PrismaAuctionRepo implements IAuctionRepository {
 
         const list = await this._prisma.auction.findMany({
             where,
-            include: { assets: true, category: true },
+            include: {
+                assets: true,
+                category: {
+                    include: { submittedByUser: true },
+                },
+            },
             orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
             skip: (safePage - 1) * safeLimit,
             take: safeLimit,
@@ -226,7 +273,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         const result: Auction[] = [];
 
         for (const raw of list) {
-            const r = AuctionMapper.toDomain(raw);
+            const r = this.mapper.toDomain(raw);
             if (r.isFailure) return Result.fail(r.getError());
             result.push(r.getValue());
         }
@@ -272,7 +319,14 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         const [rows, total] = await Promise.all([
             this._prisma.auction.findMany({
                 where,
-                include: { assets: true, category: true },
+                include: {
+                    assets: true,
+                    category: {
+                        include: {
+                            submittedByUser: true,
+                        },
+                    },
+                },
                 orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
                 skip: (safePage - 1) * safeLimit,
                 take: safeLimit,
@@ -282,7 +336,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
 
         const auctions: Auction[] = [];
         for (const raw of rows) {
-            const result = AuctionMapper.toDomain(raw);
+            const result = this.mapper.toDomain(raw);
             if (result.isFailure) return Result.fail(result.getError());
             auctions.push(result.getValue());
         }

@@ -31,6 +31,24 @@ export class PrismaAuctionCategoryRepository
         super(_prisma.auctionCategory, mapper);
     }
 
+    async findAll(): Promise<Result<AuctionCategory[]>> {
+        const auctionCategories = await this._prisma.auctionCategory.findMany({
+            include: {
+                submittedByUser: true,
+            },
+        });
+
+        const result: AuctionCategory[] = [];
+
+        for (const auctionCategory of auctionCategories) {
+            const res = this.mapper.toDomain(auctionCategory);
+            if (res.isFailure) return Result.fail(res.getError());
+            result.push(res.getValue());
+        }
+
+        return Result.ok(result);
+    }
+
     async findBySlug(
         slug: AuctionCategorySlug,
     ): Promise<Result<AuctionCategory | null>> {

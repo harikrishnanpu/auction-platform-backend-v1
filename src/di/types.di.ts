@@ -207,4 +207,15 @@ export const TYPES = {
     ),
     AuctionParticipantMapper: Symbol.for('AuctionParticipantMapper'),
     AuctionCategoryMapper: Symbol.for('AuctionCategoryMapper'),
+    AuctionChatMessageMapper: Symbol.for('AuctionChatMessageMapper'),
+    AuctionWinnerMapper: Symbol.for('AuctionWinnerMapper'),
+    AuctionMapper: Symbol.for('AuctionMapper'),
+    BidMapper: Symbol.for('BidMapper'),
+    FallbackAuctionParticipantsMapper: Symbol.for(
+        'FallbackAuctionParticipantsMapper',
+    ),
+    FallbackPublicAuctionMapper: Symbol.for('FallbackPublicAuctionMapper'),
+    KycDocumentMapper: Symbol.for('KycDocumentMapper'),
+    KycMapper: Symbol.for('KycMapper'),
+    NotificationMapper: Symbol.for('NotificationMapper'),
 };
