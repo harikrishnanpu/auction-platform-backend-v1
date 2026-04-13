@@ -10,6 +10,8 @@ import { FallbackPublicAuctionMapper } from '@infrastructure/mappers/auction/fal
 import { KycDocumentMapper } from '@infrastructure/mappers/kyc/kyc-document.mapper';
 import { KycMapper } from '@infrastructure/mappers/kyc/kyc.mapper';
 import { NotificationMapper } from '@infrastructure/mappers/notification/notification.mapper';
+import { OtpMapper } from '@infrastructure/mappers/otp/otp.mapper';
+import { PaymentsMapper } from '@infrastructure/mappers/payments/payments.mapper';
 import { ContainerModule } from 'inversify';
 
 export const dbMappersContainer = new ContainerModule(({ bind }) => {
@@ -36,4 +38,6 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<KycMapper>(TYPES.KycMapper).to(KycMapper);
     bind<KycDocumentMapper>(TYPES.KycDocumentMapper).to(KycDocumentMapper);
     bind<NotificationMapper>(TYPES.NotificationMapper).to(NotificationMapper);
+    bind<OtpMapper>(TYPES.OtpMapper).to(OtpMapper);
+    bind<PaymentsMapper>(TYPES.PaymentsMapper).to(PaymentsMapper);
 });

@@ -14,53 +14,29 @@ import {
     ISellerAuctionPaymentRow,
 } from '@domain/repositories/IPaymentRepository';
 import { Result } from '@domain/shared/result';
-import { PaymentsMapper } from '@infrastructure/mappers/payments/payments.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
+import { BaseRepository } from '../base/base.Repo';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
+import { Payments as PrismaPayments } from '@prisma/client';
 
 @injectable()
-export class PrismaPaymentRepository implements IPaymentRepository {
+export class PrismaPaymentRepository
+    extends BaseRepository<
+        Payments,
+        PrismaPayments,
+        { id: string },
+        IDbMapper<Payments, PrismaPayments>
+    >
+    implements IPaymentRepository
+{
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
-    ) {}
-
-    async create(payment: Payments): Promise<Result<Payments>> {
-        const saved = await this._prisma.payments.create({
-            data: {
-                id: payment.getId(),
-                userId: payment.getUserId(),
-                amount: payment.getAmount(),
-                currency: payment.getCurrency(),
-                status: payment.getStatus(),
-                for: payment.getForPayment(),
-                referenceId: payment.getReferenceId(),
-                phase: payment.getPhase(),
-                dueAt: payment.getDueAt(),
-            },
-        });
-
-        return PaymentsMapper.toDomain(saved);
-    }
-
-    async update(payment: Payments): Promise<Result<Payments>> {
-        const result = await this._prisma.payments.update({
-            where: { id: payment.getId() },
-            data: {
-                status: payment.getStatus(),
-            },
-        });
-
-        return PaymentsMapper.toDomain(result);
-    }
-
-    async findById(id: string): Promise<Result<Payments | null>> {
-        const payment = await this._prisma.payments.findUnique({
-            where: { id },
-        });
-
-        if (!payment) return Result.ok(null);
-        return PaymentsMapper.toDomain(payment);
+        @inject(TYPES.PaymentsMapper)
+        readonly mapper: IDbMapper<Payments, PrismaPayments>,
+    ) {
+        super(_prisma.payments, mapper);
     }
 
     async findByReferenceAndUserId(
@@ -73,7 +49,7 @@ export class PrismaPaymentRepository implements IPaymentRepository {
         });
 
         if (!payment) return Result.ok(null);
-        return PaymentsMapper.toDomain(payment);
+        return this.mapper.toDomain(payment);
     }
 
     async findByReferenceUserAndPhase(
@@ -92,7 +68,7 @@ export class PrismaPaymentRepository implements IPaymentRepository {
         });
 
         if (!payment) return Result.ok(null);
-        return PaymentsMapper.toDomain(payment);
+        return this.mapper.toDomain(payment);
     }
 
     async findByUserId(
@@ -117,7 +93,7 @@ export class PrismaPaymentRepository implements IPaymentRepository {
         ]);
 
         const payments: Payments[] = rows
-            .map(PaymentsMapper.toDomain)
+            .map(this.mapper.toDomain)
             .map((result) => result.getValue());
         return Result.ok({ payments, total });
     }
@@ -184,7 +160,7 @@ export class PrismaPaymentRepository implements IPaymentRepository {
 
             const items: ISellerAuctionPaymentRow[] = [];
             for (const raw of rows) {
-                const mapped = PaymentsMapper.toDomain(raw);
+                const mapped = this.mapper.toDomain(raw);
                 if (mapped.isFailure) {
                     return Result.fail(mapped.getError());
                 }

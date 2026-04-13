@@ -218,4 +218,6 @@ export const TYPES = {
     KycDocumentMapper: Symbol.for('KycDocumentMapper'),
     KycMapper: Symbol.for('KycMapper'),
     NotificationMapper: Symbol.for('NotificationMapper'),
+    OtpMapper: Symbol.for('OtpMapper'),
+    PaymentsMapper: Symbol.for('PaymentsMapper'),
 };

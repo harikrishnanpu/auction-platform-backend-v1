@@ -33,8 +33,8 @@ export interface IFindSellerAuctionPaymentsResult {
 }
 
 export interface IPaymentRepository {
-    create(payment: Payments): Promise<Result<Payments>>;
-    update(payment: Payments): Promise<Result<Payments>>;
+    create(payment: Payments): Promise<Result<void>>;
+    update(id: string, payment: Payments): Promise<Result<void>>;
 
     findById(id: string): Promise<Result<Payments | null>>;
 
