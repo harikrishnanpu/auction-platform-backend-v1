@@ -42,10 +42,9 @@ import { IEndAuctionInput } from '@application/dtos/auction/end-auction.dto';
 export class AuctionMapperProrfile {
     public static toCreateAuctionDto(
         data: ZodCreateAuctionInputType,
-        userId: string,
     ): ICreateAuctionInputDto {
         return {
-            userId,
+            userId: data.userId,
             auctionType: data.auctionType as AuctionType,
             title: data.title,
             description: data.description,
@@ -205,10 +204,9 @@ export class AuctionMapperProrfile {
 
     public static toGetBrowseAuctionsDto(
         data: ZodGetBrowseAuctionsInputType,
-        userId: string,
     ): IGetAllAuctionsInputDto {
         return {
-            userId: userId,
+            userId: data.userId,
             status: 'ALL',
             auctionType: 'ALL',
             categoryId: 'ALL',
@@ -232,10 +230,9 @@ export class AuctionMapperProrfile {
 
     public static toGenerateAuctionUploadUrlDto(
         data: ZodGenerateAuctionUploadUrlInputType,
-        userId: string,
     ): IGenerateAuctionUploadUrlInput {
         return {
-            userId,
+            userId: data.userId,
             fileName: data.fileName,
             contentType: data.contentType,
             fileSize: data.fileSize,
@@ -244,12 +241,10 @@ export class AuctionMapperProrfile {
 
     public static toUpdateAuctionInputDto(
         data: ZodUpdateAuctionInputType,
-        auctionId: string,
-        userId: string,
     ): IUpdateAuctionInput {
         return {
-            auctionId: auctionId,
-            userId: userId,
+            auctionId: data.auctionId,
+            userId: data.userId,
             auctionType: data.auctionType as AuctionType | undefined,
             title: data.title,
             description: data.description,
@@ -274,11 +269,10 @@ export class AuctionMapperProrfile {
 
     public static toPublishAuctionInputDto(
         data: ZodPublishAuctionParamsInputType,
-        userId: string,
     ): IPublishAuctionInput {
         return {
             auctionId: data.id,
-            userId: userId,
+            userId: data.userId,
         };
     }
 

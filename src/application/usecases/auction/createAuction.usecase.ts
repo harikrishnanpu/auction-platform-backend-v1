@@ -1,4 +1,3 @@
-import { ICreateAuctionInputDto } from '@application/dtos/auction/create-auction.dto';
 import { ICreateAuctionUsecase } from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { TYPES } from '@di/types.di';
@@ -14,6 +13,7 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
+import { ZodCreateAuctionInputType } from '@presentation/validators/schemas/auction/createAuction.schema';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -28,10 +28,14 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         private readonly _auctionCreatePolicyFactory: AuctionCreatePolicyFactory,
     ) {}
 
-    async execute(input: ICreateAuctionInputDto): Promise<Result<IAuctionDto>> {
-        console.log('CREATE AUCTION INPUT: ', input);
+    async execute(
+        data: ZodCreateAuctionInputType,
+    ): Promise<Result<IAuctionDto>> {
+        console.log('CREATE AUCTION INPUT: ', data);
 
-        const validatedInput = this._auctionCreatePolicyFactory.validate(input);
+        const dto = AuctionMapperProrfile.toCreateAuctionDto(data);
+
+        const validatedInput = this._auctionCreatePolicyFactory.validate(dto);
 
         if (validatedInput.isFailure) {
             return Result.fail(validatedInput.getError());
@@ -40,7 +44,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         const validatedAuctionInput = validatedInput.getValue();
 
         const categoryResult = await this._auctionCategoryRepository.findById(
-            input.categoryId,
+            validatedAuctionInput.categoryId,
         );
 
         if (categoryResult.isFailure)
@@ -68,7 +72,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
             id: auctionId,
             sellerId: validatedAuctionInput.userId,
             auctionType: validatedAuctionInput.auctionType,
-            title: input.title,
+            title: validatedAuctionInput.title,
             description: validatedAuctionInput.description,
             category: category,
             condition: validatedAuctionInput.condition,

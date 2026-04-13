@@ -1,5 +1,4 @@
 import type {
-    IGetBrowseAuctionsInputDto,
     IGetBrowseAuctionsOutputDto,
     IGetBrowseAuctionsUsecase,
 } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
@@ -7,6 +6,7 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
+import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -17,20 +17,25 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
     ) {}
 
     async execute(
-        input: IGetBrowseAuctionsInputDto,
+        data: ZodGetBrowseAuctionsInputType,
     ): Promise<Result<IGetBrowseAuctionsOutputDto>> {
-        const safePage = Number(input.page) > 0 ? input.page : 1;
-        const safeLimit = Number(input.limit) > 0 ? input.limit : 10;
+        const dto = AuctionMapperProrfile.toGetBrowseAuctionsDto(data);
+
+        const { page, limit, auctionType, categoryId, sort, order, search } =
+            dto;
+
+        const safePage = Number(page) > 0 ? page : 1;
+        const safeLimit = Number(limit) > 0 ? limit : 10;
 
         const auctionsRes = await this._auctionRepository.findAllForUsers({
             page: safePage,
             limit: safeLimit,
             status: 'ALL',
-            auctionType: input.auctionType,
-            categoryId: input.categoryId,
-            sort: input.sort,
-            order: input.order,
-            search: input.search,
+            auctionType: auctionType,
+            categoryId: categoryId,
+            sort: sort,
+            order: order,
+            search: search,
         });
 
         if (auctionsRes.isFailure) return Result.fail(auctionsRes.getError());

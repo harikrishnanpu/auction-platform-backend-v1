@@ -1,8 +1,5 @@
 import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
-import {
-    IPublishAuctionInput,
-    IPublishAuctionOutput,
-} from '@application/dtos/auction/publish-auction.dto';
+import { IPublishAuctionOutput } from '@application/dtos/auction/publish-auction.dto';
 import { IPublishAuctionUsecase } from '@application/interfaces/usecases/auction/IPublishAuctionUsecase';
 import { TYPES } from '@di/types.di';
 import {
@@ -12,6 +9,8 @@ import {
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { ZodPublishAuctionParamsInputType } from '@presentation/validators/schemas/auction/publishAuctionParams.schema';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 
 @injectable()
 export class PublishAuctionUsecase implements IPublishAuctionUsecase {
@@ -21,11 +20,12 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
     ) {}
 
     async execute(
-        input: IPublishAuctionInput,
+        input: ZodPublishAuctionParamsInputType,
     ): Promise<Result<IPublishAuctionOutput>> {
-        const existing = await this._auctionRepository.findById(
-            input.auctionId,
-        );
+        const dto = AuctionMapperProrfile.toPublishAuctionInputDto(input);
+        const { auctionId, userId } = dto;
+
+        const existing = await this._auctionRepository.findById(auctionId);
 
         if (existing.isFailure) {
             return Result.fail(existing.getError());
@@ -33,7 +33,7 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
 
         const auction = existing.getValue();
 
-        if (auction.getSellerId() !== input.userId) {
+        if (auction.getSellerId() !== userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_PUBLISH);
         }
 

@@ -1,10 +1,10 @@
 import {
-  userResponseDto,
-  UserRoleType,
+    userResponseDto,
+    UserRoleType,
 } from '@application/dtos/auth/loginUser.dto';
 import {
-  VerifyCredentialsInput,
-  verifyCredentialsOutput,
+    VerifyCredentialsInput,
+    verifyCredentialsOutput,
 } from '@application/dtos/auth/verifyCredentials.dto';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { IVerifyCredentialsUseCase } from '@application/interfaces/usecases/auth/IVerifyCredentialsUseCase';
@@ -14,100 +14,106 @@ import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
+import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
-  constructor(
-    @inject(TYPES.IOtpRepository)
-    private readonly _otpRepository: IOtpRepository,
-    @inject(TYPES.IUserRepository)
-    private readonly _userRepository: IUserRepository,
-    @inject(TYPES.ITokenGeneratorService)
-    private readonly _tokenGenerator: ITokenGeneratorService,
-  ) {}
+    constructor(
+        @inject(TYPES.IOtpRepository)
+        private readonly _otpRepository: IOtpRepository,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
+        @inject(TYPES.ITokenGeneratorService)
+        private readonly _tokenGenerator: ITokenGeneratorService,
+    ) {}
 
-  async execute(
-    data: VerifyCredentialsInput,
-  ): Promise<Result<verifyCredentialsOutput>> {
-    try {
-      const emailVo = Email.create(data.email);
-      if (emailVo.isFailure) {
-        return Result.fail('Invalid email');
-      }
+    async execute(
+        data: VerifyCredentialsInput,
+    ): Promise<Result<verifyCredentialsOutput>> {
+        try {
+            const dto = AuthMapperProfile.toVerifyCredentialsInput(data);
+            const { otp, email, purpose } = dto;
 
-      const userEntity = await this._userRepository.findByEmail(
-        emailVo.getValue(),
-      );
+            const emailVo = Email.create(email);
+            if (emailVo.isFailure) {
+                return Result.fail('Invalid email');
+            }
 
-      if (userEntity.isFailure) {
-        return Result.fail('User not found');
-      }
+            const userEntity = await this._userRepository.findByEmail(
+                emailVo.getValue(),
+            );
 
-      const otpEntity =
-        await this._otpRepository.findRecentOtpByUserIdAndPurpose(
-          userEntity.getValue().getId(),
-          data.purpose,
-        );
+            if (userEntity.isFailure) {
+                return Result.fail('User not found');
+            }
 
-      if (!otpEntity) {
-        return Result.fail('Otp not found');
-      }
+            const otpEntity =
+                await this._otpRepository.findRecentOtpByUserIdAndPurpose(
+                    userEntity.getValue().getId(),
+                    purpose,
+                );
 
-      if (otpEntity.isOtpBlocked()) {
-        return Result.fail('Otp blocked');
-      }
+            if (!otpEntity) {
+                return Result.fail('Otp not found');
+            }
 
-      if (otpEntity.getOtp() !== data.otp) {
-        otpEntity.incrementAttempts();
-        console.log('otpEntity', otpEntity);
-        await this._otpRepository.update(otpEntity);
-        return Result.fail('Invalid otp 123');
-      }
+            if (otpEntity.isOtpBlocked()) {
+                return Result.fail('Otp blocked');
+            }
 
-      if (otpEntity.getOtpStatus() !== OtpStatus.PENDING) {
-        return Result.fail('Otp already verified');
-      }
+            if (otpEntity.getOtp() !== otp) {
+                otpEntity.incrementAttempts();
+                console.log('otpEntity', otpEntity);
+                await this._otpRepository.update(otpEntity.getId(), otpEntity);
+                return Result.fail('Invalid otp 123');
+            }
 
-      otpEntity.setOtpStatus(OtpStatus.VERIFIED);
-      await this._otpRepository.update(otpEntity);
-      userEntity.getValue().setIsVerified(true);
-      await this._userRepository.save(userEntity.getValue());
+            if (otpEntity.getOtpStatus() !== OtpStatus.PENDING) {
+                return Result.fail('Otp already verified');
+            }
 
-      const accessToken = this._tokenGenerator.generateAccessToken(
-        userEntity.getValue().getId(),
-      );
-      const refreshToken = this._tokenGenerator.generateRefreshToken(
-        userEntity.getValue().getId(),
-      );
+            otpEntity.setOtpStatus(OtpStatus.VERIFIED);
+            await this._otpRepository.update(otpEntity.getId(), otpEntity);
+            userEntity.getValue().setIsVerified(true);
+            await this._userRepository.save(userEntity.getValue());
 
-      const userResponseDto: userResponseDto = {
-        id: userEntity.getValue().getId(),
-        name: userEntity.getValue().getName(),
-        email: userEntity.getValue().getEmail().getValue(),
-        phone: userEntity.getValue().getPhone()?.getValue() ?? '',
-        address: userEntity.getValue().getAddress() ?? '',
-        avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
-        isProfileCompleted: userEntity.getValue().isProfileCompleted(),
-        isVerified: userEntity.getValue().getIsVerified(),
-        status: userEntity.getValue().getStatus(),
-        authProvider: userEntity.getValue().getAuthProvider().getType(),
-        roles: userEntity
-          .getValue()
-          .getRoles()
-          .map((role) => role.getValue() as UserRoleType),
-      };
+            const accessToken = this._tokenGenerator.generateAccessToken(
+                userEntity.getValue().getId(),
+            );
+            const refreshToken = this._tokenGenerator.generateRefreshToken(
+                userEntity.getValue().getId(),
+            );
 
-      const response: verifyCredentialsOutput = {
-        user: userResponseDto,
-        accessToken,
-        refreshToken,
-      };
+            const userResponseDto: userResponseDto = {
+                id: userEntity.getValue().getId(),
+                name: userEntity.getValue().getName(),
+                email: userEntity.getValue().getEmail().getValue(),
+                phone: userEntity.getValue().getPhone()?.getValue() ?? '',
+                address: userEntity.getValue().getAddress() ?? '',
+                avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
+                isProfileCompleted: userEntity.getValue().isProfileCompleted(),
+                isVerified: userEntity.getValue().getIsVerified(),
+                status: userEntity.getValue().getStatus(),
+                authProvider: userEntity.getValue().getAuthProvider().getType(),
+                roles: userEntity
+                    .getValue()
+                    .getRoles()
+                    .map((role) => role.getValue() as UserRoleType),
+            };
 
-      return Result.ok(response);
-    } catch (error) {
-      console.log(error);
-      return Result.fail('UNEXPECTED ERROR FROM VERIFY CREDENTIALS USECASE');
+            const response: verifyCredentialsOutput = {
+                user: userResponseDto,
+                accessToken,
+                refreshToken,
+            };
+
+            return Result.ok(response);
+        } catch (error) {
+            console.log(error);
+            return Result.fail(
+                'UNEXPECTED ERROR FROM VERIFY CREDENTIALS USECASE',
+            );
+        }
     }
-  }
 }

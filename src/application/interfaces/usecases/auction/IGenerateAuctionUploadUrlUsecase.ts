@@ -1,11 +1,9 @@
-import {
-  IGenerateAuctionUploadUrlInput,
-  IGenerateAuctionUploadUrlOutput,
-} from '@application/dtos/auction/generate-auction-upload-url.dto';
+import { IGenerateAuctionUploadUrlOutput } from '@application/dtos/auction/generate-auction-upload-url.dto';
 import { Result } from '@domain/shared/result';
+import { ZodGenerateAuctionUploadUrlInputType } from '@presentation/validators/schemas/auction/generateAuctionUploadUrl.schema';
 
 export interface IGenerateAuctionUploadUrlUsecase {
-  execute(
-    input: IGenerateAuctionUploadUrlInput,
-  ): Promise<Result<IGenerateAuctionUploadUrlOutput>>;
+    execute(
+        data: ZodGenerateAuctionUploadUrlInputType,
+    ): Promise<Result<IGenerateAuctionUploadUrlOutput>>;
 }

@@ -3,6 +3,8 @@ import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity'
 
 export const updateAuctionSchema = z
     .object({
+        userId: z.string().trim().min(1, 'User ID is required'),
+        auctionId: z.string().trim().min(1, 'Auction ID is required'),
         auctionType: z.enum(['LONG', 'LIVE', 'SEALED']).optional(),
         title: z.string().trim().min(1, 'Title is required'),
         description: z.string().trim().min(1, 'Description is required'),

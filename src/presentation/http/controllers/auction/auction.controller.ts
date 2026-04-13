@@ -25,7 +25,6 @@ import {
     publishAuctionParamsSchema,
     ZodPublishAuctionParamsInputType,
 } from '@presentation/validators/schemas/auction/publishAuctionParams.schema';
-import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
@@ -78,12 +77,8 @@ export class AuctionController {
                 req.body,
             );
 
-        const dto = AuctionMapperProrfile.toCreateAuctionDto(
-            validatedResult,
-            req.user.id,
-        );
-
-        const result = await this._createAuctionUsecase.execute(dto);
+        const result =
+            await this._createAuctionUsecase.execute(validatedResult);
 
         if (result.isFailure) {
             throw new AppError(
@@ -137,12 +132,8 @@ export class AuctionController {
                     req.query as unknown as ZodGetBrowseAuctionsInputType,
                 );
 
-            const dto = AuctionMapperProrfile.toGetBrowseAuctionsDto(
-                validatedResult,
-                req.user.id,
-            );
-
-            const result = await this._getBrowseAuctionsUsecase.execute(dto);
+            const result =
+                await this._getBrowseAuctionsUsecase.execute(validatedResult);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -171,19 +162,17 @@ export class AuctionController {
 
             const id = req.params.id as string;
 
-            if (!id) {
+            if (!id.trim()) {
                 throw new AppError(
                     AUCTION_CONSTANTS.MESSAGES.AUCTION_NOT_FOUND,
                     AUCTION_CONSTANTS.CODES.BAD_REQUEST,
                 );
             }
 
-            const dto = AuctionMapperProrfile.toGetAuctionByIdDto(
-                id,
-                req.user.id,
-            );
-
-            const result = await this._getAuctionByIdUsecase.execute(dto);
+            const result = await this._getAuctionByIdUsecase.execute({
+                auctionId: id,
+                userId: req.user.id,
+            });
 
             if (result.isFailure) {
                 throw new AppError(
@@ -217,13 +206,10 @@ export class AuctionController {
                     req.body,
                 );
 
-            const dto = AuctionMapperProrfile.toGenerateAuctionUploadUrlDto(
-                validatedResult,
-                req.user.id,
-            );
-
             const result =
-                await this._generateAuctionUploadUrlUsecase.execute(dto);
+                await this._generateAuctionUploadUrlUsecase.execute(
+                    validatedResult,
+                );
 
             if (result.isFailure) {
                 console.log(result.getError());
@@ -264,16 +250,15 @@ export class AuctionController {
         const validatedResult =
             ValidationHelper.validate<ZodUpdateAuctionInputType>(
                 updateAuctionSchema,
-                req.body,
+                {
+                    ...req.body,
+                    userId: req.user.id,
+                    auctionId: id,
+                },
             );
 
-        const dto = AuctionMapperProrfile.toUpdateAuctionInputDto(
-            validatedResult,
-            id,
-            req.user.id,
-        );
-
-        const result = await this._updateAuctionUsecase.execute(dto);
+        const result =
+            await this._updateAuctionUsecase.execute(validatedResult);
 
         if (result.isFailure) {
             console.log(result.getError());
@@ -303,15 +288,14 @@ export class AuctionController {
             const validatedResult =
                 ValidationHelper.validate<ZodPublishAuctionParamsInputType>(
                     publishAuctionParamsSchema,
-                    req.params as ZodPublishAuctionParamsInputType,
+                    {
+                        id: req.params.id as string,
+                        userId: req.user.id,
+                    },
                 );
 
-            const dto = AuctionMapperProrfile.toPublishAuctionInputDto(
-                validatedResult,
-                req.user.id,
-            );
-
-            const result = await this._publishAuctionUsecase.execute(dto);
+            const result =
+                await this._publishAuctionUsecase.execute(validatedResult);
 
             if (result.isFailure) {
                 console.log(result.getError());
