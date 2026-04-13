@@ -83,7 +83,6 @@ import {
 } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
-import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { IGetAdminSellerOutput } from '@application/dtos/admin/getAdminSeller.dto';
 import { IApproveSellerKycOutput } from '@application/dtos/admin/approveSellerKyc.dto';
 import { IGetAllAdminAuctionCategoryResponseDto } from '@application/dtos/admin/getAllCategoryRequest.dto';
@@ -130,17 +129,16 @@ export class AdminController {
     ) {}
 
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
+        console.log(req.query);
+
         const validationResult =
             ValidationHelper.validate<ZodGetAllUsersInputType>(
                 getAllUsersSchema,
                 req.query,
             );
 
-        console.log(req.query);
-
-        const dto = AdminMapperProfile.toGetAllUsersInputDto(validationResult);
-
-        const getAllUsersResult = await this._getAllUsersUsecase.execute(dto);
+        const getAllUsersResult =
+            await this._getAllUsersUsecase.execute(validationResult);
 
         if (getAllUsersResult.isFailure) {
             console.log(getAllUsersResult.getError());
@@ -165,9 +163,8 @@ export class AdminController {
                 req.body,
             );
 
-        const dto = AdminMapperProfile.toBlockUserInputDto(validationResult);
-
-        const blockUserResult = await this._blockUserUsecase.execute(dto);
+        const blockUserResult =
+            await this._blockUserUsecase.execute(validationResult);
 
         if (blockUserResult.isFailure) {
             throw new AppError(
@@ -193,9 +190,8 @@ export class AdminController {
                 },
             );
 
-        const dto = AdminMapperProfile.toGetAdminUserInputDto(validationResult);
-
-        const getAdminUserResult = await this._getAdminUserUsecase.execute(dto);
+        const getAdminUserResult =
+            await this._getAdminUserUsecase.execute(validationResult);
 
         if (getAdminUserResult.isFailure) {
             throw new AppError(
@@ -219,11 +215,8 @@ export class AdminController {
                 req.query,
             );
 
-        const dto =
-            AdminMapperProfile.toGetAllSellersInputDto(validationResult);
-
         const getAllSellersResult =
-            await this._getAllSellersUsecase.execute(dto);
+            await this._getAllSellersUsecase.execute(validationResult);
 
         if (getAllSellersResult.isFailure) {
             throw new AppError(
@@ -247,10 +240,8 @@ export class AdminController {
                 { id: req.params.id as string },
             );
 
-        const dto =
-            AdminMapperProfile.toGetAdminSellerInputDto(validationResult);
-
-        const getSellerResult = await this._getAdminSellerUsecase.execute(dto);
+        const getSellerResult =
+            await this._getAdminSellerUsecase.execute(validationResult);
 
         if (getSellerResult.isFailure) {
             throw new AppError(
@@ -275,10 +266,8 @@ export class AdminController {
                     { id: req.params.id as string },
                 );
 
-            const dto =
-                AdminMapperProfile.toApproveSellerKycInputDto(validationResult);
-
-            const result = await this._approveSellerKycUsecase.execute(dto);
+            const result =
+                await this._approveSellerKycUsecase.execute(validationResult);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -307,10 +296,8 @@ export class AdminController {
                     },
                 );
 
-            const dto =
-                AdminMapperProfile.toRejectSellerKycInputDto(validationResult);
-
-            const result = await this._rejectSellerKycUsecase.execute(dto);
+            const result =
+                await this._rejectSellerKycUsecase.execute(validationResult);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -358,13 +345,10 @@ export class AdminController {
                     },
                 );
 
-            const dto =
-                AdminMapperProfile.toApproveAuctionCategoryInputDto(
+            const result =
+                await this._approveAuctionCategoryUsecase.execute(
                     validationResult,
                 );
-
-            const result =
-                await this._approveAuctionCategoryUsecase.execute(dto);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -393,13 +377,10 @@ export class AdminController {
                     },
                 );
 
-            const dto =
-                AdminMapperProfile.toRejectAuctionCategoryInputDto(
+            const result =
+                await this._rejectAuctionCategoryUsecase.execute(
                     validationResult,
                 );
-
-            const result =
-                await this._rejectAuctionCategoryUsecase.execute(dto);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -428,13 +409,10 @@ export class AdminController {
                     },
                 );
 
-            const dto =
-                AdminMapperProfile.toChangeAuctionCategoryStatusInputDto(
+            const result =
+                await this._changeAuctionCategoryStatusUsecase.execute(
                     validationResult,
                 );
-
-            const result =
-                await this._changeAuctionCategoryStatusUsecase.execute(dto);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -483,10 +461,10 @@ export class AdminController {
                     req.query as unknown as ZodGetBrowseAuctionsInputType,
                 );
 
-            const dto =
-                AdminMapperProfile.toGetAdminAuctionsInputDto(validationResult);
-
-            const result = await this._getAllAdminAuctionsUsecase.execute(dto);
+            const result =
+                await this._getAllAdminAuctionsUsecase.execute(
+                    validationResult,
+                );
 
             if (result.isFailure) {
                 throw new AppError(
@@ -523,13 +501,10 @@ export class AdminController {
                     },
                 );
 
-            const dto =
-                AdminMapperProfile.toUpdateAuctionCategoryInputDto(
+            const result =
+                await this._updateAuctionCategoryUsecase.execute(
                     validationResult,
                 );
-
-            const result =
-                await this._updateAuctionCategoryUsecase.execute(dto);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -560,18 +535,16 @@ export class AdminController {
                 ValidationHelper.validate<ZodCreateAuctionCategoryInputType>(
                     createAuctionCategorySchema,
                     {
-                        name: req.body?.name,
+                        name: req.body.name,
                         parentId: req.body?.parentId,
+                        userId: req.user.id,
                     },
                 );
 
-            const dto = AdminMapperProfile.toCreateAuctionCategoryInputDto(
-                validationResult,
-                req.user.id,
-            );
-
             const result =
-                await this._createAuctionCategoryUsecase.execute(dto);
+                await this._createAuctionCategoryUsecase.execute(
+                    validationResult,
+                );
 
             if (result.isFailure) {
                 throw new AppError(
@@ -601,15 +574,11 @@ export class AdminController {
             viewKycSchema,
             {
                 documentId: req.params.id as string,
+                userId: req.user.id,
             },
         );
 
-        const dto = AdminMapperProfile.toViewKycInputDto(
-            validationResult,
-            req.user.id,
-        );
-
-        const result = await this._viewKycUsecase.execute(dto);
+        const result = await this._viewKycUsecase.execute(validationResult);
 
         if (result.isFailure) {
             throw new AppError(

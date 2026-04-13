@@ -1,5 +1,4 @@
 import type {
-    IGetAdminAuctionsInputDto,
     IGetAdminAuctionsOutputDto,
     IGetAdminAuctionsUsecase,
 } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
@@ -9,6 +8,8 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
+import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 
 @injectable()
 export class GetAdminAuctionsUsecase implements IGetAdminAuctionsUsecase {
@@ -18,20 +19,25 @@ export class GetAdminAuctionsUsecase implements IGetAdminAuctionsUsecase {
     ) {}
 
     async execute(
-        input: IGetAdminAuctionsInputDto,
+        input: ZodGetBrowseAuctionsInputType,
     ): Promise<Result<IGetAdminAuctionsOutputDto>> {
-        const safePage = Number(input.page) > 0 ? input.page : 1;
-        const safeLimit = Number(input.limit) > 0 ? input.limit : 10;
+        const dto = AdminMapperProfile.toGetAdminAuctionsInputDto(input);
+
+        const { page, limit, auctionType, categoryId, sort, order, search } =
+            dto;
+
+        const safePage = Number(page) > 0 ? page : 1;
+        const safeLimit = Number(limit) > 0 ? limit : 10;
 
         const auctionsRes = await this._auctionRepository.findAll({
             page: safePage,
             limit: safeLimit,
             status: 'ALL',
-            auctionType: input.auctionType,
-            categoryId: input.categoryId as string,
-            sort: input.sort as string,
-            order: input.order as 'asc' | 'desc',
-            search: input.search as string,
+            auctionType: auctionType,
+            categoryId: categoryId,
+            sort: sort,
+            order: order,
+            search: search,
         });
 
         if (auctionsRes.isFailure) {
