@@ -38,9 +38,9 @@ export class GetAllUsersUseCase implements IGetAllUsersUsecase {
                 search,
                 sort,
                 order,
-                role,
-                status,
-                authProvider,
+                role: role === 'ALL' ? undefined : role,
+                status: status === 'ALL' ? undefined : status,
+                authProvider: authProvider === 'ALL' ? undefined : authProvider,
             };
 
             const usersResult = await this._userRepository.findAll(input);

@@ -50,4 +50,8 @@ export class WalletTransaction {
     getType(): WalletTransactionType {
         return this.type;
     }
+
+    getCreatedAt(): Date {
+        return this.createdAt;
+    }
 }

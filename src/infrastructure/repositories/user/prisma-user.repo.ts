@@ -2,7 +2,6 @@ import { User } from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Email } from '@domain/value-objects/email.vo';
 import { PrismaClient } from '@prisma/client';
-import { UserMapper } from '../../mappers/user/user.mapper';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
 import { TYPES } from 'di/types.di';
@@ -10,17 +9,25 @@ import { Result } from '@domain/shared/result';
 import { IFindAllUsersInput } from '@domain/types/userRepo.types';
 import { BaseRepository } from '../base/base.Repo';
 import { User as PrismaUser } from '@prisma/client';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 
 @injectable()
 export class PrismaUserRepo
-    extends BaseRepository<User, PrismaUser, IFindAllUsersInput>
+    extends BaseRepository<
+        User,
+        PrismaUser,
+        IFindAllUsersInput,
+        IDbMapper<User, PrismaUser>
+    >
     implements IUserRepository
 {
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
+        @inject(TYPES.UserMapper)
+        readonly mapper: IDbMapper<User, PrismaUser>,
     ) {
-        super(_prisma.user, UserMapper);
+        super(_prisma.user, mapper);
     }
 
     async findById(userId: string): Promise<Result<User>> {
@@ -35,7 +42,7 @@ export class PrismaUserRepo
 
         if (!dbUser) return Result.fail('User not found');
 
-        const userResult = UserMapper.toDomain(dbUser);
+        const userResult = this.mapper.toDomain(dbUser);
         if (userResult.isFailure) return Result.fail(userResult.getError());
 
         return Result.ok(userResult.getValue());
@@ -51,7 +58,7 @@ export class PrismaUserRepo
 
         const users: User[] = [];
         for (const dbUser of dbUsers) {
-            const userResult = UserMapper.toDomain(dbUser);
+            const userResult = this.mapper.toDomain(dbUser);
             if (userResult.isFailure) return Result.fail(userResult.getError());
             users.push(userResult.getValue());
         }
@@ -70,7 +77,7 @@ export class PrismaUserRepo
 
         if (!dbUser) return Result.fail('User not found');
 
-        const userResult = UserMapper.toDomain(dbUser);
+        const userResult = this.mapper.toDomain(dbUser);
         if (userResult.isFailure) return Result.fail(userResult.getError());
 
         return Result.ok(userResult.getValue());
@@ -88,7 +95,7 @@ export class PrismaUserRepo
 
         if (!dbUser) return Result.fail('User not found');
 
-        const userResult = UserMapper.toDomain(dbUser);
+        const userResult = this.mapper.toDomain(dbUser);
         if (userResult.isFailure) {
             return Result.fail(userResult.getError());
         }
@@ -96,8 +103,8 @@ export class PrismaUserRepo
         return Result.ok(userResult.getValue());
     }
 
-    async save(user: User): Promise<void> {
-        const persistantUser = UserMapper.toPersistence(user);
+    async save(user: User): Promise<Result<void>> {
+        const persistantUser = this.mapper.toPersistence(user) as PrismaUser;
 
         await this._prisma.user.upsert({
             where: {
@@ -121,6 +128,8 @@ export class PrismaUserRepo
                 },
             },
         });
+
+        return Result.ok();
     }
 
     async findAll(input: IFindAllUsersInput): Promise<Result<User[]>> {
@@ -134,9 +143,9 @@ export class PrismaUserRepo
                     { email: { contains: search, mode: 'insensitive' } },
                     { phone: { contains: search, mode: 'insensitive' } },
                 ],
-                roles: { some: { role: role === 'ALL' ? undefined : role } },
-                status: status === 'ALL' ? undefined : status,
-                authProvider: authProvider === 'ALL' ? undefined : authProvider,
+                roles: { some: { role: role } },
+                status: status,
+                authProvider: authProvider,
             },
             orderBy: {
                 [sort]: order,
@@ -149,7 +158,7 @@ export class PrismaUserRepo
         });
 
         return Result.ok(
-            users.map((user) => UserMapper.toDomain(user).getValue()),
+            users.map((user) => this.mapper.toDomain(user).getValue()),
         );
     }
 }

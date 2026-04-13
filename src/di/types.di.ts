@@ -220,4 +220,7 @@ export const TYPES = {
     NotificationMapper: Symbol.for('NotificationMapper'),
     OtpMapper: Symbol.for('OtpMapper'),
     PaymentsMapper: Symbol.for('PaymentsMapper'),
+    WalletMapper: Symbol.for('WalletMapper'),
+    UserMapper: Symbol.for('UserMapper'),
+    WalletTransactionMapper: Symbol.for('WalletTransactionMapper'),
 };
