@@ -10,5 +10,5 @@ export interface IUserRepository {
     findByEmail(email: Email): Promise<Result<User>>;
     findByPhone(phone: Phone): Promise<Result<User>>;
     findAll(input: IFindAllUsersInput): Promise<Result<User[]>>;
-    save(user: User): Promise<Result<void>>;
+    save(user: User): Promise<Result<User>>;
 }

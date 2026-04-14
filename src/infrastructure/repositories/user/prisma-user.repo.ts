@@ -103,7 +103,7 @@ export class PrismaUserRepo
         return Result.ok(userResult.getValue());
     }
 
-    async save(user: User): Promise<Result<void>> {
+    async save(user: User): Promise<Result<User>> {
         const persistantUser = this.mapper.toPersistence(user) as PrismaUser;
 
         await this._prisma.user.upsert({

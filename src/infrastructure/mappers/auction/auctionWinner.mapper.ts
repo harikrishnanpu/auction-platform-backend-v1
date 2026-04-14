@@ -2,11 +2,15 @@ import {
     AuctionWinner,
     AuctionWinnerStatus,
 } from '@domain/entities/auction/auction-winner.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { Result } from '@domain/shared/result';
 import { AuctionWinner as PrismaAuctionWinner } from '@prisma/client';
 
-export class AuctionWinnerMapper {
-    static toPersistence(auctionWinner: AuctionWinner) {
+export class AuctionWinnerMapper implements IDbMapper<
+    AuctionWinner,
+    PrismaAuctionWinner
+> {
+    toPersistence(auctionWinner: AuctionWinner): unknown {
         return {
             id: auctionWinner.getId(),
             auctionId: auctionWinner.getAuctionId(),
@@ -19,7 +23,7 @@ export class AuctionWinnerMapper {
         };
     }
 
-    static toDomain(raw: PrismaAuctionWinner): Result<AuctionWinner> {
+    toDomain(raw: PrismaAuctionWinner): Result<AuctionWinner> {
         return AuctionWinner.create({
             id: raw.id,
             auctionId: raw.auctionId,

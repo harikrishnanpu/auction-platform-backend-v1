@@ -3,13 +3,15 @@ import {
     AuctionPublicFallbackStatus,
     PublicFallbackAuction,
 } from '@domain/entities/auction/public-fallback-auction.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { Result } from '@domain/shared/result';
 import { PublicFallbackAuction as PrismaPublicFallbackAuction } from '@prisma/client';
 
-export class FallbackPublicAuctionMapper {
-    public static toDomain(
-        data: PrismaPublicFallbackAuction,
-    ): Result<PublicFallbackAuction> {
+export class FallbackPublicAuctionMapper implements IDbMapper<
+    PublicFallbackAuction,
+    PrismaPublicFallbackAuction
+> {
+    toDomain(data: PrismaPublicFallbackAuction): Result<PublicFallbackAuction> {
         return PublicFallbackAuction.create({
             id: data.id,
             auctionId: data.auctionId,
@@ -21,8 +23,8 @@ export class FallbackPublicAuctionMapper {
         });
     }
 
-    public static toPersistence(publicFallbackAuction: PublicFallbackAuction) {
-        return Result.ok({
+    toPersistence(publicFallbackAuction: PublicFallbackAuction): unknown {
+        return {
             id: publicFallbackAuction.getId(),
             auctionId: publicFallbackAuction.getAuctionId(),
             amount: publicFallbackAuction.getAmount(),
@@ -30,6 +32,6 @@ export class FallbackPublicAuctionMapper {
             paymentStatus:
                 publicFallbackAuction.getPaymentStatus() as AuctionPublicFallbackPaymentStatus,
             createdAt: publicFallbackAuction.getCreatedAt(),
-        });
+        };
     }
 }

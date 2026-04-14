@@ -17,6 +17,7 @@ export abstract class BaseRepository<
     ) {}
 
     async save(entity: Entity): Promise<Result<Entity>> {
+        console.log('BSREPO__ ENTITY SAVE: ', entity);
         try {
             const persistence = this.mapper.toPersistence(
                 entity,
@@ -29,7 +30,8 @@ export abstract class BaseRepository<
             });
 
             return this.mapper.toDomain(rawRes);
-        } catch {
+        } catch (err) {
+            console.log('BSREPO__ ERROR SAVE: ', err);
             return Result.fail('UNEXPECTED ERROR IN SAVE- BSREPO');
         }
     }

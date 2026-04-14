@@ -2,7 +2,6 @@ import { TYPES } from '@di/types.di';
 import { AuctionWinner } from '@domain/entities/auction/auction-winner.entity';
 import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
 import { Result } from '@domain/shared/result';
-import { AuctionWinnerMapper } from '@infrastructure/mappers/auction/auctionWinner.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject } from 'inversify';
 import { BaseRepository } from '../base/base.Repo';
@@ -36,7 +35,7 @@ export class PrismaAuctionWinnerRepository
 
         const winners: AuctionWinner[] = [];
         for (const raw of result) {
-            const result = AuctionWinnerMapper.toDomain(raw);
+            const result = this.mapper.toDomain(raw);
             if (result.isFailure) return Result.fail(result.getError());
             winners.push(result.getValue());
         }
@@ -51,7 +50,7 @@ export class PrismaAuctionWinnerRepository
 
         const winners: AuctionWinner[] = [];
         for (const raw of result) {
-            const result = AuctionWinnerMapper.toDomain(raw);
+            const result = this.mapper.toDomain(raw);
             if (result.isFailure) return Result.fail(result.getError());
             winners.push(result.getValue());
         }

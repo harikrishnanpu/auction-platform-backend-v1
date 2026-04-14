@@ -2,7 +2,7 @@ import { AuctionChatMessage } from '@domain/entities/auction/auction-chat-messag
 import { Result } from '@domain/shared/result';
 
 export interface IAuctionChatMessageRepository {
-    create(data: AuctionChatMessage): Promise<Result<void>>;
+    create(data: AuctionChatMessage): Promise<Result<AuctionChatMessage>>;
 
     findManyByAuctionId(
         auctionId: string,

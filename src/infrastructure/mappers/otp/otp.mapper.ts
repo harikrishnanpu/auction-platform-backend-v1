@@ -31,11 +31,14 @@ export class OtpMapper implements IDbMapper<Otp, PrismaOtp> {
 
     toPersistence(otp: Otp): unknown {
         return {
+            id: otp.getId(),
             userId: otp.getUserId(),
             purpose: otp.getPurpose(),
             channel: otp.getChannel(),
             otp: otp.getOtp(),
             expiresAt: otp.getExpiresAt(),
+            maxAttempts: otp.getMaxAttempts(),
+            attempts: otp.getAttempts(),
             status: otp.getOtpStatus(),
         };
     }

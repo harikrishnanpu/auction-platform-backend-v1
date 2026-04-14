@@ -2,7 +2,6 @@ import { TYPES } from '@di/types.di';
 import { PublicAuctionFallbackParticipants } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { Result } from '@domain/shared/result';
-import { FallbackAuctionParticipantsMapper } from '@infrastructure/mappers/auction/fallbackAuctionParticipants.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject } from 'inversify';
 import { BaseRepository } from '../base/base.Repo';
@@ -48,7 +47,7 @@ export class PrismaFallbackAuctionParticipantsRepo
             });
 
         if (!data) return Result.ok(null);
-        return FallbackAuctionParticipantsMapper.toDomain(data);
+        return this.mapper.toDomain(data);
     }
 
     async findByAuctionId(
@@ -60,9 +59,7 @@ export class PrismaFallbackAuctionParticipantsRepo
             });
 
         return Result.ok(
-            data
-                .map(FallbackAuctionParticipantsMapper.toDomain)
-                .map((result) => result.getValue()),
+            data.map(this.mapper.toDomain).map((result) => result.getValue()),
         );
     }
 }

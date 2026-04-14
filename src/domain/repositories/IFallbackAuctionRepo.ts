@@ -2,7 +2,9 @@ import { PublicFallbackAuction } from '@domain/entities/auction/public-fallback-
 import { Result } from '@domain/shared/result';
 
 export interface IFallbackAuctionRepo {
-    save(publicFallbackAuction: PublicFallbackAuction): Promise<Result<void>>;
+    save(
+        publicFallbackAuction: PublicFallbackAuction,
+    ): Promise<Result<PublicFallbackAuction>>;
     findById(id: string): Promise<Result<PublicFallbackAuction | null>>;
     findByAuctionId(
         auctionId: string,

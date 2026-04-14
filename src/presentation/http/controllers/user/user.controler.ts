@@ -205,6 +205,7 @@ export class UserController {
                 {
                     ...req.body,
                     userId: req.user.id,
+                    email: req.user.email,
                 },
             );
 

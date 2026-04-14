@@ -31,6 +31,24 @@ export class PrismaAuctionCategoryRepository
         super(_prisma.auctionCategory, mapper);
     }
 
+    async findById(id: string): Promise<Result<AuctionCategory | null>> {
+        const auctionCategory = await this._prisma.auctionCategory.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                submittedByUser: true,
+            },
+        });
+
+        if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
+
+        const result = this.mapper.toDomain(auctionCategory);
+
+        if (result.isFailure) return Result.fail(result.getError());
+        return Result.ok<AuctionCategory>(result.getValue());
+    }
+
     async findAll(): Promise<Result<AuctionCategory[]>> {
         const auctionCategories = await this._prisma.auctionCategory.findMany({
             include: {

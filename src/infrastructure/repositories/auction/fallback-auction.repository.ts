@@ -2,7 +2,6 @@ import { TYPES } from '@di/types.di';
 import { PublicFallbackAuction } from '@domain/entities/auction/public-fallback-auction.entity';
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
 import { Result } from '@domain/shared/result';
-import { FallbackPublicAuctionMapper } from '@infrastructure/mappers/auction/fallbackPublicAuction.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
 import { BaseRepository } from '../base/base.Repo';
@@ -39,6 +38,6 @@ export class PrismaFallbackAuctionRepository
         });
 
         if (!data) return Result.ok(null);
-        return FallbackPublicAuctionMapper.toDomain(data);
+        return this.mapper.toDomain(data);
     }
 }
