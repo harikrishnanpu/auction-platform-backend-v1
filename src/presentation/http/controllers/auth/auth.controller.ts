@@ -303,7 +303,10 @@ export class AuthController {
             const validationResult =
                 ValidationHelper.validate<ZodCompleteProfileInputType>(
                     completeProfileSchema,
-                    req.body,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
             const result =

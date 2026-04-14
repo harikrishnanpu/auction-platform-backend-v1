@@ -16,52 +16,52 @@ export abstract class BaseRepository<
         protected readonly mapper: DbMapper,
     ) {}
 
-    async save(entity: Entity): Promise<Result<void>> {
+    async save(entity: Entity): Promise<Result<Entity>> {
         try {
             const persistence = this.mapper.toPersistence(
                 entity,
             ) as Persistence;
 
-            await this.model.upsert({
+            const rawRes = await this.model.upsert({
                 where: { id: persistence.id },
                 create: persistence,
                 update: persistence,
             });
 
-            return Result.ok();
+            return this.mapper.toDomain(rawRes);
         } catch {
             return Result.fail('UNEXPECTED ERROR IN SAVE- BSREPO');
         }
     }
 
-    async create(entity: Entity): Promise<Result<void>> {
+    async create(entity: Entity): Promise<Result<Entity>> {
         try {
             const persistence = this.mapper.toPersistence(
                 entity,
             ) as Persistence;
 
-            await this.model.create({
+            const rawRes = await this.model.create({
                 data: persistence,
             });
 
-            return Result.ok();
+            return this.mapper.toDomain(rawRes);
         } catch {
             return Result.fail('UNEXPECTED ERROR IN CREATE- BSREPO');
         }
     }
 
-    async update(id: string, entity: Entity): Promise<Result<void>> {
+    async update(id: string, entity: Entity): Promise<Result<Entity>> {
         try {
             const persistence = this.mapper.toPersistence(
                 entity,
             ) as Persistence;
 
-            await this.model.update({
+            const rawRes = await this.model.update({
                 where: { id },
                 data: persistence,
             });
 
-            return Result.ok();
+            return this.mapper.toDomain(rawRes);
         } catch {
             return Result.fail('UNEXPECTED ERROR IN UPDATE- BSREPO');
         }

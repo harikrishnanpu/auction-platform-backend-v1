@@ -5,20 +5,14 @@ import expressAsyncHandler from 'express-async-handler';
 import { inject, injectable } from 'inversify';
 import { Request, Response } from 'express';
 import { AppError } from '@presentation/http/error/app.error';
-import {
-    IGetAllAuctionCategoryRequestInputDto,
-    IGetAllAuctionCategoryRequestOutputDto,
-} from '@application/dtos/seller/getAllAuctionCategoryRequest.dto';
+import { IGetAllAuctionCategoryRequestOutputDto } from '@application/dtos/seller/getAllAuctionCategoryRequest.dto';
 import {
     requestAuctionCategorySchema,
     ZodRequestAuctionCategoryInputType,
 } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import { IRequestAuctionCategoryUsecase } from '@application/interfaces/usecases/seller/IRequestAuctionCategory.usecase';
 import { IGetAllSellerAuctionsUsecase } from '@application/interfaces/usecases/seller/IGetallAuctionsUsecase';
-import {
-    IGetAllAuctionsInputDto,
-    IGetAllAuctionsOutputDto,
-} from '@application/dtos/auction/getAllAuction.dto';
+import { IGetAllAuctionsOutputDto } from '@application/dtos/auction/getAllAuction.dto';
 import {
     getAllAuctionsSchema,
     ZodGetAllAuctionsInputType,
@@ -26,15 +20,12 @@ import {
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetSellerAuctionPaymentsUsecase } from '@application/interfaces/usecases/seller/IGetSellerAuctionPaymentsUsecase';
 import { AUCTION_CONSTANTS } from '@presentation/constants/auction/auction.constants';
-import { SellerMapperProfile } from '@infrastructure/mappers/seller/seller.mapper';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
-import {
-    IRequestAuctionCategoryInputDto,
-    IRequestAuctionCategoryOutputDto,
-} from '@application/dtos/admin/request-auction-category.dto';
+import { IRequestAuctionCategoryOutputDto } from '@application/dtos/admin/request-auction-category.dto';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { IGetSellerAuctionPaymentsOutputDto } from '@application/dtos/seller/sellerAuctionPayments.dto';
+import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { PaymentStatus } from '@domain/entities/payments/payments.entity';
 import {
     getSellerAuctionPaymentsSchema,
@@ -65,15 +56,10 @@ export class SellerController {
                 );
             }
 
-            const dto: IGetAllAuctionCategoryRequestInputDto =
-                SellerMapperProfile.toGetAllAuctionCategoryRequestInputDto(
-                    req.user.id,
-                );
-
             const result =
-                await this._getAllSellerAuctionCategoryRequestUsecase.execute(
-                    dto,
-                );
+                await this._getAllSellerAuctionCategoryRequestUsecase.execute({
+                    userId: req.user.id,
+                });
 
             if (result.isFailure) {
                 throw new AppError(
@@ -107,14 +93,12 @@ export class SellerController {
                     req.body,
                 );
 
-            const dto: IRequestAuctionCategoryInputDto =
-                SellerMapperProfile.toRequestAuctionCategoryInputDto(
+            const result = await this._requestAuctionCategoryUsecase.execute(
+                AuctionMapperProrfile.toRequestAuctionCategoryDto(
                     validationResult,
                     req.user.id,
-                );
-
-            const result =
-                await this._requestAuctionCategoryUsecase.execute(dto);
+                ),
+            );
 
             if (result.isFailure) {
                 throw new AppError(
@@ -145,16 +129,14 @@ export class SellerController {
             const validationResult =
                 ValidationHelper.validate<ZodGetAllAuctionsInputType>(
                     getAllAuctionsSchema,
-                    req.query,
+                    {
+                        ...req.query,
+                        userId: req.user.id,
+                    } as unknown as ZodGetAllAuctionsInputType,
                 );
 
-            const dto: IGetAllAuctionsInputDto =
-                SellerMapperProfile.toGetAllAuctionsInputDto(
-                    validationResult,
-                    req.user.id,
-                );
-
-            const result = await this._getAllAuctionsUsecase.execute(dto);
+            const result =
+                await this._getAllAuctionsUsecase.execute(validationResult);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -190,12 +172,10 @@ export class SellerController {
                 );
             }
 
-            const dto = SellerMapperProfile.toGetAuctionByIdInputDto(
+            const result = await this._getAuctionByIdUsecase.execute({
+                userId: req.user.id,
                 auctionId,
-                req.user.id,
-            );
-
-            const result = await this._getAuctionByIdUsecase.execute(dto);
+            });
 
             if (result.isFailure) {
                 throw new AppError(

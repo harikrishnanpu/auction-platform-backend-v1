@@ -98,10 +98,10 @@ export class AddAuctionParticipantUsecase implements IAddAuctionParticipantUseca
             wllettransaction.getValue(),
         );
 
-        const updatedWallet = await this._walletRepository.save(userWallet);
+        const saveWalletResult = await this._walletRepository.save(userWallet);
 
-        if (updatedWallet.isFailure) {
-            return Result.fail(updatedWallet.getError());
+        if (saveWalletResult.isFailure) {
+            return Result.fail(saveWalletResult.getError());
         }
 
         const auctionParticipantEntity = AuctionParticipant.create({

@@ -94,7 +94,10 @@ export class ReleaseParticipantsWalletUsecase implements IReleaseParticipantsWal
                 return Result.fail(walletTransaction.getError());
             }
 
-            await this._walletRepository.save(wallet!);
+            const saveWalletResult = await this._walletRepository.save(wallet!);
+            if (saveWalletResult.isFailure) {
+                return Result.fail(saveWalletResult.getError());
+            }
         }
 
         return Result.ok();

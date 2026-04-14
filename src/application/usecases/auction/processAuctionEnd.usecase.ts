@@ -57,15 +57,15 @@ export class ProcessAuctionEndNotificationUsecase implements IProcessAuctionEndN
             return Result.fail(winnerNotification.getError());
         }
 
-        const savedWinner = await this._notificationRepository.save(
+        const saveWinnerResult = await this._notificationRepository.save(
             winnerNotification.getValue(),
         );
 
-        if (savedWinner.isFailure) {
-            return Result.fail(savedWinner.getError());
+        if (saveWinnerResult.isFailure) {
+            return Result.fail(saveWinnerResult.getError());
         }
 
-        const winner = savedWinner.getValue();
+        const winner = winnerNotification.getValue();
 
         this._eventBus.publish(
             new NotificationCreated(
@@ -92,14 +92,14 @@ export class ProcessAuctionEndNotificationUsecase implements IProcessAuctionEndN
                 return Result.fail(notification.getError());
             }
 
-            const saved = await this._notificationRepository.save(
+            const saveNotifyResult = await this._notificationRepository.save(
                 notification.getValue(),
             );
-            if (saved.isFailure) {
-                return Result.fail(saved.getError());
+            if (saveNotifyResult.isFailure) {
+                return Result.fail(saveNotifyResult.getError());
             }
 
-            const notify = saved.getValue();
+            const notify = notification.getValue();
 
             this._eventBus.publish(
                 new NotificationCreated(

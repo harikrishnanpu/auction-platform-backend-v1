@@ -83,9 +83,13 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
                 return Result.fail(newFallbackAuction.getError());
             }
 
-            await this._publicFallbackAuctionRepository.save(
-                newFallbackAuction.getValue(),
-            );
+            const saveFallbackResult =
+                await this._publicFallbackAuctionRepository.save(
+                    newFallbackAuction.getValue(),
+                );
+            if (saveFallbackResult.isFailure) {
+                return Result.fail(saveFallbackResult.getError());
+            }
 
             const savedAuction = await this._auctionRepository.save(auction);
 
@@ -123,16 +127,21 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
                     return Result.fail(notificationEntity.getError());
                 }
 
-                await this._notificationRepository.save(
-                    notificationEntity.getValue(),
-                );
+                const saveNotifyResult =
+                    await this._notificationRepository.save(
+                        notificationEntity.getValue(),
+                    );
+                if (saveNotifyResult.isFailure) {
+                    return Result.fail(saveNotifyResult.getError());
+                }
 
+                const notify = notificationEntity.getValue();
                 this._eventBus.publish(
                     new NotificationCreated(
-                        notificationEntity.getValue().getId(),
-                        notificationEntity.getValue().getUserId(),
-                        notificationEntity.getValue().getTitle(),
-                        notificationEntity.getValue().getMessage(),
+                        notify.getId(),
+                        notify.getUserId(),
+                        notify.getTitle(),
+                        notify.getMessage(),
                     ),
                 );
             }

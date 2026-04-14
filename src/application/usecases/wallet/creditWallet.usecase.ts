@@ -52,16 +52,15 @@ export class CreditWalletUsecase implements ICreditWalletUsecase {
         const updateWallet = wallet.addToMainBalance(input.amount);
         if (updateWallet.isFailure) return Result.fail(updateWallet.getError());
 
-        const updatedWallet = await this._walletRepository.save(wallet);
-        if (updatedWallet.isFailure)
-            return Result.fail(updatedWallet.getError());
+        const saveResult = await this._walletRepository.save(wallet);
+        if (saveResult.isFailure) return Result.fail(saveResult.getError());
 
         return Result.ok({
-            id: updatedWallet.getValue().getId(),
+            id: wallet.getId(),
             userId: wallet.getUserId(),
-            mainBalance: updatedWallet.getValue().getMainBalance(),
-            heldBalance: updatedWallet.getValue().getHeldBalance(),
-            currency: updatedWallet.getValue().getCurrency(),
+            mainBalance: wallet.getMainBalance(),
+            heldBalance: wallet.getHeldBalance(),
+            currency: wallet.getCurrency(),
         });
     }
 }

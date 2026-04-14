@@ -1,10 +1,8 @@
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
-import {
-  EditProfileInput,
-  EditProfileOutput,
-} from '@application/dtos/user/editProfile.dto';
+import { EditProfileOutput } from '@application/dtos/user/editProfile.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
+import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { TYPES } from '@di/types.di';
 import { OtpPurpose } from '@domain/entities/otp/otp.entity';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';
@@ -13,82 +11,88 @@ import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
+import { ZodEditProfileInputType } from '@presentation/validators/schemas/user/editProfile.schema';
 
 @injectable()
 export class EditProfileUseCase implements IEditProfileUsecase {
-  constructor(
-    @inject(TYPES.IUserRepository)
-    private readonly _userRepository: IUserRepository,
-    @inject(TYPES.IOtpRepository)
-    private readonly _otpRepository: IOtpRepository,
-  ) {}
+    constructor(
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
+        @inject(TYPES.IOtpRepository)
+        private readonly _otpRepository: IOtpRepository,
+    ) {}
 
-  async execute(data: EditProfileInput): Promise<Result<EditProfileOutput>> {
-    try {
-      const userEntity = await this._userRepository.findById(data.userId);
-      if (userEntity.isFailure) {
-        return Result.fail(userEntity.getError());
-      }
+    async execute(
+        data: ZodEditProfileInputType,
+    ): Promise<Result<EditProfileOutput>> {
+        try {
+            const dto = UserMapperProfile.toEditProfileInput(data);
 
-      const otpEntity =
-        await this._otpRepository.findRecentOtpByUserIdAndPurpose(
-          userEntity.getValue().getId(),
-          OtpPurpose.EDIT_PROFILE,
-        );
-      if (!otpEntity) {
-        return Result.fail('No Otp found');
-      }
+            const userEntity = await this._userRepository.findById(dto.userId);
+            if (userEntity.isFailure) {
+                return Result.fail(userEntity.getError());
+            }
 
-      if (otpEntity.isOtpExpired() || otpEntity.isOtpBlocked()) {
-        return Result.fail('Otp expired');
-      }
+            const otpEntity =
+                await this._otpRepository.findRecentOtpByUserIdAndPurpose(
+                    userEntity.getValue().getId(),
+                    OtpPurpose.EDIT_PROFILE,
+                );
 
-      if (otpEntity.getOtp() !== data.otp) {
-        otpEntity.incrementAttempts();
-        await this._otpRepository.update(otpEntity);
-        return Result.fail('Invalid otp');
-      }
+            if (!otpEntity) {
+                return Result.fail('No Otp found');
+            }
 
-      const emailVo = Email.create(data.email);
-      if (emailVo.isFailure) {
-        return Result.fail(emailVo.getError());
-      }
+            if (otpEntity.isOtpExpired() || otpEntity.isOtpBlocked()) {
+                return Result.fail('Otp expired');
+            }
 
-      const phoneVo = Phone.create(data.phone);
-      if (phoneVo.isFailure) {
-        return Result.fail(phoneVo.getError());
-      }
+            if (otpEntity.getOtp() !== dto.otp) {
+                otpEntity.incrementAttempts();
+                await this._otpRepository.update(otpEntity.getId(), otpEntity);
+                return Result.fail('Invalid otp');
+            }
 
-      userEntity.getValue().setName(data.name);
-      userEntity.getValue().setEmail(emailVo.getValue());
-      userEntity.getValue().setPhone(phoneVo.getValue());
-      userEntity.getValue().setAddress(data.address);
+            const emailVo = Email.create(dto.email);
+            if (emailVo.isFailure) {
+                return Result.fail(emailVo.getError());
+            }
 
-      await this._userRepository.save(userEntity.getValue());
+            const phoneVo = Phone.create(dto.phone);
+            if (phoneVo.isFailure) {
+                return Result.fail(phoneVo.getError());
+            }
 
-      const userResponseDto: userResponseDto = {
-        id: userEntity.getValue().getId(),
-        name: userEntity.getValue().getName(),
-        email: userEntity.getValue().getEmail().getValue(),
-        phone: userEntity.getValue().getPhone()?.getValue() ?? '',
-        address: userEntity.getValue().getAddress() ?? '',
-        avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
-        isProfileCompleted: userEntity.getValue().isProfileCompleted(),
-        isVerified: userEntity.getValue().getIsVerified(),
-        status: userEntity.getValue().getStatus(),
-        authProvider: userEntity.getValue().getAuthProvider().getType(),
-        roles: userEntity
-          .getValue()
-          .getRoles()
-          .map((role) => role.getValue() as UserRoleType),
-      };
+            userEntity.getValue().setName(dto.name);
+            userEntity.getValue().setEmail(emailVo.getValue());
+            userEntity.getValue().setPhone(phoneVo.getValue());
+            userEntity.getValue().setAddress(dto.address);
 
-      return Result.ok({
-        user: userResponseDto,
-      });
-    } catch (error) {
-      console.log(error);
-      return Result.fail('UNEXPECTED ERROR FROM EDIT PROFILE USECASE');
+            await this._userRepository.save(userEntity.getValue());
+
+            const userResponseDto: userResponseDto = {
+                id: userEntity.getValue().getId(),
+                name: userEntity.getValue().getName(),
+                email: userEntity.getValue().getEmail().getValue(),
+                phone: userEntity.getValue().getPhone()?.getValue() ?? '',
+                address: userEntity.getValue().getAddress() ?? '',
+                avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
+                isProfileCompleted: userEntity.getValue().isProfileCompleted(),
+                isVerified: userEntity.getValue().getIsVerified(),
+                status: userEntity.getValue().getStatus(),
+                authProvider: userEntity.getValue().getAuthProvider().getType(),
+                roles: userEntity
+                    .getValue()
+                    .getRoles()
+                    .map((role) => role.getValue() as UserRoleType),
+            };
+
+            return Result.ok({
+                user: userResponseDto,
+            });
+        } catch (error) {
+            console.log(error);
+            return Result.fail('UNEXPECTED ERROR FROM EDIT PROFILE USECASE');
+        }
     }
-  }
 }

@@ -4,7 +4,6 @@ import { inject, injectable } from 'inversify';
 import { Request, Response } from 'express';
 import { AppError } from '@presentation/http/error/app.error';
 import { IChangeProfilePasswordUsecase } from '@application/interfaces/usecases/user/IChangeProfilePassword';
-import { ChangeProfilePasswordInput } from '@application/dtos/user/userProfile.dto';
 import {
     changeProfilePasswordSchema,
     ZodChangeProfilePasswordInputType,
@@ -13,16 +12,12 @@ import { USER_PROFILE_CONSTANTS } from '@presentation/constants/user/user-profil
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
 import { SendVerificationCodeInputDto } from '@application/dtos/otp/SendOtp.dto';
 import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
-import {
-    EditProfileInput,
-    EditProfileOutput,
-} from '@application/dtos/user/editProfile.dto';
+import { EditProfileOutput } from '@application/dtos/user/editProfile.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
 import {
     editProfileSchema,
     ZodEditProfileInputType,
 } from '@presentation/validators/schemas/user/editProfile.schema';
-import { GenerateAvatarUploadUrlInput } from '@application/dtos/user/avatarUploadUrl.dto';
 import { IGenerateAvatarUploadUrlUsecase } from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
 import {
     generateUploadUrlSchema,
@@ -32,14 +27,10 @@ import {
     updateAvatarUrlSchema,
     ZodUpdateAvatarUrlInputType,
 } from '@presentation/validators/schemas/user/update-avatar-url.schema';
-import {
-    UpdateAvatarUrlRequestDto,
-    UpdateAvatarUrlResponseDto,
-} from '@application/dtos/user/updateAvatar.dto';
+import { UpdateAvatarUrlResponseDto } from '@application/dtos/user/updateAvatar.dto';
 import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
-import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/notification/IGetUserNotificationsUsecase';
 import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
@@ -116,12 +107,6 @@ export class UserController {
     changeProfilePassword = expressAsyncHandler(
         async (req: Request, res: Response) => {
             // console.log(req.body);
-            const validationResult =
-                ValidationHelper.validate<ZodChangeProfilePasswordInputType>(
-                    changeProfilePasswordSchema,
-                    req.body,
-                );
-
             if (!req.user) {
                 throw new AppError(
                     USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -129,13 +114,19 @@ export class UserController {
                 );
             }
 
-            const dto: ChangeProfilePasswordInput =
-                UserMapperProfile.toChangeProfilePasswordInput(
-                    validationResult,
-                    req.user.id,
+            const validationResult =
+                ValidationHelper.validate<ZodChangeProfilePasswordInputType>(
+                    changeProfilePasswordSchema,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
-            const user = await this._changeProfilePasswordUseCase.execute(dto);
+            const user =
+                await this._changeProfilePasswordUseCase.execute(
+                    validationResult,
+                );
 
             if (user.isFailure) {
                 throw new AppError(
@@ -201,12 +192,6 @@ export class UserController {
     editProfile = expressAsyncHandler(async (req: Request, res: Response) => {
         // console.log('EDIT PROFILE=---', req.body);
 
-        const validationResult =
-            ValidationHelper.validate<ZodEditProfileInputType>(
-                editProfileSchema,
-                req.body,
-            );
-
         if (!req.user) {
             throw new AppError(
                 USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -214,13 +199,16 @@ export class UserController {
             );
         }
 
-        const dto: EditProfileInput = UserMapperProfile.toEditProfileInput(
-            validationResult,
-            req.user.id,
-            req.user.email,
-        );
+        const validationResult =
+            ValidationHelper.validate<ZodEditProfileInputType>(
+                editProfileSchema,
+                {
+                    ...req.body,
+                    userId: req.user.id,
+                },
+            );
 
-        const result = await this._editProfileUseCase.execute(dto);
+        const result = await this._editProfileUseCase.execute(validationResult);
 
         if (result.isFailure) {
             throw new AppError(
@@ -239,12 +227,6 @@ export class UserController {
 
     generateAvatarUploadUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
-            const validationResult =
-                ValidationHelper.validate<ZodGenerateUploadUrlInputType>(
-                    generateUploadUrlSchema,
-                    req.body,
-                );
-
             if (!req.user) {
                 throw new AppError(
                     USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -252,14 +234,19 @@ export class UserController {
                 );
             }
 
-            const dto: GenerateAvatarUploadUrlInput =
-                UserMapperProfile.toGenerateAvatarUploadUrlInput(
-                    validationResult,
-                    req.user.id,
+            const validationResult =
+                ValidationHelper.validate<ZodGenerateUploadUrlInputType>(
+                    generateUploadUrlSchema,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
             const result =
-                await this._generateAvatarUploadUrlUseCase.execute(dto);
+                await this._generateAvatarUploadUrlUseCase.execute(
+                    validationResult,
+                );
 
             if (result.isFailure) {
                 throw new AppError(
@@ -280,12 +267,6 @@ export class UserController {
 
     updateAvatarUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
-            const validationResult =
-                ValidationHelper.validate<ZodUpdateAvatarUrlInputType>(
-                    updateAvatarUrlSchema,
-                    req.body,
-                );
-
             if (!req.user) {
                 throw new AppError(
                     USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -293,13 +274,17 @@ export class UserController {
                 );
             }
 
-            const dto: UpdateAvatarUrlRequestDto =
-                UserMapperProfile.toUpdateAvatarUrlInput(
-                    validationResult,
-                    req.user.id,
+            const validationResult =
+                ValidationHelper.validate<ZodUpdateAvatarUrlInputType>(
+                    updateAvatarUrlSchema,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
-            const result = await this._updateAvatarUrlUseCase.execute(dto);
+            const result =
+                await this._updateAvatarUrlUseCase.execute(validationResult);
 
             if (result.isFailure) {
                 throw new AppError(

@@ -56,9 +56,12 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
                 return Result.fail(marked.getError());
             }
 
-            const updated = await this._paymentRepository.update(payment);
-            if (updated.isFailure) {
-                return Result.fail(updated.getError());
+            const updateResult = await this._paymentRepository.update(
+                payment.getId(),
+                payment,
+            );
+            if (updateResult.isFailure) {
+                return Result.fail(updateResult.getError());
             }
 
             if (

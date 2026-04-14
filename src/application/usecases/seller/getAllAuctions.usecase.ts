@@ -1,13 +1,12 @@
-import {
-    IGetAllAuctionsInputDto,
-    IGetAllAuctionsOutputDto,
-} from '@application/dtos/auction/getAllAuction.dto';
+import { IGetAllAuctionsOutputDto } from '@application/dtos/auction/getAllAuction.dto';
 import { IGetAllSellerAuctionsUsecase } from '@application/interfaces/usecases/seller/IGetallAuctionsUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject } from 'inversify';
+import { ZodGetAllAuctionsInputType } from '@presentation/validators/schemas/seller/getAllAuctions.schema';
+import { SellerMapperProfile } from '@infrastructure/mappers/seller/seller.mapper';
 
 export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase {
     constructor(
@@ -16,19 +15,21 @@ export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase
     ) {}
 
     async execute(
-        input: IGetAllAuctionsInputDto,
+        input: ZodGetAllAuctionsInputType,
     ): Promise<Result<IGetAllAuctionsOutputDto>> {
-        const safePage = Number(input.page) > 0 ? input.page : 1;
-        const safeLimit = Number(input.limit) > 0 ? input.limit : 10;
+        const dto = SellerMapperProfile.toGetAllAuctionsInputDto(input);
+
+        const safePage = Number(dto.page) > 0 ? dto.page : 1;
+        const safeLimit = Number(dto.limit) > 0 ? dto.limit : 10;
 
         const auctions = await this._auctionRepository.findAll({
-            sellerId: input.userId,
-            status: input.status,
-            auctionType: input.auctionType,
-            categoryId: input.categoryId,
-            sort: input.sort,
-            order: input.order,
-            search: input.search,
+            sellerId: dto.userId,
+            status: dto.status,
+            auctionType: dto.auctionType,
+            categoryId: dto.categoryId,
+            sort: dto.sort,
+            order: dto.order,
+            search: dto.search,
             page: safePage,
             limit: safeLimit,
         });

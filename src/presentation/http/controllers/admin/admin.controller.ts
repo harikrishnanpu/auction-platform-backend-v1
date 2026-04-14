@@ -455,10 +455,20 @@ export class AdminController {
 
     getAllAdminAuctions = expressAsyncHandler(
         async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    ADMIN_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
             const validationResult =
                 ValidationHelper.validate<ZodGetBrowseAuctionsInputType>(
                     getBrowseAuctionsSchema,
-                    req.query as unknown as ZodGetBrowseAuctionsInputType,
+                    {
+                        ...req.query,
+                        userId: req.user.id,
+                    } as unknown as ZodGetBrowseAuctionsInputType,
                 );
 
             const result =

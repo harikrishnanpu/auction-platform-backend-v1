@@ -1,8 +1,8 @@
 import { Result } from '@domain/shared/result';
 
 export interface IWrite<T> {
-    create(data: T): Promise<Result<void>>;
-    update(id: string, data: T): Promise<Result<void>>;
+    create(data: T): Promise<Result<T>>;
+    update(id: string, data: T): Promise<Result<T>>;
     delete(id: string): Promise<Result<void>>;
 }
 

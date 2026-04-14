@@ -10,7 +10,7 @@ export interface AuctionCategoryFilter {
 }
 
 export interface IAuctionCategoryRepository {
-    save(category: AuctionCategory): Promise<Result<void>>;
+    save(category: AuctionCategory): Promise<Result<AuctionCategory>>;
     findBySlug(
         slug: AuctionCategorySlug,
     ): Promise<Result<AuctionCategory | null>>;

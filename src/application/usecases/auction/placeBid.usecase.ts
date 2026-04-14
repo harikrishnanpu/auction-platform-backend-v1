@@ -179,14 +179,11 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
             }
 
             const output: IPlaceBidOutput = {
-                id: createBidResult.getValue().getId(),
-                auctionId: createBidResult.getValue().getAuctionId(),
-                userId: createBidResult.getValue().getUserId(),
-                amount: createBidResult.getValue().getAmount(),
-                createdAt: createBidResult
-                    .getValue()
-                    .getCreatedAt()
-                    .toISOString(),
+                id: newBid.getId(),
+                auctionId: newBid.getAuctionId(),
+                userId: newBid.getUserId(),
+                amount: newBid.getAmount(),
+                createdAt: newBid.getCreatedAt().toISOString(),
                 endAt: auctionForOutput.getEndAt().toISOString(),
                 extensionCount: auctionForOutput.getExtensionCount(),
                 participants: participantsResult.getValue().map((p) => ({

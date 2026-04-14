@@ -74,7 +74,10 @@ export class AuctionController {
         const validatedResult =
             ValidationHelper.validate<ZodCreateAuctionInputType>(
                 createAuctionSchema,
-                req.body,
+                {
+                    ...req.body,
+                    userId: req.user.id,
+                },
             );
 
         const result =
@@ -129,7 +132,10 @@ export class AuctionController {
             const validatedResult =
                 ValidationHelper.validate<ZodGetBrowseAuctionsInputType>(
                     getBrowseAuctionsSchema,
-                    req.query as unknown as ZodGetBrowseAuctionsInputType,
+                    {
+                        ...req.query,
+                        userId: req.user.id,
+                    } as unknown as ZodGetBrowseAuctionsInputType,
                 );
 
             const result =
@@ -203,7 +209,10 @@ export class AuctionController {
             const validatedResult =
                 ValidationHelper.validate<ZodGenerateAuctionUploadUrlInputType>(
                     generateAuctionUploadUrlSchema,
-                    req.body,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
             const result =

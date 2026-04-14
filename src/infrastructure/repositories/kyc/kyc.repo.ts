@@ -31,7 +31,7 @@ export class PrismaKycRepo
     async findByUserIdAndFor(
         userId: string,
         kycFor: KycFor,
-    ): Promise<Result<Kyc>> {
+    ): Promise<Result<Kyc | null>> {
         const kyc = await this._prisma.kyc.findUnique({
             where: {
                 userId_for: {
