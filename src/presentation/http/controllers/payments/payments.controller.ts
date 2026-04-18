@@ -14,7 +14,6 @@ import {
     ZodGetUsersPaymentsInputType,
 } from '@presentation/validators/schemas/payments/getUsersPayments.schema';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
-import { PaymentsMapperProfile } from '@application/mappers/payments/paymentsProfile.mapper';
 import {
     createPaymentOrderSchema,
     ZodCreatePaymentOrderInputType,
@@ -53,15 +52,14 @@ export class PaymentsController {
             const validationResult =
                 ValidationHelper.validate<ZodGetUsersPaymentsInputType>(
                     getUsersPaymentsSchema,
-                    req.query as unknown as ZodGetUsersPaymentsInputType,
+                    {
+                        ...req.query,
+                        userId: req.user.id,
+                    } as unknown as ZodGetUsersPaymentsInputType,
                 );
 
-            const dto = PaymentsMapperProfile.toGetUserPaymentsInputDto(
-                validationResult,
-                req.user.id,
-            );
-
-            const result = await this._getUserPaymentsUsecase.execute(dto);
+            const result =
+                await this._getUserPaymentsUsecase.execute(validationResult);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -126,16 +124,14 @@ export class PaymentsController {
         const validationResult =
             ValidationHelper.validate<ZodVerifyPaymentInputType>(
                 verifyPaymentSchema,
-                req.body,
+                {
+                    ...req.body,
+                    userId: req.user.id,
+                },
             );
 
-        const result = await this._verifyPaymentUsecase.execute({
-            userId: req.user.id,
-            paymentId: validationResult.paymentId,
-            orderId: validationResult.orderId,
-            gatewayPaymentId: validationResult.gatewayPaymentId,
-            signature: validationResult.signature,
-        });
+        const result =
+            await this._verifyPaymentUsecase.execute(validationResult);
 
         if (result.isFailure) {
             throw new AppError(

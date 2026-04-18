@@ -2,16 +2,10 @@ import { AuctionChatMessage } from '@domain/entities/auction/auction-chat-messag
 import { Result } from '@domain/shared/result';
 
 export interface IAuctionChatMessageRepository {
-  create(data: {
-    id: string;
-    auctionId: string;
-    userId: string;
-    userName: string;
-    message: string;
-  }): Promise<Result<AuctionChatMessage>>;
+    create(data: AuctionChatMessage): Promise<Result<AuctionChatMessage>>;
 
-  findManyByAuctionId(
-    auctionId: string,
-    limit: number,
-  ): Promise<Result<AuctionChatMessage[]>>;
+    findManyByAuctionId(
+        auctionId: string,
+        limit: number,
+    ): Promise<Result<AuctionChatMessage[]>>;
 }

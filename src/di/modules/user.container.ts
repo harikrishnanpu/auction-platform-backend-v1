@@ -5,6 +5,7 @@ import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEdit
 import { IGenerateAvatarUploadUrlUsecase } from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
 import { ISendProfileChangePasswordOtpUsecase } from '@application/interfaces/usecases/user/ISentProfileChangePasswordOtpUsecase';
 import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
+import { IGetUserHomeStatsUsecase } from '@application/interfaces/usecases/user/IGetUserHomeStatsUsecase';
 import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/notification/IGetUserNotificationsUsecase';
 import { SendOtpUseCase } from '@application/usecases/otp/send-otp.usecase';
 import { ChangeProfilePasswordUseCase } from '@application/usecases/user/changeProfilePassword.usecase';
@@ -12,6 +13,7 @@ import { EditProfileUseCase } from '@application/usecases/user/editProfile.useca
 import { GenerateAvatarUploadUrlUseCase } from '@application/usecases/user/generateAvatarUploadUrl.usecase';
 import { SendProfileChangePasswordOtpUsecase } from '@application/usecases/user/sendProfileChangePassword.usecase';
 import { UpdateAvatarUrlUseCase } from '@application/usecases/user/updateAvatarurl.usecase';
+import { GetUserHomeStatsUsecase } from '@application/usecases/user/getUserHomeStats.usecase';
 import { GetUserNotificationsUsecase } from '@application/usecases/notification/getUserNotifications.usecase';
 import { S3Client } from '@aws-sdk/client-s3';
 import { TYPES } from '@di/types.di';
@@ -41,5 +43,8 @@ export const userContainer = new ContainerModule(({ bind }) => {
     );
     bind<IGetUserNotificationsUsecase>(TYPES.IGetUserNotificationsUsecase).to(
         GetUserNotificationsUsecase,
+    );
+    bind<IGetUserHomeStatsUsecase>(TYPES.IGetUserHomeStatsUsecase).to(
+        GetUserHomeStatsUsecase,
     );
 });

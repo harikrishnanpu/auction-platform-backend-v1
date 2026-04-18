@@ -2,38 +2,29 @@ import { TYPES } from '@di/types.di';
 import { AuctionParticipant } from '@domain/entities/auction/auction-participant.entity';
 import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
 import { Result } from '@domain/shared/result';
-import { AuctionParticipantMapper } from '@infrastructure/mappers/auction/auction-particpants.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
+import { BaseRepository } from '../base/base.Repo';
+import { AuctionParticipant as PrismaAuctionParticipant } from '@prisma/client';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 
 @injectable()
-export class PrismaAuctionParticipantRepo implements IAuctionParticipantRepository {
+export class PrismaAuctionParticipantRepo
+    extends BaseRepository<
+        AuctionParticipant,
+        PrismaAuctionParticipant,
+        { id: string },
+        IDbMapper<AuctionParticipant, PrismaAuctionParticipant>
+    >
+    implements IAuctionParticipantRepository
+{
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
-    ) {}
-
-    async save(data: AuctionParticipant): Promise<Result<AuctionParticipant>> {
-        const res = await this._prisma.auctionParticipant.upsert({
-            where: {
-                auctionId_userId: {
-                    auctionId: data.getAuctionId(),
-                    userId: data.getUserId(),
-                },
-            },
-            create: {
-                auctionId: data.getAuctionId(),
-                userId: data.getUserId(),
-                userName: data.getUserName(),
-                intialAmount: data.getIntialAmount(),
-            },
-            update: {
-                userName: data.getUserName(),
-                intialAmount: data.getIntialAmount(),
-            },
-        });
-
-        return AuctionParticipantMapper.toDomain(res);
+        @inject(TYPES.AuctionParticipantMapper)
+        mapper: IDbMapper<AuctionParticipant, PrismaAuctionParticipant>,
+    ) {
+        super(_prisma.auctionParticipant, mapper);
     }
 
     async findByAuctionId(
@@ -47,7 +38,7 @@ export class PrismaAuctionParticipantRepo implements IAuctionParticipantReposito
         const participants: AuctionParticipant[] = [];
 
         for (const row of rows) {
-            const result = AuctionParticipantMapper.toDomain(row);
+            const result = this.mapper.toDomain(row);
             if (result.isFailure)
                 return Result.fail<AuctionParticipant[]>(result.getError());
             participants.push(result.getValue());
@@ -65,7 +56,7 @@ export class PrismaAuctionParticipantRepo implements IAuctionParticipantReposito
         const participants: AuctionParticipant[] = [];
 
         for (const row of rows) {
-            const result = AuctionParticipantMapper.toDomain(row);
+            const result = this.mapper.toDomain(row);
             if (result.isFailure)
                 return Result.fail<AuctionParticipant[]>(result.getError());
             participants.push(result.getValue());

@@ -1,6 +1,7 @@
 import { IVerifyPaymentInputDto } from '@application/dtos/payments/payment.dto';
 import { IPaymentGatewayService } from '@application/interfaces/services/IPaymentGatewayService';
 import { IVerifyPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyPaymentUsecase';
+import { PaymentsMapperProfile } from '@application/mappers/payments/paymentsProfile.mapper';
 import { TYPES } from '@di/types.di';
 import { PaymentStatus } from '@domain/entities/payments/payments.entity';
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository';
@@ -17,15 +18,17 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
     ) {}
 
     async execute(input: IVerifyPaymentInputDto): Promise<Result<void>> {
+        const dto = PaymentsMapperProfile.toVerifyPaymentInput(input);
+
         const paymentResult = await this._paymentRepository.findById(
-            input.paymentId,
+            dto.paymentId,
         );
         if (paymentResult.isFailure)
             return Result.fail(paymentResult.getError());
 
         const payment = paymentResult.getValue();
         if (!payment) return Result.fail('Payment request not found');
-        if (payment.getUserId() !== input.userId) {
+        if (payment.getUserId() !== dto.userId) {
             return Result.fail('Not authorized to verify this payment');
         }
 
@@ -36,10 +39,10 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
 
         const verify = await this._paymentGatewayService.verifyPayment({
             userId: payment.getUserId(),
-            orderId: input.orderId,
-            paymentId: input.gatewayPaymentId,
-            signature: input.signature,
-            expectedPaymentId: payment.getId(),
+            orderId: dto.orderId,
+            paymentId: dto.gatewayPaymentId,
+            signature: dto.signature,
+            referenceId: payment.getReferenceId(),
         });
 
         if (verify.isFailure) return Result.fail(verify.getError());
@@ -47,7 +50,10 @@ export class VerifyPaymentUsecase implements IVerifyPaymentUsecase {
         const completed = payment.markAsCompleted();
         if (completed.isFailure) return Result.fail(completed.getError());
 
-        const updated = await this._paymentRepository.update(payment);
+        const updated = await this._paymentRepository.update(
+            payment.getId(),
+            payment,
+        );
         if (updated.isFailure) return Result.fail(updated.getError());
 
         return Result.ok();

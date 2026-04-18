@@ -213,15 +213,15 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
             return Result.fail(winnerNotification.getError());
         }
 
-        const savedWinner = await this._notificationRepository.save(
+        const saveNotifyResult = await this._notificationRepository.save(
             winnerNotification.getValue(),
         );
 
-        if (savedWinner.isFailure) {
-            return Result.fail(savedWinner.getError());
+        if (saveNotifyResult.isFailure) {
+            return Result.fail(saveNotifyResult.getError());
         }
 
-        const notify = savedWinner.getValue();
+        const notify = winnerNotification.getValue();
         this._eventBus.publish(
             new NotificationCreated(
                 notify.getId(),

@@ -8,47 +8,44 @@ import { ZodUpdateKycInputType } from '@presentation/validators/schemas/kyc/upda
 import { ZodUploadKycUrlInputType } from '@presentation/validators/schemas/kyc/uploadKyc.schema';
 
 export class KycMapperProfile {
-  public static toUploadKycUrlInput(
-    data: ZodUploadKycUrlInputType,
-  ): UploadKycGetUrlInput {
-    return {
-      kycFor: data.kycFor,
-      fileName: data.fileName,
-      contentType: data.contentType,
-      fileSize: data.fileSize,
-    };
-  }
+    public static toUploadKycUrlInput(
+        data: ZodUploadKycUrlInputType,
+    ): UploadKycGetUrlInput {
+        return {
+            kycFor: data.kycFor,
+            fileName: data.fileName,
+            contentType: data.contentType,
+            fileSize: data.fileSize,
+        };
+    }
 
-  public static toGetKycStatusInput(
-    data: ZodGetKycStatusInputType,
-    userId: string,
-  ): IGetKycStatusInput {
-    return {
-      userId: userId,
-      kycFor: data.kycFor,
-    };
-  }
+    public static toGetKycStatusInput(
+        data: ZodGetKycStatusInputType,
+    ): IGetKycStatusInput {
+        return {
+            userId: data.userId,
+            kycFor: data.kycFor,
+        };
+    }
 
-  public static toUpdateKycInput(
-    data: ZodUpdateKycInputType,
-    userId: string,
-  ): IUpdateKycInput {
-    return {
-      userId: userId,
-      kycFor: data.kycFor,
-      documentType: data.documentType,
-      side: data.side,
-      documentUrl: data.fileKey,
-    };
-  }
+    public static toUpdateKycInput(
+        data: ZodUpdateKycInputType,
+    ): IUpdateKycInput {
+        return {
+            userId: data.userId,
+            kycFor: data.kycFor,
+            documentType: data.documentType,
+            side: data.side,
+            documentUrl: data.fileKey,
+        };
+    }
 
-  public static toSubmitKycInput(
-    data: ZodSubmitKycInputType,
-    userId: string,
-  ): ISubmitKycInput {
-    return {
-      userId: userId,
-      kycFor: data.kycFor,
-    };
-  }
+    public static toSubmitKycInputDto(
+        data: ZodSubmitKycInputType,
+    ): ISubmitKycInput {
+        return {
+            userId: data.userId,
+            kycFor: data.kycFor,
+        };
+    }
 }

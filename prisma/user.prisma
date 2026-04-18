@@ -24,6 +24,7 @@ model User {
   payments                          Payments[]
   auctionWinners                    AuctionWinner[]
   publicFallbackAuctionParticipants PublicFallbackAuctionParticipants[]
+  wishlist                          Wishlist?
 }
 
 model UserRole {

@@ -1,102 +1,89 @@
 import { TYPES } from '@di/types.di';
 import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
-import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
+import {
+    AuctionCategoryFilter,
+    IAuctionCategoryRepository,
+} from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
 import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug.vo';
-import { AuctionCategoryMapper } from '@infrastructure/mappers/auction/auctionCategory.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
+import { BaseRepository } from '../base/base.Repo';
+import { AuctionCategory as PrismaAuctionCategory } from '@prisma/client';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 
 @injectable()
-export class PrismaAuctionCategoryRepository implements IAuctionCategoryRepository {
-  constructor(
-    @inject(TYPES.PrismaClient)
-    private readonly _prisma: PrismaClient,
-  ) {}
+export class PrismaAuctionCategoryRepository
+    extends BaseRepository<
+        AuctionCategory,
+        PrismaAuctionCategory,
+        AuctionCategoryFilter,
+        IDbMapper<AuctionCategory, PrismaAuctionCategory>
+    >
+    implements IAuctionCategoryRepository
+{
+    constructor(
+        @inject(TYPES.PrismaClient)
+        private readonly _prisma: PrismaClient,
+        @inject(TYPES.AuctionCategoryMapper)
+        readonly mapper: IDbMapper<AuctionCategory, PrismaAuctionCategory>,
+    ) {
+        super(_prisma.auctionCategory, mapper);
+    }
 
-  async save(category: AuctionCategory): Promise<Result<void>> {
-    await this._prisma.auctionCategory.upsert({
-      where: {
-        id: category.getId(),
-      },
-      create: {
-        id: category.getId(),
-        name: category.getName(),
-        slug: category.getSlug().getValue(),
-        isVerified: category.getIsVerified(),
-        parentId: category.getParentId(),
-        isActive: category.getIsActive(),
-        status: category.getStatus(),
-        rejectionReason: category.getRejectionReason(),
-        submittedBy: category.getSubmittedBy(),
-      },
-      update: {
-        name: category.getName(),
-        slug: category.getSlug().getValue(),
-        isVerified: category.getIsVerified(),
-        isActive: category.getIsActive(),
-        status: category.getStatus(),
-        parentId: category.getParentId(),
-        rejectionReason: category.getRejectionReason(),
-      },
-    });
+    async findById(id: string): Promise<Result<AuctionCategory | null>> {
+        const auctionCategory = await this._prisma.auctionCategory.findUnique({
+            where: {
+                id,
+            },
+            include: {
+                submittedByUser: true,
+            },
+        });
 
-    return Result.ok();
-  }
+        if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
 
-  async findBySlug(
-    slug: AuctionCategorySlug,
-  ): Promise<Result<AuctionCategory | null>> {
-    const auctionCategory = await this._prisma.auctionCategory.findUnique({
-      where: {
-        slug: slug.getValue(),
-      },
-    });
+        const result = this.mapper.toDomain(auctionCategory);
 
-    if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
+        if (result.isFailure) return Result.fail(result.getError());
+        return Result.ok<AuctionCategory>(result.getValue());
+    }
 
-    const result = AuctionCategoryMapper.toDomain(auctionCategory);
+    async findAll(): Promise<Result<AuctionCategory[]>> {
+        const auctionCategories = await this._prisma.auctionCategory.findMany({
+            include: {
+                submittedByUser: true,
+            },
+        });
 
-    if (result.isFailure) return Result.fail(result.getError());
-    return Result.ok<AuctionCategory>(result.getValue());
-  }
+        const result: AuctionCategory[] = [];
 
-  async findAll({
-    isVerified,
-    isActive,
-    submittedBy,
-  }: {
-    isVerified: boolean | undefined;
-    isActive: boolean | undefined;
-    submittedBy: string | undefined;
-  }): Promise<Result<AuctionCategory[]>> {
-    const auctionCategories = await this._prisma.auctionCategory.findMany({
-      where: {
-        isVerified: isVerified,
-        isActive: isActive,
-        submittedBy: submittedBy,
-      },
-    });
+        for (const auctionCategory of auctionCategories) {
+            const res = this.mapper.toDomain(auctionCategory);
+            if (res.isFailure) return Result.fail(res.getError());
+            result.push(res.getValue());
+        }
 
-    const result = auctionCategories.map((category) => {
-      const result = AuctionCategoryMapper.toDomain(category);
-      return result.getValue();
-    });
+        return Result.ok(result);
+    }
 
-    return Result.ok<AuctionCategory[]>(result);
-  }
+    async findBySlug(
+        slug: AuctionCategorySlug,
+    ): Promise<Result<AuctionCategory | null>> {
+        const auctionCategory = await this._prisma.auctionCategory.findUnique({
+            where: {
+                slug: slug.getValue(),
+            },
+            include: {
+                submittedByUser: true,
+            },
+        });
 
-  async findById(id: string): Promise<Result<AuctionCategory | null>> {
-    const auctionCategory = await this._prisma.auctionCategory.findUnique({
-      where: { id },
-    });
+        if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
 
-    if (!auctionCategory) return Result.ok<AuctionCategory | null>(null);
+        const result = this.mapper.toDomain(auctionCategory);
 
-    const result = AuctionCategoryMapper.toDomain(auctionCategory);
-
-    if (result.isFailure) return Result.fail(result.getError());
-
-    return Result.ok<AuctionCategory | null>(result.getValue());
-  }
+        if (result.isFailure) return Result.fail(result.getError());
+        return Result.ok<AuctionCategory>(result.getValue());
+    }
 }

@@ -6,7 +6,8 @@ import {
 } from '@domain/types/notifications.type';
 
 export interface INotificationRepository {
-    save(notification: Notification): Promise<Result<Notification>>;
+    save(notification: Notification): Promise<Result<void>>;
+
     findAllByUserId(
         userId: string,
         options?: IFindNotificationsOptions,

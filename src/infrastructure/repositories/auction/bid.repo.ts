@@ -2,29 +2,29 @@ import { TYPES } from '@di/types.di';
 import { Bid } from '@domain/entities/auction/bid.entity';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { Result } from '@domain/shared/result';
-import { BidMapper } from '@infrastructure/mappers/auction/bid.mapper';
 import { PrismaClient } from '@prisma/client';
 import { inject, injectable } from 'inversify';
+import { BaseRepository } from '../base/base.Repo';
+import { Bid as PrismaBid } from '@prisma/client';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 
 @injectable()
-export class PrismaBidRepo implements IBidRepository {
+export class PrismaBidRepo
+    extends BaseRepository<
+        Bid,
+        PrismaBid,
+        { auctionId: string },
+        IDbMapper<Bid, PrismaBid>
+    >
+    implements IBidRepository
+{
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
-    ) {}
-
-    async create(data: Bid): Promise<Result<Bid>> {
-        const row = await this._prisma.bid.create({
-            data: {
-                id: data.getId(),
-                auctionId: data.getAuctionId(),
-                userId: data.getUserId(),
-                amount: data.getAmount(),
-                encryptedAmount: data.getEncryptedAmount(),
-            },
-        });
-
-        return BidMapper.toDomain(row);
+        @inject(TYPES.BidMapper)
+        readonly mapper: IDbMapper<Bid, PrismaBid>,
+    ) {
+        super(_prisma.bid, mapper);
     }
 
     async findLatestByAuctionId(
@@ -36,7 +36,7 @@ export class PrismaBidRepo implements IBidRepository {
         });
 
         if (!row) return Result.ok(null);
-        return BidMapper.toDomain(row);
+        return this.mapper.toDomain(row);
     }
 
     async findLastBidsByUser(
@@ -53,7 +53,7 @@ export class PrismaBidRepo implements IBidRepository {
 
         if (!res) return Result.ok(null);
 
-        return BidMapper.toDomain(res);
+        return this.mapper.toDomain(res);
     }
 
     async findManyByAuctionId(
@@ -68,7 +68,7 @@ export class PrismaBidRepo implements IBidRepository {
 
         const bids: Bid[] = [];
         for (const row of rows) {
-            const result = BidMapper.toDomain(row);
+            const result = this.mapper.toDomain(row);
 
             if (result.isFailure) return Result.fail<Bid[]>(result.getError());
             bids.push(result.getValue());
@@ -84,7 +84,7 @@ export class PrismaBidRepo implements IBidRepository {
 
         const bids: Bid[] = [];
         for (const row of result) {
-            const result = BidMapper.toDomain(row);
+            const result = this.mapper.toDomain(row);
             if (result.isFailure) return Result.fail(result.getError());
             bids.push(result.getValue());
         }

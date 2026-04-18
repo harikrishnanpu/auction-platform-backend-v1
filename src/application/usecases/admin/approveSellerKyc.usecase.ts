@@ -1,8 +1,6 @@
-import {
-  IApproveSellerKycInput,
-  IApproveSellerKycOutput,
-} from '@application/dtos/admin/approveSellerKyc.dto';
+import { IApproveSellerKycOutput } from '@application/dtos/admin/approveSellerKyc.dto';
 import { IApproveSellerKycUsecase } from '@application/interfaces/usecases/admin/IApproveSellerKycUsecase';
+import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { KycFor } from '@domain/entities/kyc/kyc.entity';
 import { UserStatus } from '@domain/entities/user/user.entity';
@@ -10,65 +8,69 @@ import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
+import { ZodGetAdminSellerInputType } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class ApproveSellerKycUseCase implements IApproveSellerKycUsecase {
-  constructor(
-    @inject(TYPES.IKycRepository)
-    private readonly _kycRepository: IKycRepository,
-    @inject(TYPES.IUserRepository)
-    private readonly _userRepository: IUserRepository,
-  ) {}
+    constructor(
+        @inject(TYPES.IKycRepository)
+        private readonly _kycRepository: IKycRepository,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
+    ) {}
 
-  async execute(
-    data: IApproveSellerKycInput,
-  ): Promise<Result<IApproveSellerKycOutput>> {
-    try {
-      const { sellerId } = data;
+    async execute(
+        data: ZodGetAdminSellerInputType,
+    ): Promise<Result<IApproveSellerKycOutput>> {
+        try {
+            const dto = AdminMapperProfile.toApproveSellerKycInputDto(data);
+            const { sellerId } = dto;
 
-      const userEntity = await this._userRepository.findById(sellerId);
-      if (userEntity.isFailure) {
-        return Result.fail(userEntity.getError());
-      }
+            const userEntity = await this._userRepository.findById(sellerId);
+            if (userEntity.isFailure) {
+                return Result.fail(userEntity.getError());
+            }
 
-      const user = userEntity.getValue();
+            const user = userEntity.getValue();
 
-      if (!user || user.getStatus() !== UserStatus.ACTIVE) {
-        return Result.fail('User not found');
-      }
+            if (!user || user.getStatus() !== UserStatus.ACTIVE) {
+                return Result.fail('User not found');
+            }
 
-      if (user.getRoles().some((r) => r.equals(UserRole.SELLER))) {
-        return Result.fail('User already has seller role');
-      }
+            if (user.getRoles().some((r) => r.equals(UserRole.SELLER))) {
+                return Result.fail('User already has seller role');
+            }
 
-      const kycResult = await this._kycRepository.findByUserIdAndFor(
-        sellerId,
-        KycFor.SELLER,
-      );
+            const kycResult = await this._kycRepository.findByUserIdAndFor(
+                sellerId,
+                KycFor.SELLER,
+            );
 
-      if (kycResult.isFailure) {
-        return Result.fail(kycResult.getError());
-      }
+            if (kycResult.isFailure) {
+                return Result.fail(kycResult.getError());
+            }
 
-      const kyc = kycResult.getValue();
-      if (!kyc) {
-        return Result.fail('KYC record not found for this seller');
-      }
+            const kyc = kycResult.getValue();
+            if (!kyc) {
+                return Result.fail('KYC record not found for this seller');
+            }
 
-      const approveResult = kyc.approveKyc();
-      if (approveResult.isFailure) {
-        return Result.fail(approveResult.getError());
-      }
+            const approveResult = kyc.approveKyc();
+            if (approveResult.isFailure) {
+                return Result.fail(approveResult.getError());
+            }
 
-      user.addRole(UserRole.SELLER);
-      await this._userRepository.save(user);
+            user.addRole(UserRole.SELLER);
+            await this._userRepository.save(user);
 
-      await this._kycRepository.save(kyc);
-      return Result.ok({ success: true });
-    } catch (error: unknown) {
-      console.log(error);
-      return Result.fail('UNEXPECTED ERROR FROM APPROVE SELLER KYC USECASE');
+            await this._kycRepository.save(kyc);
+            return Result.ok({ success: true });
+        } catch (error: unknown) {
+            console.log(error);
+            return Result.fail(
+                'UNEXPECTED ERROR FROM APPROVE SELLER KYC USECASE',
+            );
+        }
     }
-  }
 }

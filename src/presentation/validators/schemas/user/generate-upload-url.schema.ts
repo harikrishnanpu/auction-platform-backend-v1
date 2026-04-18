@@ -1,11 +1,12 @@
 import z from 'zod';
 
 export const generateUploadUrlSchema = z.object({
-  contentType: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
-  fileName: z.string().min(1, 'File name is required').trim(),
-  fileSize: z.number().min(1, 'File size is required'),
+    userId: z.string().min(1, 'User ID is required'),
+    contentType: z.enum(['image/jpeg', 'image/png', 'image/gif', 'image/webp']),
+    fileName: z.string().min(1, 'File name is required').trim(),
+    fileSize: z.number().min(1, 'File size is required'),
 });
 
 export type ZodGenerateUploadUrlInputType = z.infer<
-  typeof generateUploadUrlSchema
+    typeof generateUploadUrlSchema
 >;

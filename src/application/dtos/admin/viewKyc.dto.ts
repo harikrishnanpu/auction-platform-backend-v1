@@ -1,11 +1,10 @@
 import { Readable } from 'node:stream';
 
 export interface IViewKycInputDto {
-  userId: string;
-  documentId: string;
+    documentId: string;
 }
 
 export interface IViewKycOutputDto {
-  stream: Readable;
-  contentType: string;
+    stream: Readable;
+    contentType: string;
 }

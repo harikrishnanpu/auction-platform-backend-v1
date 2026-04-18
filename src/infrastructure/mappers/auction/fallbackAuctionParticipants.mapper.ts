@@ -3,13 +3,17 @@ import {
     PublicAuctionFallbackParticipantsPaymentStatus,
     PublicAuctionFallbackParticipantsStatus,
 } from '@domain/entities/auction/public-auction-fallback-participants.entity';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { Result } from '@domain/shared/result';
 import { PublicFallbackAuctionParticipants as PrismaPublicFallbackAuctionParticipants } from '@prisma/client';
 
-export class FallbackAuctionParticipantsMapper {
-    public static toPersistence(
+export class FallbackAuctionParticipantsMapper implements IDbMapper<
+    PublicAuctionFallbackParticipants,
+    PrismaPublicFallbackAuctionParticipants
+> {
+    toPersistence(
         publicAuctionFallbackParticipants: PublicAuctionFallbackParticipants,
-    ) {
+    ): unknown {
         return {
             id: publicAuctionFallbackParticipants.getId(),
             publicFallbackAuctionId:
@@ -20,7 +24,7 @@ export class FallbackAuctionParticipantsMapper {
         };
     }
 
-    public static toDomain(
+    toDomain(
         data: PrismaPublicFallbackAuctionParticipants,
     ): Result<PublicAuctionFallbackParticipants> {
         return PublicAuctionFallbackParticipants.create({

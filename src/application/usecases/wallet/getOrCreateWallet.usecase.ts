@@ -48,18 +48,16 @@ export class GetOrCreateWalletUsecase implements IGetOrCreateWalletUsecase {
             currency: WalletCurrency.INR,
         });
 
-        const createdResult = await this._walletRepository.save(
-            walletEntity.getValue(),
-        );
-        if (createdResult.isFailure)
-            return Result.fail(createdResult.getError());
+        const wallet = walletEntity.getValue();
+        const saveResult = await this._walletRepository.save(wallet);
+        if (saveResult.isFailure) return Result.fail(saveResult.getError());
 
         return Result.ok({
-            id: createdResult.getValue().getId(),
-            userId: createdResult.getValue().getUserId(),
-            mainBalance: createdResult.getValue().getMainBalance(),
-            heldBalance: createdResult.getValue().getHeldBalance(),
-            currency: createdResult.getValue().getCurrency(),
+            id: wallet.getId(),
+            userId: wallet.getUserId(),
+            mainBalance: wallet.getMainBalance(),
+            heldBalance: wallet.getHeldBalance(),
+            currency: wallet.getCurrency(),
         });
     }
 }

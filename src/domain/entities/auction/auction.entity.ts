@@ -99,6 +99,10 @@ export class Auction {
             return Result.fail('Max extension count must be less than 10');
         }
 
+        // if(extensionCount <= 0 || antiSnipSeconds <= 0 || bidCooldownSeconds <= 0) {
+        //     return Result.fail('Extension count, anti snip seconds and bid cooldown seconds must be greater than 0');
+        // }
+
         if (extensionCount > maxExtensionCount) {
             return Result.fail(
                 'Extension count cannot exceed max extension count',

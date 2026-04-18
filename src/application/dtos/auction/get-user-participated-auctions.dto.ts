@@ -6,13 +6,15 @@ import { IAuctionDto } from './auction.dto';
 
 export interface IGetUserParticipatedAuctionsInputDto {
     userId: string;
-    page: number;
-    limit: number;
-    search: string;
-    auctionType: AuctionType | 'ALL';
-    status: AuctionStatus | 'ALL';
-    sort: string;
-    order: 'asc' | 'desc';
+    query: {
+        page: number;
+        limit: number;
+        search: string;
+        auctionType: AuctionType | 'ALL';
+        status: AuctionStatus | 'ALL';
+        sort: string;
+        order: 'asc' | 'desc';
+    };
 }
 
 export interface IGetUserParticipatedAuctionsOutputDto {

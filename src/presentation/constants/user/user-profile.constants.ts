@@ -14,6 +14,7 @@ export const USER_PROFILE_MESSAGES = {
     GET_NOTIFICATIONS_SUCCESSFULLY: 'Get notifications successfully',
     GET_MY_AUCTIONS_SUCCESSFULLY: 'Get my auctions successfully',
     GET_WALLET_SUCCESSFULLY: 'Get wallet successfully',
+    GET_HOME_STATS_SUCCESSFULLY: 'Get home stats successfully',
 };
 
 export const USER_PROFILE_CONSTANTS = {

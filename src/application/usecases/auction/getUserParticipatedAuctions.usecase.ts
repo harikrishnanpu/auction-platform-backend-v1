@@ -1,12 +1,10 @@
-import type {
-    IGetUserParticipatedAuctionsInputDto,
-    IGetUserParticipatedAuctionsOutputDto,
-} from '@application/dtos/auction/get-user-participated-auctions.dto';
+import type { IGetUserParticipatedAuctionsOutputDto } from '@application/dtos/auction/get-user-participated-auctions.dto';
 import type { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
+import { ZodGetUserParticipatedAuctionsInputType } from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -17,24 +15,26 @@ export class GetUserParticipatedAuctionsUsecase implements IGetUserParticipatedA
     ) {}
 
     async execute(
-        input: IGetUserParticipatedAuctionsInputDto,
+        input: ZodGetUserParticipatedAuctionsInputType,
     ): Promise<Result<IGetUserParticipatedAuctionsOutputDto>> {
-        const safePage = Number(input.page) > 0 ? Number(input.page) : 1;
-        const safeLimit = Number(input.limit) > 0 ? Number(input.limit) : 10;
+        const {
+            userId,
+            query: { page, limit, search, auctionType, status, sort, order },
+        } = AuctionMapperProrfile.toGetUserParticipatedAuctionsInputDto(input);
+
+        const safePage = Number(page) > 0 ? Number(page) : 1;
+        const safeLimit = Number(limit) > 0 ? Number(limit) : 10;
 
         const auctionsRes =
-            await this._auctionRepository.findParticipatedByUserId(
-                input.userId,
-                {
-                    status: input.status,
-                    auctionType: input.auctionType,
-                    page: safePage,
-                    limit: safeLimit,
-                    sort: input.sort,
-                    order: input.order,
-                    search: input.search,
-                },
-            );
+            await this._auctionRepository.findParticipatedByUserId(userId, {
+                status: status,
+                auctionType: auctionType,
+                page: safePage,
+                limit: safeLimit,
+                sort: sort,
+                order: order,
+                search: search,
+            });
 
         if (auctionsRes.isFailure) return Result.fail(auctionsRes.getError());
 

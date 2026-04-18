@@ -6,6 +6,8 @@ import { IIdGeneratingService } from '@application/interfaces/services/IIdGenera
 import { IPaymentGatewayService } from '@application/interfaces/services/IPaymentGatewayService';
 import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePaymentOrderForPublicFallbackAuctionUsecase';
 import { TYPES } from '@di/types.di';
+import { AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY } from '@domain/constants/auction.constants';
+import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import {
     PublicAuctionFallbackParticipants,
     PublicAuctionFallbackParticipantsPaymentStatus,
@@ -15,6 +17,8 @@ import {
     AuctionPublicFallbackPaymentStatus,
     AuctionPublicFallbackStatus,
 } from '@domain/entities/auction/public-fallback-auction.entity';
+import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
 import { Result } from '@domain/shared/result';
@@ -31,11 +35,44 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
         private readonly _paymentGatewayService: IPaymentGatewayService,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.IAuctionRepository)
+        private readonly _auctionRepository: IAuctionRepository,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
     ) {}
 
     async execute(
         input: ICreatePaymentOrderForPublicFallbackAuctionInputDto,
     ): Promise<Result<ICreatePaymentOrderForPublicFallbackAuctionOutputDto>> {
+        const auctionEntoty = await this._auctionRepository.findById(
+            input.auctionId,
+        );
+        if (auctionEntoty.isFailure)
+            return Result.fail(auctionEntoty.getError());
+
+        const auction = auctionEntoty.getValue();
+
+        if (!auction) return Result.fail('Auction not found');
+
+        if (auction.getStatus() !== AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION)
+            return Result.fail('Auction not public notification');
+
+        const auctionWinnersResult =
+            await this._auctionWinnerRepository.findAllByAuctionId(
+                input.auctionId,
+            );
+
+        if (auctionWinnersResult.isFailure)
+            return Result.fail(auctionWinnersResult.getError());
+
+        const auctionWinners = auctionWinnersResult.getValue();
+        if (!auctionWinners) return Result.fail('Auction winners not found');
+
+        if (
+            auctionWinners.some((winner) => winner.getUserId() === input.userId)
+        )
+            return Result.fail('You cannot pay for auction in public fallback');
+
         const fallabckAuctionResult =
             await this._publicFallbackAuctionRepository.findByAuctionId(
                 input.auctionId,
@@ -81,7 +118,9 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
 
             const paymentOrder = await this._paymentGatewayService.createOrder({
                 userId: input.userId,
-                amount: fallbackAuction.getAmount(),
+                amount:
+                    fallbackAuction.getAmount() *
+                    AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY.INITIAL_AMOUNT_PERCENTAGE,
                 referenceId: fallbackAuction.getAuctionId(),
             });
 

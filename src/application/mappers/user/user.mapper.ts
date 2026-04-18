@@ -8,52 +8,47 @@ import { ZodGenerateUploadUrlInputType } from '@presentation/validators/schemas/
 import { ZodUpdateAvatarUrlInputType } from '@presentation/validators/schemas/user/update-avatar-url.schema';
 
 export class UserMapperProfile {
-  public static toChangeProfilePasswordInput(
-    data: ZodChangeProfilePasswordInputType,
-    userId: string,
-  ): ChangeProfilePasswordInput {
-    return {
-      userId: userId,
-      otp: data.otp,
-      oldPassword: data.oldPassword,
-      newPassword: data.newPassword,
-    };
-  }
+    public static toChangeProfilePasswordInput(
+        data: ZodChangeProfilePasswordInputType,
+    ): ChangeProfilePasswordInput {
+        return {
+            userId: data.userId,
+            otp: data.otp,
+            oldPassword: data.oldPassword,
+            newPassword: data.newPassword,
+        };
+    }
 
-  public static toEditProfileInput(
-    data: ZodEditProfileInputType,
-    userId: string,
-    email: string,
-  ): EditProfileInput {
-    return {
-      userId: userId,
-      otp: data.otp,
-      name: data.name,
-      email: email,
-      phone: data.phone,
-      address: data.address,
-    };
-  }
+    public static toEditProfileInput(
+        data: ZodEditProfileInputType,
+    ): EditProfileInput {
+        return {
+            userId: data.userId,
+            otp: data.otp,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+        };
+    }
 
-  public static toGenerateAvatarUploadUrlInput(
-    data: ZodGenerateUploadUrlInputType,
-    userId: string,
-  ): GenerateAvatarUploadUrlInput {
-    return {
-      userId: userId,
-      contentType: data.contentType,
-      fileName: data.fileName,
-      fileSize: data.fileSize,
-    };
-  }
+    public static toGenerateAvatarUploadUrlInput(
+        data: ZodGenerateUploadUrlInputType,
+    ): GenerateAvatarUploadUrlInput {
+        return {
+            userId: data.userId,
+            contentType: data.contentType,
+            fileName: data.fileName,
+            fileSize: data.fileSize,
+        };
+    }
 
-  public static toUpdateAvatarUrlInput(
-    data: ZodUpdateAvatarUrlInputType,
-    userId: string,
-  ): UpdateAvatarUrlRequestDto {
-    return {
-      userId: userId,
-      avatarKey: data.fileKey,
-    };
-  }
+    public static toUpdateAvatarUrlInput(
+        data: ZodUpdateAvatarUrlInputType,
+    ): UpdateAvatarUrlRequestDto {
+        return {
+            userId: data.userId,
+            avatarKey: data.fileKey,
+        };
+    }
 }

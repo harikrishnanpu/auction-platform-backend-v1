@@ -10,49 +10,48 @@ import { ZodLoginInputType } from '@presentation/validators/schemas/auth/login.s
 import { ZodVerifyCredentialsInputType } from '@presentation/validators/schemas/auth/verifyCredentials.schema';
 
 export class AuthMapperProfile {
-  public static toVerifyCredentialsInput(
-    data: ZodVerifyCredentialsInputType,
-  ): VerifyCredentialsInput {
-    return {
-      otp: data.otp,
-      email: data.email,
-      purpose: data.purpose,
-      channel: data.channel,
-    };
-  }
+    public static toVerifyCredentialsInput(
+        data: ZodVerifyCredentialsInputType,
+    ): VerifyCredentialsInput {
+        return {
+            otp: data.otp,
+            email: data.email,
+            purpose: data.purpose,
+            channel: data.channel,
+        };
+    }
 
-  public static toLoginUserInput(data: ZodLoginInputType): LoginUserInput {
-    return {
-      email: data.email,
-      password: data.password,
-    };
-  }
+    public static toLoginUserInput(data: ZodLoginInputType): LoginUserInput {
+        return {
+            email: data.email,
+            password: data.password,
+        };
+    }
 
-  public static toCompleteProfileInput(
-    data: ZodCompleteProfileInputType,
-    userId: string,
-  ): CompleteProfileInput {
-    return {
-      userId,
-      phone: data.phone,
-      address: data.address,
-    };
-  }
+    public static toCompleteProfileInput(
+        data: ZodCompleteProfileInputType,
+    ): CompleteProfileInput {
+        return {
+            userId: data.userId,
+            phone: data.phone,
+            address: data.address,
+        };
+    }
 
-  public static toForgotPasswordInput(
-    data: ZodForgottenPasswordInputType,
-  ): ForgotPasswordInput {
-    return {
-      email: data.email,
-    };
-  }
+    public static toForgotPasswordInput(
+        data: ZodForgottenPasswordInputType,
+    ): ForgotPasswordInput {
+        return {
+            email: data.email,
+        };
+    }
 
-  public static toChangePasswordInput(
-    data: ZodChangePasswordInputType,
-  ): ChangePasswordInput {
-    return {
-      token: data.token,
-      newPassword: data.newPassword,
-    };
-  }
+    public static toChangePasswordInput(
+        data: ZodChangePasswordInputType,
+    ): ChangePasswordInput {
+        return {
+            token: data.token,
+            newPassword: data.newPassword,
+        };
+    }
 }

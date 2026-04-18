@@ -8,25 +8,27 @@ import { inject, injectable } from 'inversify';
 
 @injectable()
 export class GetAllCategoryRequestUsecase implements IGetAllCategoryRequestUsecase {
-  constructor(
-    @inject(TYPES.IAuctionCategoryRepository)
-    private readonly _auctionCategoryRepository: IAuctionCategoryRepository,
-  ) {}
+    constructor(
+        @inject(TYPES.IAuctionCategoryRepository)
+        private readonly _auctionCategoryRepository: IAuctionCategoryRepository,
+    ) {}
 
-  async execute(): Promise<Result<IGetAllAdminAuctionCategoryResponseDto>> {
-    const categories = await this._auctionCategoryRepository.findAll({
-      isVerified: false,
-      isActive: true,
-    });
+    async execute(): Promise<Result<IGetAllAdminAuctionCategoryResponseDto>> {
+        const categories = await this._auctionCategoryRepository.findAll({
+            isVerified: false,
+            isActive: true,
+            submittedBy: undefined,
+            parentId: null,
+        });
 
-    if (categories.isFailure) {
-      return Result.fail(categories.getError());
+        if (categories.isFailure) {
+            return Result.fail(categories.getError());
+        }
+
+        const output = AuctionMapperProrfile.toGetAllAuctionCategoryResponseDto(
+            categories.getValue(),
+        );
+
+        return Result.ok(output);
     }
-
-    const output = AuctionMapperProrfile.toGetAllAuctionCategoryResponseDto(
-      categories.getValue(),
-    );
-
-    return Result.ok(output);
-  }
 }

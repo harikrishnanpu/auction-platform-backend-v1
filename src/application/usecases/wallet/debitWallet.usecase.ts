@@ -59,16 +59,15 @@ export class DebitWalletUsecase implements IDebitWalletUsecase {
         const debitResult = wallet.debitFromMainBalance(input.amount);
         if (debitResult.isFailure) return Result.fail(debitResult.getError());
 
-        const updatedWallet = await this._walletRepository.save(wallet);
-        if (updatedWallet.isFailure)
-            return Result.fail(updatedWallet.getError());
+        const saveResult = await this._walletRepository.save(wallet);
+        if (saveResult.isFailure) return Result.fail(saveResult.getError());
 
         return Result.ok({
-            id: updatedWallet.getValue().getId(),
-            userId: updatedWallet.getValue().getUserId(),
-            mainBalance: updatedWallet.getValue().getMainBalance(),
-            heldBalance: updatedWallet.getValue().getHeldBalance(),
-            currency: updatedWallet.getValue().getCurrency(),
+            id: wallet.getId(),
+            userId: wallet.getUserId(),
+            mainBalance: wallet.getMainBalance(),
+            heldBalance: wallet.getHeldBalance(),
+            currency: wallet.getCurrency(),
         });
     }
 }

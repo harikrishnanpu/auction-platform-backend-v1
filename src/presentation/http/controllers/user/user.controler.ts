@@ -4,7 +4,6 @@ import { inject, injectable } from 'inversify';
 import { Request, Response } from 'express';
 import { AppError } from '@presentation/http/error/app.error';
 import { IChangeProfilePasswordUsecase } from '@application/interfaces/usecases/user/IChangeProfilePassword';
-import { ChangeProfilePasswordInput } from '@application/dtos/user/userProfile.dto';
 import {
     changeProfilePasswordSchema,
     ZodChangeProfilePasswordInputType,
@@ -13,16 +12,12 @@ import { USER_PROFILE_CONSTANTS } from '@presentation/constants/user/user-profil
 import { ISendOtpUsecase } from '@application/interfaces/usecases/otp/ISendOtpUsecase';
 import { SendVerificationCodeInputDto } from '@application/dtos/otp/SendOtp.dto';
 import { OtpChannel, OtpPurpose } from '@domain/entities/otp/otp.entity';
-import {
-    EditProfileInput,
-    EditProfileOutput,
-} from '@application/dtos/user/editProfile.dto';
+import { EditProfileOutput } from '@application/dtos/user/editProfile.dto';
 import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
 import {
     editProfileSchema,
     ZodEditProfileInputType,
 } from '@presentation/validators/schemas/user/editProfile.schema';
-import { GenerateAvatarUploadUrlInput } from '@application/dtos/user/avatarUploadUrl.dto';
 import { IGenerateAvatarUploadUrlUsecase } from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
 import {
     generateUploadUrlSchema,
@@ -32,21 +27,19 @@ import {
     updateAvatarUrlSchema,
     ZodUpdateAvatarUrlInputType,
 } from '@presentation/validators/schemas/user/update-avatar-url.schema';
-import {
-    UpdateAvatarUrlRequestDto,
-    UpdateAvatarUrlResponseDto,
-} from '@application/dtos/user/updateAvatar.dto';
+import { UpdateAvatarUrlResponseDto } from '@application/dtos/user/updateAvatar.dto';
 import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
-import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/notification/IGetUserNotificationsUsecase';
 import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
+import { IGetUserHomeStatsUsecase } from '@application/interfaces/usecases/user/IGetUserHomeStatsUsecase';
+import { IGetUserHomeStatsOutputDto } from '@application/dtos/user/getUserHomeStats.dto';
 import {
-    AuctionStatus,
-    AuctionType,
-} from '@domain/entities/auction/auction.entity';
+    ZodGetUserParticipatedAuctionsInputType,
+    ZodGetUserParticipatedAuctionsSchema,
+} from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
 
 @injectable()
 export class UserController {
@@ -67,7 +60,40 @@ export class UserController {
         private readonly _getUserParticipatedAuctionsUsecase: IGetUserParticipatedAuctionsUsecase,
         @inject(TYPES.IGetOrCreateWalletUsecase)
         private readonly _getOrCreateWalletUsecase: IGetOrCreateWalletUsecase,
+        @inject(TYPES.IGetUserHomeStatsUsecase)
+        private readonly _getUserHomeStatsUsecase: IGetUserHomeStatsUsecase,
     ) {}
+
+    /**
+     * @description Get home-page stats for the current user
+     * @returns ApiResponse<IGetUserHomeStatsOutputDto>
+     */
+    getHomeStats = expressAsyncHandler(async (req: Request, res: Response) => {
+        if (!req.user) {
+            throw new AppError(
+                USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        const result = await this._getUserHomeStatsUsecase.execute({
+            userId: req.user.id,
+        });
+
+        if (result.isFailure) {
+            throw new AppError(
+                result.getError(),
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        ResponseHelper.success<IGetUserHomeStatsOutputDto>(
+            res,
+            result.getValue(),
+            USER_PROFILE_CONSTANTS.MESSAGES.GET_HOME_STATS_SUCCESSFULLY,
+            USER_PROFILE_CONSTANTS.CODES.OK,
+        );
+    });
 
     /**
      * @description Send a profile change password otp to the user's email
@@ -116,12 +142,6 @@ export class UserController {
     changeProfilePassword = expressAsyncHandler(
         async (req: Request, res: Response) => {
             // console.log(req.body);
-            const validationResult =
-                ValidationHelper.validate<ZodChangeProfilePasswordInputType>(
-                    changeProfilePasswordSchema,
-                    req.body,
-                );
-
             if (!req.user) {
                 throw new AppError(
                     USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -129,13 +149,19 @@ export class UserController {
                 );
             }
 
-            const dto: ChangeProfilePasswordInput =
-                UserMapperProfile.toChangeProfilePasswordInput(
-                    validationResult,
-                    req.user.id,
+            const validationResult =
+                ValidationHelper.validate<ZodChangeProfilePasswordInputType>(
+                    changeProfilePasswordSchema,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
-            const user = await this._changeProfilePasswordUseCase.execute(dto);
+            const user =
+                await this._changeProfilePasswordUseCase.execute(
+                    validationResult,
+                );
 
             if (user.isFailure) {
                 throw new AppError(
@@ -201,12 +227,6 @@ export class UserController {
     editProfile = expressAsyncHandler(async (req: Request, res: Response) => {
         // console.log('EDIT PROFILE=---', req.body);
 
-        const validationResult =
-            ValidationHelper.validate<ZodEditProfileInputType>(
-                editProfileSchema,
-                req.body,
-            );
-
         if (!req.user) {
             throw new AppError(
                 USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -214,13 +234,17 @@ export class UserController {
             );
         }
 
-        const dto: EditProfileInput = UserMapperProfile.toEditProfileInput(
-            validationResult,
-            req.user.id,
-            req.user.email,
-        );
+        const validationResult =
+            ValidationHelper.validate<ZodEditProfileInputType>(
+                editProfileSchema,
+                {
+                    ...req.body,
+                    userId: req.user.id,
+                    email: req.user.email,
+                },
+            );
 
-        const result = await this._editProfileUseCase.execute(dto);
+        const result = await this._editProfileUseCase.execute(validationResult);
 
         if (result.isFailure) {
             throw new AppError(
@@ -239,12 +263,6 @@ export class UserController {
 
     generateAvatarUploadUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
-            const validationResult =
-                ValidationHelper.validate<ZodGenerateUploadUrlInputType>(
-                    generateUploadUrlSchema,
-                    req.body,
-                );
-
             if (!req.user) {
                 throw new AppError(
                     USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -252,14 +270,19 @@ export class UserController {
                 );
             }
 
-            const dto: GenerateAvatarUploadUrlInput =
-                UserMapperProfile.toGenerateAvatarUploadUrlInput(
-                    validationResult,
-                    req.user.id,
+            const validationResult =
+                ValidationHelper.validate<ZodGenerateUploadUrlInputType>(
+                    generateUploadUrlSchema,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
             const result =
-                await this._generateAvatarUploadUrlUseCase.execute(dto);
+                await this._generateAvatarUploadUrlUseCase.execute(
+                    validationResult,
+                );
 
             if (result.isFailure) {
                 throw new AppError(
@@ -280,12 +303,6 @@ export class UserController {
 
     updateAvatarUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
-            const validationResult =
-                ValidationHelper.validate<ZodUpdateAvatarUrlInputType>(
-                    updateAvatarUrlSchema,
-                    req.body,
-                );
-
             if (!req.user) {
                 throw new AppError(
                     USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
@@ -293,13 +310,17 @@ export class UserController {
                 );
             }
 
-            const dto: UpdateAvatarUrlRequestDto =
-                UserMapperProfile.toUpdateAvatarUrlInput(
-                    validationResult,
-                    req.user.id,
+            const validationResult =
+                ValidationHelper.validate<ZodUpdateAvatarUrlInputType>(
+                    updateAvatarUrlSchema,
+                    {
+                        ...req.body,
+                        userId: req.user.id,
+                    },
                 );
 
-            const result = await this._updateAvatarUrlUseCase.execute(dto);
+            const result =
+                await this._updateAvatarUrlUseCase.execute(validationResult);
 
             if (result.isFailure) {
                 throw new AppError(
@@ -362,28 +383,19 @@ export class UserController {
             );
         }
 
-        const page = Number(req.query.page);
-        const limit = Number(req.query.limit);
-        const search = String(req.query.search ?? '');
-        const auctionType = String(req.query.auctionType ?? 'ALL') as
-            | AuctionType
-            | 'ALL';
-        const status = String(req.query.status ?? 'ALL') as
-            | AuctionStatus
-            | 'ALL';
-        const sort = String(req.query.sort ?? 'startAt');
-        const order = String(req.query.order ?? 'desc') as 'asc' | 'desc';
+        const validatedResult =
+            ValidationHelper.validate<ZodGetUserParticipatedAuctionsInputType>(
+                ZodGetUserParticipatedAuctionsSchema,
+                {
+                    userId: req.user.id,
+                    ...req.query,
+                } as ZodGetUserParticipatedAuctionsInputType,
+            );
 
-        const result = await this._getUserParticipatedAuctionsUsecase.execute({
-            userId: req.user.id,
-            page,
-            limit,
-            search,
-            auctionType,
-            status,
-            sort,
-            order,
-        });
+        const result =
+            await this._getUserParticipatedAuctionsUsecase.execute(
+                validatedResult,
+            );
 
         if (result.isFailure) {
             throw new AppError(

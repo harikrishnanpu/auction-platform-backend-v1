@@ -1,33 +1,30 @@
 import { TYPES } from '@di/types.di';
 import { Notification } from '@domain/entities/notifications/notification.entity';
-import {
-    IFindNotificationsOptions,
-    INotificationRepository,
-} from '@domain/repositories/INotificationRepo';
+import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { Result } from '@domain/shared/result';
-import { NotificationMapper } from '@infrastructure/mappers/notification/notification.mapper';
+import { IFindNotificationsOptions } from '@domain/types/notifications.type';
 import { PrismaClient } from '@prisma/client';
 import { inject } from 'inversify';
+import { BaseRepository } from '../base/base.Repo';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
+import { Notification as PrismaNotification } from '@prisma/client';
 
-export class PrismaNotificationRepo implements INotificationRepository {
+export class PrismaNotificationRepo
+    extends BaseRepository<
+        Notification,
+        PrismaNotification,
+        { id: string },
+        IDbMapper<Notification, PrismaNotification>
+    >
+    implements INotificationRepository
+{
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
-    ) {}
-
-    async save(notification: Notification): Promise<Result<Notification>> {
-        const res = await this._prisma.notification.create({
-            data: {
-                id: notification.getId(),
-                title: notification.getTitle(),
-                message: notification.getMessage(),
-                userId: notification.getUserId(),
-                isRead: notification.getIsRead(),
-                isDelivered: notification.getIsDelivered(),
-            },
-        });
-
-        return NotificationMapper.toDomain(res);
+        @inject(TYPES.NotificationMapper)
+        readonly mapper: IDbMapper<Notification, PrismaNotification>,
+    ) {
+        super(_prisma.notification, mapper);
     }
 
     async findAllByUserId(
@@ -65,7 +62,8 @@ export class PrismaNotificationRepo implements INotificationRepository {
         const notifications: Notification[] = [];
 
         for (const not of res) {
-            const result = NotificationMapper.toDomain(not);
+            const result = this.mapper.toDomain(not);
+            // --change
             if (result.isFailure) return Result.fail(result.getError());
             notifications.push(result.getValue());
         }

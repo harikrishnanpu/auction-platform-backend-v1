@@ -12,6 +12,7 @@ import { Notification } from '@domain/entities/notifications/notification.entity
 import { NotificationCreated } from '@domain/events/notitificationCreated.event';
 import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
 import { IFallbackAuctionRepo } from '@domain/repositories/IFallbackAuctionRepo';
 import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { Result } from '@domain/shared/result';
@@ -32,6 +33,8 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
         private readonly _eventBus: IEventBus,
         @inject(TYPES.IFallbackAuctionRepository)
         private readonly _publicFallbackAuctionRepository: IFallbackAuctionRepo,
+        @inject(TYPES.IAuctionWinnerRepository)
+        private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
     ) {}
 
     async execute(auctionId: string): Promise<Result<void>> {
@@ -50,6 +53,16 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
             if (auction.getStatus() !== AuctionStatus.FALLBACK_ENDED) {
                 throw new Error('Auction is not ended');
             }
+
+            const auctionWinnersResult =
+                await this._auctionWinnerRepository.findAllByAuctionId(
+                    auctionId,
+                );
+            if (auctionWinnersResult.isFailure) {
+                return Result.fail(auctionWinnersResult.getError());
+            }
+
+            const auctionWinners = auctionWinnersResult.getValue();
 
             const setStatusResult = auction.setStatus(
                 AuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
@@ -70,9 +83,13 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
                 return Result.fail(newFallbackAuction.getError());
             }
 
-            await this._publicFallbackAuctionRepository.save(
-                newFallbackAuction.getValue(),
-            );
+            const saveFallbackResult =
+                await this._publicFallbackAuctionRepository.save(
+                    newFallbackAuction.getValue(),
+                );
+            if (saveFallbackResult.isFailure) {
+                return Result.fail(saveFallbackResult.getError());
+            }
 
             const savedAuction = await this._auctionRepository.save(auction);
 
@@ -90,6 +107,15 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
             const participants = participantsResult.getValue();
 
             for (const participant of participants) {
+                if (
+                    auctionWinners.some(
+                        (winner) =>
+                            winner.getUserId() === participant.getUserId(),
+                    )
+                ) {
+                    continue;
+                }
+
                 const notificationEntity = Notification.create({
                     id: this._idGeneratingService.generateId(),
                     title: `You got another chance to win the auction: ${auction.getTitle()}`,
@@ -101,16 +127,21 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
                     return Result.fail(notificationEntity.getError());
                 }
 
-                await this._notificationRepository.save(
-                    notificationEntity.getValue(),
-                );
+                const saveNotifyResult =
+                    await this._notificationRepository.save(
+                        notificationEntity.getValue(),
+                    );
+                if (saveNotifyResult.isFailure) {
+                    return Result.fail(saveNotifyResult.getError());
+                }
 
+                const notify = notificationEntity.getValue();
                 this._eventBus.publish(
                     new NotificationCreated(
-                        notificationEntity.getValue().getId(),
-                        notificationEntity.getValue().getUserId(),
-                        notificationEntity.getValue().getTitle(),
-                        notificationEntity.getValue().getMessage(),
+                        notify.getId(),
+                        notify.getUserId(),
+                        notify.getTitle(),
+                        notify.getMessage(),
                     ),
                 );
             }

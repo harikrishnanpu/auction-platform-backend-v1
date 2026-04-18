@@ -12,7 +12,7 @@ enum AuctionPublicFallbackPaymentStatus {
 model PublicFallbackAuction {
   id                                String                              @id @default(uuid())
   auctionId                         String                              @unique
-  amount                            Float                            
+  amount                            Float
   status                            AuctionPublicFallbackStatus         @default(PENDING)
   paymentStatus                     AuctionPublicFallbackPaymentStatus  @default(PENDING)
   createdAt                         DateTime                            @default(now())

@@ -15,8 +15,8 @@ import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { IGetAdminAuctionsInputDto } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
 import { AuctionType } from '@domain/entities/auction/auction.entity';
 import {
-  AuthProviderType,
-  UserStatus,
+    AuthProviderType,
+    UserStatus,
 } from '@domain/entities/user/user.entity';
 import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
 import { ZodBlockUserInputType } from '@presentation/validators/schemas/admin/blockUsers.schema';
@@ -33,141 +33,138 @@ import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/view
 import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 
 export class AdminMapperProfile {
-  public static toGetAllUsersInputDto(
-    data: ZodGetAllUsersInputType,
-  ): IGetAllUsersInput {
-    return {
-      page: data.page ? Number(data.page) : 1,
-      limit: data.limit ? Number(data.limit) : 10,
-      search: data.search ?? '',
-      sort: data.sort ?? 'createdAt',
-      order: data.order as 'asc' | 'desc',
-      role: data.role as UserRoleType | 'ALL',
-      status: data.status as UserStatus | 'ALL',
-      authProvider: data.authProvider as AuthProviderType | 'ALL',
-    };
-  }
+    public static toGetAllUsersInputDto(
+        data: ZodGetAllUsersInputType,
+    ): IGetAllUsersInput {
+        return {
+            page: data.page ? Number(data.page) : 1,
+            limit: data.limit ? Number(data.limit) : 10,
+            search: data.search ?? '',
+            sort: data.sort ?? 'createdAt',
+            order: data.order as 'asc' | 'desc',
+            role: data.role as UserRoleType | 'ALL',
+            status: data.status as UserStatus | 'ALL',
+            authProvider: data.authProvider as AuthProviderType | 'ALL',
+        };
+    }
 
-  public static toBlockUserInputDto(
-    data: ZodBlockUserInputType,
-  ): IBlockUserInput {
-    return {
-      userId: data.userId,
-      block: data.block,
-    };
-  }
+    public static toBlockUserInputDto(
+        data: ZodBlockUserInputType,
+    ): IBlockUserInput {
+        return {
+            userId: data.userId,
+            block: data.block,
+        };
+    }
 
-  public static toGetAdminUserInputDto(
-    data: ZodGetAdminUserInputType,
-  ): IGetUserInput {
-    return {
-      userId: data.userId,
-    };
-  }
+    public static toGetAdminUserInputDto(
+        data: ZodGetAdminUserInputType,
+    ): IGetUserInput {
+        return {
+            userId: data.userId,
+        };
+    }
 
-  public static toGetAllSellersInputDto(
-    data: ZodGetAllSellersInputType,
-  ): IGetAllSellersInput {
-    return {
-      page: data.page ? Number(data.page) : 1,
-      limit: data.limit ? Number(data.limit) : 10,
-      pendingOnly: data.pendingOnly ?? false,
-    };
-  }
+    public static toGetAllSellersInputDto(
+        data: ZodGetAllSellersInputType,
+    ): IGetAllSellersInput {
+        return {
+            page: data.page ? Number(data.page) : 1,
+            limit: data.limit ? Number(data.limit) : 10,
+            pendingOnly: data.pendingOnly ?? false,
+        };
+    }
 
-  public static toGetAdminSellerInputDto(
-    data: ZodGetAdminSellerInputType,
-  ): IGetAdminSellerInput {
-    return {
-      sellerId: data.id,
-    };
-  }
+    public static toGetAdminSellerInputDto(
+        data: ZodGetAdminSellerInputType,
+    ): IGetAdminSellerInput {
+        return {
+            sellerId: data.id,
+        };
+    }
 
-  public static toApproveSellerKycInputDto(
-    data: ZodGetAdminSellerInputType,
-  ): IApproveSellerKycInput {
-    return {
-      sellerId: data.id,
-    };
-  }
+    public static toApproveSellerKycInputDto(
+        data: ZodGetAdminSellerInputType,
+    ): IApproveSellerKycInput {
+        return {
+            sellerId: data.id,
+        };
+    }
 
-  public static toRejectSellerKycInputDto(
-    data: ZodRejectSellerKycInputType,
-  ): IRejectSellerKycInput {
-    return {
-      sellerId: data.id,
-      reason: data.reason,
-    };
-  }
+    public static toRejectSellerKycInputDto(
+        data: ZodRejectSellerKycInputType,
+    ): IRejectSellerKycInput {
+        return {
+            sellerId: data.id,
+            reason: data.reason,
+        };
+    }
 
-  public static toApproveAuctionCategoryInputDto(
-    data: ZodApproveAuctionCategoryInputType,
-  ): IApproveAuctionCategoryInputDto {
-    return {
-      categoryId: data.categoryId,
-    };
-  }
+    public static toApproveAuctionCategoryInputDto(
+        data: ZodApproveAuctionCategoryInputType,
+    ): IApproveAuctionCategoryInputDto {
+        return {
+            categoryId: data.categoryId,
+        };
+    }
 
-  public static toRejectAuctionCategoryInputDto(
-    data: ZodRejectAuctionCategoryInputType,
-  ): IRejectAuctionCategoryrequestInputDto {
-    return {
-      categoryId: data.categoryId,
-      reason: data.reason,
-    };
-  }
+    public static toRejectAuctionCategoryInputDto(
+        data: ZodRejectAuctionCategoryInputType,
+    ): IRejectAuctionCategoryrequestInputDto {
+        return {
+            categoryId: data.categoryId,
+            reason: data.reason,
+        };
+    }
 
-  public static toChangeAuctionCategoryStatusInputDto(
-    data: ZodChangeAuctionCategoryStatusInputType,
-  ): IChangeAuctionCategoryStatusInputDto {
-    return {
-      categoryId: data.categoryId,
-      status: data.status,
-    };
-  }
+    public static toChangeAuctionCategoryStatusInputDto(
+        data: ZodChangeAuctionCategoryStatusInputType,
+    ): IChangeAuctionCategoryStatusInputDto {
+        return {
+            categoryId: data.categoryId,
+            status: data.status,
+        };
+    }
 
-  public static toGetAdminAuctionsInputDto(
-    data: ZodGetBrowseAuctionsInputType,
-  ): IGetAdminAuctionsInputDto {
-    return {
-      auctionType: data.auctionType as AuctionType | 'ALL',
-      categoryId: data.categoryId,
-      page: data.page,
-      limit: data.limit,
-      sort: data.sort,
-      order: data.order,
-      search: data.search,
-    };
-  }
+    public static toGetAdminAuctionsInputDto(
+        data: ZodGetBrowseAuctionsInputType,
+    ): IGetAdminAuctionsInputDto {
+        return {
+            auctionType: data.auctionType as AuctionType | 'ALL',
+            categoryId: data.categoryId,
+            page: data.page,
+            limit: data.limit,
+            sort: data.sort,
+            order: data.order,
+            search: data.search,
+        };
+    }
 
-  public static toUpdateAuctionCategoryInputDto(
-    data: ZodUpdateAuctionCategoryInputType,
-  ): IUpdateAuctionCategoryInputDto {
-    return {
-      categoryId: data.categoryId,
-      name: data.name,
-      parentId: data.parentId || null,
-    };
-  }
+    public static toUpdateAuctionCategoryInputDto(
+        data: ZodUpdateAuctionCategoryInputType,
+    ): IUpdateAuctionCategoryInputDto {
+        return {
+            categoryId: data.categoryId,
+            name: data.name,
+            parentId: data.parentId || null,
+        };
+    }
 
-  public static toCreateAuctionCategoryInputDto(
-    data: ZodCreateAuctionCategoryInputType,
-    userId: string,
-  ): ICreateAuctionCategoryInputDto {
-    return {
-      name: data.name,
-      parentId: data.parentId || null,
-      userId: userId,
-    };
-  }
+    public static toCreateAuctionCategoryInputDto(
+        data: ZodCreateAuctionCategoryInputType,
+    ): ICreateAuctionCategoryInputDto {
+        return {
+            name: data.name,
+            parentId: data.parentId || null,
+            userId: data.userId,
+        };
+    }
 
-  public static toViewKycInputDto(
-    data: ZodViewKycInputType,
-    userId: string,
-  ): IViewKycInputDto {
-    return {
-      userId: userId,
-      documentId: data.documentId,
-    };
-  }
+    public static toViewKycInputDto(
+        data: ZodViewKycInputType,
+    ): IViewKycInputDto {
+        return {
+            documentId: data.documentId,
+        };
+    }
 }
