@@ -38,6 +38,8 @@ import { IUpdateAuctionInput } from '@application/dtos/auction/update-auction.dt
 import { ZodPublishAuctionParamsInputType } from '@presentation/validators/schemas/auction/publishAuctionParams.schema';
 import { IPublishAuctionInput } from '@application/dtos/auction/publish-auction.dto';
 import { IEndAuctionInput } from '@application/dtos/auction/end-auction.dto';
+import { IGetUserParticipatedAuctionsInputDto } from '@application/dtos/auction/get-user-participated-auctions.dto';
+import { ZodGetUserParticipatedAuctionsInputType } from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
 
 export class AuctionMapperProrfile {
     public static toCreateAuctionDto(
@@ -285,6 +287,23 @@ export class AuctionMapperProrfile {
             auctionId: auctionId,
             userId: userId,
             isAdmin: isAdmin,
+        };
+    }
+
+    public static toGetUserParticipatedAuctionsInputDto(
+        data: ZodGetUserParticipatedAuctionsInputType,
+    ): IGetUserParticipatedAuctionsInputDto {
+        return {
+            userId: data.userId,
+            query: {
+                page: data.page,
+                limit: data.limit,
+                search: data.search || '',
+                auctionType: data.auctionType || 'ALL',
+                status: data.status || 'ALL',
+                sort: data.sort || '',
+                order: data.order || 'asc',
+            },
         };
     }
 }

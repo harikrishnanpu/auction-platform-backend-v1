@@ -1,6 +1,9 @@
 import { Auction } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
-import { IFindAllAuctionsFilters } from '@domain/types/auctionRepo.types';
+import {
+    IAuctionStatsPublicCounts,
+    IFindAllAuctionsFilters,
+} from '@domain/types/auctionRepo.types';
 
 export interface IAuctionRepository {
     save(auction: Auction): Promise<Result<Auction>>;
@@ -15,4 +18,7 @@ export interface IAuctionRepository {
         userId: string,
         filters: IFindAllAuctionsFilters,
     ): Promise<Result<{ auctions: Auction[]; total: number }>>;
+
+    countAuctionStats(): Promise<Result<IAuctionStatsPublicCounts>>;
+    countParticipatedByUserId(userId: string): Promise<Result<number>>;
 }

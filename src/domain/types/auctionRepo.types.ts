@@ -14,3 +14,9 @@ export interface IFindAllAuctionsFilters {
     search?: string;
     sellerId?: string;
 }
+
+export interface IAuctionStatsPublicCounts {
+    liveCount: number;
+    upcomingCount: number;
+    endedCount: number;
+}

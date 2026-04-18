@@ -34,10 +34,12 @@ import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
 import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/notification/IGetUserNotificationsUsecase';
 import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
+import { IGetUserHomeStatsUsecase } from '@application/interfaces/usecases/user/IGetUserHomeStatsUsecase';
+import { IGetUserHomeStatsOutputDto } from '@application/dtos/user/getUserHomeStats.dto';
 import {
-    AuctionStatus,
-    AuctionType,
-} from '@domain/entities/auction/auction.entity';
+    ZodGetUserParticipatedAuctionsInputType,
+    ZodGetUserParticipatedAuctionsSchema,
+} from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
 
 @injectable()
 export class UserController {
@@ -58,7 +60,40 @@ export class UserController {
         private readonly _getUserParticipatedAuctionsUsecase: IGetUserParticipatedAuctionsUsecase,
         @inject(TYPES.IGetOrCreateWalletUsecase)
         private readonly _getOrCreateWalletUsecase: IGetOrCreateWalletUsecase,
+        @inject(TYPES.IGetUserHomeStatsUsecase)
+        private readonly _getUserHomeStatsUsecase: IGetUserHomeStatsUsecase,
     ) {}
+
+    /**
+     * @description Get home-page stats for the current user
+     * @returns ApiResponse<IGetUserHomeStatsOutputDto>
+     */
+    getHomeStats = expressAsyncHandler(async (req: Request, res: Response) => {
+        if (!req.user) {
+            throw new AppError(
+                USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        const result = await this._getUserHomeStatsUsecase.execute({
+            userId: req.user.id,
+        });
+
+        if (result.isFailure) {
+            throw new AppError(
+                result.getError(),
+                USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+            );
+        }
+
+        ResponseHelper.success<IGetUserHomeStatsOutputDto>(
+            res,
+            result.getValue(),
+            USER_PROFILE_CONSTANTS.MESSAGES.GET_HOME_STATS_SUCCESSFULLY,
+            USER_PROFILE_CONSTANTS.CODES.OK,
+        );
+    });
 
     /**
      * @description Send a profile change password otp to the user's email
@@ -348,28 +383,19 @@ export class UserController {
             );
         }
 
-        const page = Number(req.query.page);
-        const limit = Number(req.query.limit);
-        const search = String(req.query.search ?? '');
-        const auctionType = String(req.query.auctionType ?? 'ALL') as
-            | AuctionType
-            | 'ALL';
-        const status = String(req.query.status ?? 'ALL') as
-            | AuctionStatus
-            | 'ALL';
-        const sort = String(req.query.sort ?? 'startAt');
-        const order = String(req.query.order ?? 'desc') as 'asc' | 'desc';
+        const validatedResult =
+            ValidationHelper.validate<ZodGetUserParticipatedAuctionsInputType>(
+                ZodGetUserParticipatedAuctionsSchema,
+                {
+                    userId: req.user.id,
+                    ...req.query,
+                } as ZodGetUserParticipatedAuctionsInputType,
+            );
 
-        const result = await this._getUserParticipatedAuctionsUsecase.execute({
-            userId: req.user.id,
-            page,
-            limit,
-            search,
-            auctionType,
-            status,
-            sort,
-            order,
-        });
+        const result =
+            await this._getUserParticipatedAuctionsUsecase.execute(
+                validatedResult,
+            );
 
         if (result.isFailure) {
             throw new AppError(

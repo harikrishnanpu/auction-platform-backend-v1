@@ -38,6 +38,7 @@ export const TYPES = {
         'IGenerateAvatarUploadUrlUsecase',
     ),
     IUpdateAvatarUrlUsecase: Symbol.for('IUpdateAvatarUrlUsecase'),
+    IGetUserHomeStatsUsecase: Symbol.for('IGetUserHomeStatsUsecase'),
     IGetKycUploadUrlUsecase: Symbol.for('IGetKycUploadUrlUsecase'),
     KycController: Symbol.for('KycController'),
     IKycRepository: Symbol.for('IKycRepository'),

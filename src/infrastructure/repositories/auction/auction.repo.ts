@@ -3,7 +3,10 @@ import { Auction } from '@domain/entities/auction/auction.entity';
 import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
-import { IFindAllAuctionsFilters } from '@domain/types/auctionRepo.types';
+import {
+    IAuctionStatsPublicCounts,
+    IFindAllAuctionsFilters,
+} from '@domain/types/auctionRepo.types';
 import {
     AuctionStatus as PrismaAuctionStatus,
     AuctionType,
@@ -342,5 +345,60 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         }
 
         return Result.ok({ auctions, total });
+    }
+
+    async countAuctionStats(): Promise<Result<IAuctionStatsPublicCounts>> {
+        try {
+            const now = new Date();
+
+            const [liveCount, upcomingCount, endedCount] = await Promise.all([
+                this._prisma.auction.count({
+                    where: {
+                        status: PrismaAuctionStatus.ACTIVE,
+                        startAt: { lte: now },
+                        endAt: { gte: now },
+                    },
+                }),
+                this._prisma.auction.count({
+                    where: {
+                        status: {
+                            in: [
+                                PrismaAuctionStatus.ACTIVE,
+                                PrismaAuctionStatus.PAUSED,
+                            ],
+                        },
+                        startAt: { gt: now },
+                    },
+                }),
+                this._prisma.auction.count({
+                    where: {
+                        status: {
+                            in: [
+                                PrismaAuctionStatus.ENDED,
+                                PrismaAuctionStatus.SOLD,
+                                PrismaAuctionStatus.CANCELLED,
+                                PrismaAuctionStatus.FALLBACK_ENDED,
+                                PrismaAuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
+                            ],
+                        },
+                    },
+                }),
+            ]);
+
+            return Result.ok({ liveCount, upcomingCount, endedCount });
+        } catch (error) {
+            return Result.fail(
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to count public auctions',
+            );
+        }
+    }
+
+    async countParticipatedByUserId(userId: string): Promise<Result<number>> {
+        const count = await this._prisma.auction.count({
+            where: { participants: { some: { userId: userId } } },
+        });
+        return Result.ok(count);
     }
 }

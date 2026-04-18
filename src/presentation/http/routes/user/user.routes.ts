@@ -16,6 +16,13 @@ export class UserRoutes {
     }
 
     register(): Router {
+        this._router.get(
+            '/home-stats',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.getHomeStats,
+        );
+
         this._router.post(
             '/send-profile-change-password-otp',
             this._authenticateMiddleware.authenticate,
