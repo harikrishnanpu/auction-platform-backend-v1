@@ -19,7 +19,6 @@ import { sellerContainer } from './modules/seller.container';
 import { SellerController } from '@presentation/http/controllers/seller/seller.controller';
 import { IEncryptionService } from '@application/interfaces/services/IEncryptionService';
 import { EncryptService } from '@infrastructure/services/encrypt/encrypt.service';
-import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { EventBus } from '@infrastructure/events/event-bus';
 import { IEventBus } from '@application/interfaces/events/IEventBus';
@@ -30,6 +29,7 @@ import { WalletController } from '@presentation/http/controllers/wallet/wallet.c
 import { paymentsContainer } from './modules/payments.container';
 import { PaymentsController } from '@presentation/http/controllers/payments/payments.controller';
 import { dbMappersContainer } from './modules/mappers.container';
+import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 
 const container = new Container();
 

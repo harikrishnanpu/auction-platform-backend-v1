@@ -24,4 +24,14 @@ export enum SocketEvents {
     DECLINE_PAYMENT_FOR_PUBLIC_FALLBACK_AUCTION = 'auction:declinePaymentForPublicFallbackAuction',
 
     ADD_AUCTION_PARTICIPANT = 'auction:addAuctionParticipant',
+
+    LIVE_AUCTION_GET_CAPABILITIES = 'auction:liveAuctionGetCapabilities',
+    LIVE_AUCTION_CREATE_SEND_TRANSPORT = 'auction:liveAuctionCreateSendTransport',
+    LIVE_AUCTION_CREATE_RECV_TRANSPORT = 'auction:liveAuctionCreateRecvTransport',
+    LIVE_AUCTION_CONNECT_TRANSPORT = 'auction:liveAuctionConnectTransport',
+    LIVE_AUCTION_PRODUCE = 'auction:liveAuctionProduce',
+    LIVE_AUCTION_CONSUME = 'auction:liveAuctionConsume',
+    LIVE_AUCTION_RESUME_CONSUMER = 'auction:liveAuctionResumeConsumer',
+    LIVE_AUCTION_NEW_PRODUCER = 'auction:liveAuctionNewProducer',
+    LIVE_AUCTION_PRODUCER_CLOSED = 'auction:liveAuctionProducerClosed',
 }

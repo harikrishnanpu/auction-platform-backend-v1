@@ -13,7 +13,7 @@ export interface IFindAllByKycForResult {
 }
 
 export interface IKycRepository {
-    save(kyc: Kyc): Promise<Result<void>>;
+    save(kyc: Kyc): Promise<Result<Kyc>>;
 
     findByUserIdAndFor(
         userId: string,

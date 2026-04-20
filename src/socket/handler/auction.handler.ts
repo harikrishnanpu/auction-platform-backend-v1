@@ -10,7 +10,7 @@ import { AuthUser } from '@presentation/types/auth.user';
 import { TYPES } from '@di/types.di';
 import type { Container } from 'inversify';
 import type { Server, Socket } from 'socket.io';
-import type { SocketAckPayload } from '../socket.ack';
+import type { SocketAckPayload } from '../helpers/socket.ack';
 import { SocketEvents } from '../constants/socket.events';
 import {
     auctionControlSocketSchema,
@@ -30,7 +30,17 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { PublicAuctionFallbackParticipantsStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
-import { AuctionStatus } from '@domain/entities/auction/auction.entity';
+import {
+    AuctionStatus,
+    AuctionType,
+} from '@domain/entities/auction/auction.entity';
+import { LiveAuctionRoomManager } from 'socket/managers/liveAuctionRoom.manager';
+import { MediaSoupeManager } from 'socket/managers/mediaSoupe.manager';
+import type { DtlsParameters } from 'mediasoup/node/lib/WebRtcTransportTypes';
+import { z } from 'zod';
+
+const liveAuctionRoomManager = new LiveAuctionRoomManager();
+const mediaSoupeManager = MediaSoupeManager.getInstance();
 
 export class AuctionHandler {
     constructor(
@@ -38,6 +48,24 @@ export class AuctionHandler {
         private readonly socket: Socket,
         private readonly container: Container,
     ) {}
+
+    private parseLiveRoomId(auctionId: string): string {
+        return `auction:${auctionId}`;
+    }
+
+    private toTransportParams(transport: {
+        id: string;
+        iceParameters: unknown;
+        iceCandidates: unknown;
+        dtlsParameters: unknown;
+    }) {
+        return {
+            id: transport.id,
+            iceParameters: transport.iceParameters,
+            iceCandidates: transport.iceCandidates,
+            dtlsParameters: transport.dtlsParameters,
+        };
+    }
 
     private authorizeUser(
         user: AuthUser,
@@ -95,7 +123,15 @@ export class AuctionHandler {
         const result = roomResult.getValue();
         const chatMessages = chatResult.getValue();
 
-        this.socket.emit(SocketEvents.JOINED, { ...result, chatMessages });
+        this.socket.emit(SocketEvents.JOINED, {
+            ...result,
+            chatMessages,
+            isLiveAuction: result.auction.auctionType === AuctionType.LIVE,
+            isProducer:
+                result.auction.status === AuctionStatus.ACTIVE &&
+                (user.roles.includes(UserRoleType.ADMIN) ||
+                    user.roles.includes(UserRoleType.SELLER)),
+        });
 
         return { success: true, data: { auctionId } };
     }
@@ -557,5 +593,313 @@ export class AuctionHandler {
             );
 
         return { success: true, data: output };
+    }
+
+    async handleLiveAuctionGetCapabilities(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const { auctionId } = parsed.data;
+        const roomId = this.parseLiveRoomId(auctionId);
+        const roomResult = await this.container
+            .get<IGetAuctionRoomUsecase>(TYPES.IGetAuctionRoomUsecase)
+            .execute({
+                userId: this.socket.data.user.id,
+                auctionId,
+                mode: 'USER',
+            });
+
+        if (roomResult.isFailure) {
+            return { success: false, error: roomResult.getError() };
+        }
+
+        const roomData = roomResult.getValue();
+        if (roomData.auction.auctionType !== AuctionType.LIVE) {
+            return { success: false, error: 'Not a live auction' };
+        }
+        if (roomData.auction.status !== AuctionStatus.ACTIVE) {
+            return { success: false, error: 'Auction is not active' };
+        }
+
+        const router =
+            liveAuctionRoomManager.getAuctionRoom(roomId)?.router ??
+            (await mediaSoupeManager.createRouter());
+        liveAuctionRoomManager.createAuctionRoom(roomId, router);
+
+        const user = this.socket.data.user;
+        const isHost =
+            user.roles.includes(UserRoleType.ADMIN) ||
+            user.roles.includes(UserRoleType.SELLER);
+
+        liveAuctionRoomManager.joinAuctionRoom(roomId, {
+            id: this.socket.id,
+            username: user.name,
+            role: isHost ? 'host' : 'viewer',
+            isEnabledToSpeak: isHost,
+            transport: null,
+            producers: [],
+            consumers: [],
+        });
+
+        const producerIds = liveAuctionRoomManager
+            .getProducers(roomId)
+            .map((producer) => producer.id);
+
+        return {
+            success: true,
+            data: {
+                roomId,
+                isHost,
+                rtpCapabilities: router.rtpCapabilities,
+                producerIds,
+            },
+        };
+    }
+
+    async handleLiveAuctionCreateSendTransport(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
+        const room = liveAuctionRoomManager.getAuctionRoom(roomId);
+        if (!room) {
+            return { success: false, error: 'Live room not ready' };
+        }
+
+        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        if (!user || !user.isEnabledToSpeak) {
+            return { success: false, error: 'Only host can publish media' };
+        }
+
+        const transport =
+            user.transport ??
+            (await mediaSoupeManager.createTransport(room.router));
+        if (!user.transport) {
+            liveAuctionRoomManager.setTransport(
+                roomId,
+                this.socket.id,
+                transport,
+            );
+        }
+
+        return {
+            success: true,
+            data: this.toTransportParams(transport),
+        };
+    }
+
+    async handleLiveAuctionCreateRecvTransport(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
+        const room = liveAuctionRoomManager.getAuctionRoom(roomId);
+        if (!room) {
+            return { success: false, error: 'Live room not ready' };
+        }
+
+        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        if (!user) {
+            return { success: false, error: 'Live user not joined' };
+        }
+
+        const transport =
+            user.transport ??
+            (await mediaSoupeManager.createTransport(room.router));
+        if (!user.transport) {
+            liveAuctionRoomManager.setTransport(
+                roomId,
+                this.socket.id,
+                transport,
+            );
+        }
+
+        return {
+            success: true,
+            data: this.toTransportParams(transport),
+        };
+    }
+
+    async handleLiveAuctionConnectTransport(payload: unknown) {
+        const parsed = parseSocketPayload(
+            auctionControlSocketSchema.extend({
+                dtlsParameters: z.any(),
+            }),
+            payload,
+        );
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
+        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        if (!user) {
+            return { success: false, error: 'Live user not joined' };
+        }
+
+        const transport = user.transport;
+
+        if (!transport) {
+            return { success: false, error: 'Transport not found' };
+        }
+
+        await transport.connect({
+            dtlsParameters: parsed.data.dtlsParameters as DtlsParameters,
+        });
+        return { success: true };
+    }
+
+    async handleLiveAuctionProduce(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(
+            auctionControlSocketSchema.extend({
+                kind: z.enum(['audio', 'video']),
+                rtpParameters: z.any(),
+            }),
+            payload,
+        );
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
+        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        if (!user || !user.isEnabledToSpeak) {
+            return { success: false, error: 'Only host can publish media' };
+        }
+        if (!user.transport) {
+            return { success: false, error: 'Transport not ready' };
+        }
+
+        const producer = await user.transport.produce({
+            kind: parsed.data.kind,
+            rtpParameters: parsed.data.rtpParameters,
+        });
+
+        liveAuctionRoomManager.addProducer(roomId, this.socket.id, producer);
+
+        producer.on('transportclose', () => {
+            producer.close();
+            liveAuctionRoomManager.removeProducer(roomId, producer.id);
+            this.io.to(roomId).emit(SocketEvents.LIVE_AUCTION_PRODUCER_CLOSED, {
+                producerId: producer.id,
+            });
+        });
+
+        this.socket.to(roomId).emit(SocketEvents.LIVE_AUCTION_NEW_PRODUCER, {
+            producerId: producer.id,
+            socketId: this.socket.id,
+            kind: producer.kind,
+        });
+
+        return { success: true, data: { id: producer.id } };
+    }
+
+    async handleLiveAuctionConsume(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(
+            auctionControlSocketSchema.extend({
+                producerId: z.string().min(1),
+                rtpCapabilities: z.any(),
+            }),
+            payload,
+        );
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
+        const room = liveAuctionRoomManager.getAuctionRoom(roomId);
+        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+
+        if (!room || !user || !user.transport) {
+            return { success: false, error: 'Transport not ready' };
+        }
+
+        if (
+            !room.router.canConsume({
+                producerId: parsed.data.producerId,
+                rtpCapabilities: parsed.data.rtpCapabilities as never,
+            })
+        ) {
+            return { success: false, error: 'Cannot consume this producer' };
+        }
+
+        const consumer = await user.transport.consume({
+            producerId: parsed.data.producerId,
+            rtpCapabilities: parsed.data.rtpCapabilities as never,
+            paused: true,
+        });
+
+        liveAuctionRoomManager.addConsumer(roomId, this.socket.id, consumer);
+        consumer.on('transportclose', () => consumer.close());
+        consumer.on('producerclose', () => {
+            consumer.close();
+            this.socket.emit(SocketEvents.LIVE_AUCTION_PRODUCER_CLOSED, {
+                producerId: parsed.data.producerId,
+            });
+        });
+
+        return {
+            success: true,
+            data: {
+                id: consumer.id,
+                producerId: parsed.data.producerId,
+                kind: consumer.kind,
+                rtpParameters: consumer.rtpParameters,
+            },
+        };
+    }
+
+    async handleLiveAuctionResumeConsumer(
+        payload: unknown,
+    ): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(
+            auctionControlSocketSchema.extend({
+                consumerId: z.string().min(1),
+            }),
+            payload,
+        );
+        if (!parsed.ok) {
+            return { success: false, error: parsed.error };
+        }
+
+        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
+        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        if (!user) {
+            return { success: false, error: 'Live user not joined' };
+        }
+
+        const consumer = user.consumers.find(
+            (item) => item.id === parsed.data.consumerId,
+        );
+        if (!consumer) {
+            return { success: false, error: 'Consumer not found' };
+        }
+
+        await consumer.resume();
+        return { success: true };
+    }
+
+    handleSocketDisconnect(roomIds: string[]): void {
+        for (const roomId of roomIds) {
+            if (roomId.startsWith('auction:')) {
+                liveAuctionRoomManager.leaveAuctionRoom(roomId, this.socket.id);
+            }
+        }
     }
 }

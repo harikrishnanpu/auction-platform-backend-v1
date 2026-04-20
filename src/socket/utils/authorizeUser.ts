@@ -1,6 +1,6 @@
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { AuthUser } from '@presentation/types/auth.user';
-import { SocketAckPayload } from 'socket/socket.ack';
+import { SocketAckPayload } from 'socket/helpers/socket.ack';
 
 export const authorizeUser = (
     user: AuthUser,

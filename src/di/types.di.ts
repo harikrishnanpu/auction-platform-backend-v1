@@ -224,4 +224,5 @@ export const TYPES = {
     WalletMapper: Symbol.for('WalletMapper'),
     UserMapper: Symbol.for('UserMapper'),
     WalletTransactionMapper: Symbol.for('WalletTransactionMapper'),
+    LiveAuctionCreatePolicy: Symbol.for('LiveAuctionCreatePolicy'),
 };
