@@ -10,6 +10,8 @@ import { IFindAllUsersInput } from '@domain/types/userRepo.types';
 import { BaseRepository } from '../base/base.Repo';
 import { User as PrismaUser } from '@prisma/client';
 import { IDbMapper } from '@domain/mappers/IDbMapper';
+import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
+import { UserStatus } from '@domain/entities/user/user.entity';
 
 @injectable()
 export class PrismaUserRepo
@@ -130,6 +132,25 @@ export class PrismaUserRepo
         });
 
         return Result.ok();
+    }
+
+    async count(input?: {
+        role?: UserRoleType;
+        status?: UserStatus;
+    }): Promise<Result<number>> {
+        try {
+            const total = await this._prisma.user.count({
+                where: {
+                    roles: input?.role
+                        ? { some: { role: input.role } }
+                        : undefined,
+                    status: input?.status,
+                },
+            });
+            return Result.ok(total);
+        } catch {
+            return Result.fail('Failed to count users');
+        }
     }
 
     async findAll(input: IFindAllUsersInput): Promise<Result<User[]>> {

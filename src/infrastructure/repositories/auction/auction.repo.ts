@@ -401,4 +401,17 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         });
         return Result.ok(count);
     }
+
+    async countAdminVisibleAuctions(): Promise<Result<number>> {
+        try {
+            const total = await this._prisma.auction.count({
+                where: {
+                    status: { not: PrismaAuctionStatus.DRAFT },
+                },
+            });
+            return Result.ok(total);
+        } catch {
+            return Result.fail('Failed to count admin auctions');
+        }
+    }
 }

@@ -24,4 +24,6 @@ export interface IKycRepository {
         kycFor: KycFor,
         options?: IFindAllByKycForOptions,
     ): Promise<Result<IFindAllByKycForResult>>;
+
+    countByKycFor(kycFor: KycFor, status?: KycStatus): Promise<Result<number>>;
 }
