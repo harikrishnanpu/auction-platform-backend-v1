@@ -97,6 +97,7 @@ export class LiveAuctionRoomManager {
     ): boolean {
         const user = this.getUser(roomId, userId);
         if (!user) {
+            console.log('user not found', roomId, userId);
             return false;
         }
         user.producers.push(producer);

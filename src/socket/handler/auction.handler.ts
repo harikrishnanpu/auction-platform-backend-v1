@@ -39,32 +39,17 @@ import { MediaSoupeManager } from 'socket/managers/mediaSoupe.manager';
 import type { DtlsParameters } from 'mediasoup/node/lib/WebRtcTransportTypes';
 import { z } from 'zod';
 
-const liveAuctionRoomManager = new LiveAuctionRoomManager();
-const mediaSoupeManager = MediaSoupeManager.getInstance();
-
 export class AuctionHandler {
     constructor(
         private readonly io: Server,
         private readonly socket: Socket,
         private readonly container: Container,
+        private readonly _liveAuctionRoomManager: LiveAuctionRoomManager,
+        private readonly _mediasoupeManager: MediaSoupeManager,
     ) {}
 
     private parseLiveRoomId(auctionId: string): string {
         return `auction:${auctionId}`;
-    }
-
-    private toTransportParams(transport: {
-        id: string;
-        iceParameters: unknown;
-        iceCandidates: unknown;
-        dtlsParameters: unknown;
-    }) {
-        return {
-            id: transport.id,
-            iceParameters: transport.iceParameters,
-            iceCandidates: transport.iceCandidates,
-            dtlsParameters: transport.dtlsParameters,
-        };
     }
 
     private authorizeUser(
@@ -625,17 +610,25 @@ export class AuctionHandler {
             return { success: false, error: 'Auction is not active' };
         }
 
+        if (!this._liveAuctionRoomManager.getAuctionRoom(roomId)) {
+            const router = await this._mediasoupeManager.createRouter();
+            this._liveAuctionRoomManager.createAuctionRoom(roomId, router);
+        }
+
         const router =
-            liveAuctionRoomManager.getAuctionRoom(roomId)?.router ??
-            (await mediaSoupeManager.createRouter());
-        liveAuctionRoomManager.createAuctionRoom(roomId, router);
+            this._liveAuctionRoomManager.getAuctionRoom(roomId)?.router;
+
+        if (!router) {
+            console.log('dd');
+            return { success: false, error: 'Router not found' };
+        }
 
         const user = this.socket.data.user;
         const isHost =
             user.roles.includes(UserRoleType.ADMIN) ||
             user.roles.includes(UserRoleType.SELLER);
 
-        liveAuctionRoomManager.joinAuctionRoom(roomId, {
+        this._liveAuctionRoomManager.joinAuctionRoom(roomId, {
             id: this.socket.id,
             username: user.name,
             role: isHost ? 'host' : 'viewer',
@@ -645,9 +638,11 @@ export class AuctionHandler {
             consumers: [],
         });
 
-        const producerIds = liveAuctionRoomManager
+        const producerIds = this._liveAuctionRoomManager
             .getProducers(roomId)
             .map((producer) => producer.id);
+
+        console.log('producerIds', producerIds);
 
         return {
             success: true,
@@ -660,91 +655,63 @@ export class AuctionHandler {
         };
     }
 
-    async handleLiveAuctionCreateSendTransport(
+    async handleLiveAuctionCreateTransport(
         payload: unknown,
     ): Promise<SocketAckPayload> {
         const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+
         if (!parsed.ok) {
             return { success: false, error: parsed.error };
         }
 
         const roomId = this.parseLiveRoomId(parsed.data.auctionId);
-        const room = liveAuctionRoomManager.getAuctionRoom(roomId);
+        const room = this._liveAuctionRoomManager.getAuctionRoom(roomId);
         if (!room) {
             return { success: false, error: 'Live room not ready' };
         }
 
-        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
-        if (!user || !user.isEnabledToSpeak) {
-            return { success: false, error: 'Only host can publish media' };
-        }
-
-        const transport =
-            user.transport ??
-            (await mediaSoupeManager.createTransport(room.router));
-        if (!user.transport) {
-            liveAuctionRoomManager.setTransport(
-                roomId,
-                this.socket.id,
-                transport,
-            );
-        }
-
-        return {
-            success: true,
-            data: this.toTransportParams(transport),
-        };
-    }
-
-    async handleLiveAuctionCreateRecvTransport(
-        payload: unknown,
-    ): Promise<SocketAckPayload> {
-        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
-        if (!parsed.ok) {
-            return { success: false, error: parsed.error };
-        }
-
-        const roomId = this.parseLiveRoomId(parsed.data.auctionId);
-        const room = liveAuctionRoomManager.getAuctionRoom(roomId);
-        if (!room) {
-            return { success: false, error: 'Live room not ready' };
-        }
-
-        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        const user = this._liveAuctionRoomManager.getUser(
+            roomId,
+            this.socket.id,
+        );
         if (!user) {
             return { success: false, error: 'Live user not joined' };
         }
 
-        const transport =
-            user.transport ??
-            (await mediaSoupeManager.createTransport(room.router));
-        if (!user.transport) {
-            liveAuctionRoomManager.setTransport(
-                roomId,
-                this.socket.id,
-                transport,
-            );
-        }
+        const transport = await this._mediasoupeManager.createTransport(
+            room.router,
+        );
+        room.users.get(this.socket.id)!.transport = transport;
 
         return {
             success: true,
-            data: this.toTransportParams(transport),
+            data: {
+                id: transport.id,
+                iceParameters: transport.iceParameters,
+                iceCandidates: transport.iceCandidates,
+                dtlsParameters: transport.dtlsParameters,
+            },
         };
     }
 
     async handleLiveAuctionConnectTransport(payload: unknown) {
+        // test-- change
         const parsed = parseSocketPayload(
             auctionControlSocketSchema.extend({
                 dtlsParameters: z.any(),
             }),
             payload,
         );
+
         if (!parsed.ok) {
             return { success: false, error: parsed.error };
         }
 
         const roomId = this.parseLiveRoomId(parsed.data.auctionId);
-        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        const user = this._liveAuctionRoomManager.getUser(
+            roomId,
+            this.socket.id,
+        );
         if (!user) {
             return { success: false, error: 'Live user not joined' };
         }
@@ -776,7 +743,10 @@ export class AuctionHandler {
         }
 
         const roomId = this.parseLiveRoomId(parsed.data.auctionId);
-        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        const user = this._liveAuctionRoomManager.getUser(
+            roomId,
+            this.socket.id,
+        );
         if (!user || !user.isEnabledToSpeak) {
             return { success: false, error: 'Only host can publish media' };
         }
@@ -789,11 +759,15 @@ export class AuctionHandler {
             rtpParameters: parsed.data.rtpParameters,
         });
 
-        liveAuctionRoomManager.addProducer(roomId, this.socket.id, producer);
+        this._liveAuctionRoomManager.addProducer(
+            roomId,
+            this.socket.id,
+            producer,
+        );
 
         producer.on('transportclose', () => {
             producer.close();
-            liveAuctionRoomManager.removeProducer(roomId, producer.id);
+            this._liveAuctionRoomManager.removeProducer(roomId, producer.id);
             this.io.to(roomId).emit(SocketEvents.LIVE_AUCTION_PRODUCER_CLOSED, {
                 producerId: producer.id,
             });
@@ -823,8 +797,11 @@ export class AuctionHandler {
         }
 
         const roomId = this.parseLiveRoomId(parsed.data.auctionId);
-        const room = liveAuctionRoomManager.getAuctionRoom(roomId);
-        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        const room = this._liveAuctionRoomManager.getAuctionRoom(roomId);
+        const user = this._liveAuctionRoomManager.getUser(
+            roomId,
+            this.socket.id,
+        );
 
         if (!room || !user || !user.transport) {
             return { success: false, error: 'Transport not ready' };
@@ -845,7 +822,11 @@ export class AuctionHandler {
             paused: true,
         });
 
-        liveAuctionRoomManager.addConsumer(roomId, this.socket.id, consumer);
+        this._liveAuctionRoomManager.addConsumer(
+            roomId,
+            this.socket.id,
+            consumer,
+        );
         consumer.on('transportclose', () => consumer.close());
         consumer.on('producerclose', () => {
             consumer.close();
@@ -879,7 +860,10 @@ export class AuctionHandler {
         }
 
         const roomId = this.parseLiveRoomId(parsed.data.auctionId);
-        const user = liveAuctionRoomManager.getUser(roomId, this.socket.id);
+        const user = this._liveAuctionRoomManager.getUser(
+            roomId,
+            this.socket.id,
+        );
         if (!user) {
             return { success: false, error: 'Live user not joined' };
         }
@@ -896,9 +880,13 @@ export class AuctionHandler {
     }
 
     handleSocketDisconnect(roomIds: string[]): void {
+        console.log('hanlde sckdisconet: ', roomIds);
         for (const roomId of roomIds) {
             if (roomId.startsWith('auction:')) {
-                liveAuctionRoomManager.leaveAuctionRoom(roomId, this.socket.id);
+                this._liveAuctionRoomManager.leaveAuctionRoom(
+                    roomId,
+                    this.socket.id,
+                );
             }
         }
     }

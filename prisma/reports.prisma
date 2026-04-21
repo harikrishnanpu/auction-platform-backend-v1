@@ -1,0 +1,20 @@
+
+
+enum ReportStatus {
+    PENDING
+    APPROVED
+    REJECTED
+}
+
+
+model Reports {
+    id String @id @default(uuid())
+    reportedUserId String
+    targetUserId String
+    reason String
+    status ReportStatus @default(PENDING)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    reportedUser User @relation(fields: [reportedUserId], references: [id])
+    targetUser User @relation(fields: [targetUserId], references: [id])
+}

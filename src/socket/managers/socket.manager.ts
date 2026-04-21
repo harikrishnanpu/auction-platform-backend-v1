@@ -7,6 +7,8 @@ import { ILogger } from '@application/interfaces/services/ILogger';
 import { TYPES } from '@di/types.di';
 import { AuctionHandler } from '../handler/auction.handler';
 import { hanldeSocketCallback } from '../helpers/socket.ack';
+import { LiveAuctionRoomManager } from './liveAuctionRoom.manager';
+import { MediaSoupeManager } from './mediaSoupe.manager';
 
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
@@ -18,6 +20,8 @@ export class SocketManager {
         private readonly _io: SocketIOServer,
         private readonly _logger: ILogger,
         private readonly _container: Container,
+        private readonly _liveAuctionRoomManager: LiveAuctionRoomManager,
+        private readonly _mediasoupeManager: MediaSoupeManager,
     ) {
         this.init();
     }
@@ -49,7 +53,15 @@ export class SocketManager {
                 logger.error(`Socket.IO connection error: ${err}`);
             });
 
-            this._instance = new SocketManager(io, logger, container);
+            const liveAuctionRoomManager = new LiveAuctionRoomManager();
+            const mediasoupeManager = MediaSoupeManager.getInstance();
+            this._instance = new SocketManager(
+                io,
+                logger,
+                container,
+                liveAuctionRoomManager,
+                mediasoupeManager,
+            );
         }
         return this._instance;
     }
@@ -60,6 +72,8 @@ export class SocketManager {
                 this._io,
                 socket,
                 this._container,
+                this._liveAuctionRoomManager,
+                this._mediasoupeManager,
             );
 
             socket.on(SocketEvents.JOIN, (payload, cl) => {
@@ -166,21 +180,10 @@ export class SocketManager {
             );
 
             socket.on(
-                SocketEvents.LIVE_AUCTION_CREATE_SEND_TRANSPORT,
+                SocketEvents.LIVE_AUCTION_CREATE_TRANSPORT,
                 (payload, cl) => {
                     hanldeSocketCallback(cl, () =>
-                        auctionHandler.handleLiveAuctionCreateSendTransport(
-                            payload,
-                        ),
-                    );
-                },
-            );
-
-            socket.on(
-                SocketEvents.LIVE_AUCTION_CREATE_RECV_TRANSPORT,
-                (payload, cl) => {
-                    hanldeSocketCallback(cl, () =>
-                        auctionHandler.handleLiveAuctionCreateRecvTransport(
+                        auctionHandler.handleLiveAuctionCreateTransport(
                             payload,
                         ),
                     );
@@ -219,6 +222,7 @@ export class SocketManager {
                 },
             );
 
+            //diconnect - disconnecting
             socket.on('disconnecting', () => {
                 auctionHandler.handleSocketDisconnect([
                     ...socket.rooms.values(),
