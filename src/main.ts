@@ -27,6 +27,7 @@ import { OnNotificationCreatedHandler } from '@application/event-handlers/onNoti
 import { WalletRouterFactory } from '@presentation/http/factories/wallet.router.factory';
 import { PaymentsRouterFactory } from '@presentation/http/factories/payments.router.factory';
 import { FallbackPublicNotificationWorker } from '@infrastructure/workers/fallbackPublicNotification.worker';
+import { FraudRouterFactory } from '@presentation/http/factories/fraud.router.factory';
 
 export const app = express();
 
@@ -82,5 +83,6 @@ app.use('/api/v1/auction', AuctionRouterFactory.auctionRouter(container));
 app.use('/api/v1/seller', SellerRouterFactory.sellerRouter(container));
 app.use('/api/v1/wallet', WalletRouterFactory.walletRouter(container));
 app.use('/api/v1/payments', PaymentsRouterFactory.paymentsRouter(container));
+app.use('/api/v1/fraud', FraudRouterFactory.fraudRouter(container));
 
 app.use(errorMiddleware);

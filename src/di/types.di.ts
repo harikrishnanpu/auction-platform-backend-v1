@@ -228,4 +228,18 @@ export const TYPES = {
     UserMapper: Symbol.for('UserMapper'),
     WalletTransactionMapper: Symbol.for('WalletTransactionMapper'),
     LiveAuctionCreatePolicy: Symbol.for('LiveAuctionCreatePolicy'),
+    IFraudReportRepository: Symbol.for('IFraudReportRepository'),
+    IUserSuspensionRepository: Symbol.for('IUserSuspensionRepository'),
+    ICreateFraudReportUsecase: Symbol.for('ICreateFraudReportUsecase'),
+    IGetFraudReportsUsecase: Symbol.for('IGetFraudReportsUsecase'),
+    IReviewFraudReportUsecase: Symbol.for('IReviewFraudReportUsecase'),
+    IMarkFraudReportUnderReviewUsecase: Symbol.for(
+        'IMarkFraudReportUnderReviewUsecase',
+    ),
+    IUpdateFraudReportUsecase: Symbol.for('IUpdateFraudReportUsecase'),
+    IGetSuspendedUsersUsecase: Symbol.for('IGetSuspendedUsersUsecase'),
+    IGetSuspensionTimelineUsecase: Symbol.for('IGetSuspensionTimelineUsecase'),
+    FraudController: Symbol.for('FraudController'),
+    FraudReportMapper: Symbol.for('FraudReportMapper'),
+    UserSuspensionMapper: Symbol.for('UserSuspensionMapper'),
 };

@@ -12,6 +12,8 @@ import { KycMapper } from '@infrastructure/mappers/kyc/kyc.mapper';
 import { NotificationMapper } from '@infrastructure/mappers/notification/notification.mapper';
 import { OtpMapper } from '@infrastructure/mappers/otp/otp.mapper';
 import { PaymentsMapper } from '@infrastructure/mappers/payments/payments.mapper';
+import { FraudReportMapper } from '@infrastructure/mappers/fraud/fraud-report.mapper';
+import { UserSuspensionMapper } from '@infrastructure/mappers/fraud/user-suspension.mapper';
 import { UserMapper } from '@infrastructure/mappers/user/user.mapper';
 import { WalletMapper } from '@infrastructure/mappers/wallet/wallet.mapper';
 import { WalletTransactionMapper } from '@infrastructure/mappers/wallet/wallet.transactions.mapper';
@@ -47,5 +49,9 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<WalletMapper>(TYPES.WalletMapper).to(WalletMapper);
     bind<WalletTransactionMapper>(TYPES.WalletTransactionMapper).to(
         WalletTransactionMapper,
+    );
+    bind<FraudReportMapper>(TYPES.FraudReportMapper).to(FraudReportMapper);
+    bind<UserSuspensionMapper>(TYPES.UserSuspensionMapper).to(
+        UserSuspensionMapper,
     );
 });

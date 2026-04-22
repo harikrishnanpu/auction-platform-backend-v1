@@ -1,0 +1,72 @@
+enum FraudReportSource {
+  MANUAL
+  SYSTEM
+}
+
+enum FraudReporterType {
+  USER
+  SELLER
+  SYSTEM
+}
+
+enum FraudReportCategory {
+  AUCTION_FRAUD_CRITICAL
+  PAYMENT_CRITICAL
+  OTHER
+}
+
+enum FraudReportLevel {
+  LOW
+  MEDIUM
+  CRITICAL
+}
+
+enum FraudReportStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+}
+
+enum FraudAdminDecision {
+  NO_ACTION
+  FAULT_VERIFIED
+}
+
+enum SuspensionType {
+  TEMPORARY
+  PERMANENT
+}
+
+model FraudReport {
+  id             String             @id @default(uuid())
+  reportedUserId String
+  targetedUserId String
+  reporterType   FraudReporterType
+  source         FraudReportSource  @default(MANUAL)
+  category       FraudReportCategory
+  level          FraudReportLevel
+  reason         String
+  status         FraudReportStatus  @default(OPEN)
+  adminDecision  FraudAdminDecision?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  reportedUser   User               @relation("FraudReportedUser", fields: [reportedUserId], references: [id])
+  reviewedBy     User?              @relation("FraudReviewedByAdmin", fields: [reviewedById], references: [id])
+  targetedUser   User               @relation("FraudTargetedUser", fields: [targetedUserId], references: [id])
+}
+
+model UserSuspension {
+  id          String         @id @default(uuid())
+  userId       String
+  reportId     String?
+  type         SuspensionType
+  reason       String
+  startsAt     DateTime       @default(now())
+  endsAt       DateTime?
+  isActive     Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation("SuspendedUser", fields: [userId], references: [id])
+}

@@ -54,6 +54,7 @@ import { RegisterUserOutputDto } from '@application/dtos/auth/registerUser.dto';
 import { LoginUserOutput } from '@application/dtos/auth/loginUser.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
+import { OtpChannel } from '@domain/entities/otp/otp.entity';
 
 @injectable()
 export class AuthController {
@@ -120,7 +121,10 @@ export class AuthController {
             const validationResult =
                 ValidationHelper.validate<ZodSendVerificationCodeInputType>(
                     sendVerificationCodeSchema,
-                    req.body,
+                    {
+                        ...req.body,
+                        channel: OtpChannel.EMAIL,
+                    },
                 );
 
             const result = await this._sendOtpUsecase.execute(validationResult);
