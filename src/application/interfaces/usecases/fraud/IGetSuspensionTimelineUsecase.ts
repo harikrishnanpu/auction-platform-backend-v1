@@ -1,6 +1,6 @@
-import { ISuspensionTimelineItemDto } from '@application/dtos/fraud/fraud-report.dto';
+import { ISuspensionUserItemDto } from '@application/dtos/fraud/fraud-report.dto';
 import { Result } from '@domain/shared/result';
 
-export interface IGetSuspensionTimelineUsecase {
-    execute(userId: string): Promise<Result<ISuspensionTimelineItemDto[]>>;
+export interface IGetSuspensionUsersUsecase {
+    execute(userId: string): Promise<Result<ISuspensionUserItemDto[]>>;
 }

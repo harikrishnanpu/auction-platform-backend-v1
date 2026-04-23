@@ -3,7 +3,6 @@ import { IReviewFraudReportUsecase } from '@application/interfaces/usecases/frau
 import { TYPES } from '@di/types.di';
 import {
     FraudAdminDecision,
-    FraudReportStatus,
     FraudReportLevel,
 } from '@domain/entities/fraud/fraud-report.entity';
 import {
@@ -16,7 +15,9 @@ import { IFraudReportRepository } from '@domain/repositories/IFraudReportReposit
 import { IUserSuspensionRepository } from '@domain/repositories/IUserSuspensionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { randomUUID } from 'crypto';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { USER_SUSPENSION_CONSTANTS } from '@domain/constants/userSuspension.constants';
 
 @injectable()
 export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
@@ -27,6 +28,10 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         private readonly _suspensionRepository: IUserSuspensionRepository,
         @inject(TYPES.INotificationRepository)
         private readonly _notificationRepository: INotificationRepository,
+        @inject(TYPES.IIdGeneratingService)
+        private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
     ) {}
 
     async execute(input: IReviewFraudReportInputDto): Promise<Result<null>> {
@@ -36,13 +41,15 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         if (reportResult.isFailure) return Result.fail(reportResult.getError());
         const report = reportResult.getValue();
 
-        const updateResult = await this._fraudRepository.updateReview({
-            reportId: input.reportId,
-            reviewedById: input.adminUserId,
-            decision: input.decision,
-            status: FraudReportStatus.RESOLVED,
-        });
-        if (updateResult.isFailure) return Result.fail(updateResult.getError());
+        if (!report) {
+            return Result.fail('Fraud report not found');
+        }
+
+        report.resolve(input.adminUserId, input.decision);
+        const updateResult = await this._fraudRepository.updateReport(report);
+        if (updateResult.isFailure) {
+            return Result.fail(updateResult.getError());
+        }
 
         if (input.decision !== FraudAdminDecision.FAULT_VERIFIED) {
             return Result.ok(null);
@@ -54,38 +61,30 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
                 : report.getLevel() === FraudReportLevel.MEDIUM
                   ? 2
                   : 1;
-        const userFraudLevelResult =
-            await this._suspensionRepository.incrementUserFraudLevel(
-                report.getTargetedUserId(),
-                points,
-            );
-        if (userFraudLevelResult.isFailure) {
-            return Result.fail(userFraudLevelResult.getError());
-        }
 
-        const criticalCountResult =
-            await this._fraudRepository.countByUserAndLevel(
-                report.getTargetedUserId(),
-                FraudReportLevel.CRITICAL,
-            );
-        if (criticalCountResult.isFailure) {
-            return Result.fail(criticalCountResult.getError());
+        const targetedUserResult = await this._userRepository.findById(
+            report.getTargetedUserId(),
+        );
+
+        if (targetedUserResult.isFailure) {
+            return Result.fail(targetedUserResult.getError());
         }
-        const mediumCountResult =
-            await this._fraudRepository.countByUserAndLevel(
-                report.getTargetedUserId(),
-                FraudReportLevel.MEDIUM,
-            );
-        if (mediumCountResult.isFailure) {
-            return Result.fail(mediumCountResult.getError());
+        const targetedUser = targetedUserResult.getValue();
+
+        targetedUser.setUserFraudLevel(
+            targetedUser.getUserFraudLevel() + points,
+        );
+        const saveTargetedUserResult =
+            await this._userRepository.save(targetedUser);
+        if (saveTargetedUserResult.isFailure) {
+            return Result.fail(saveTargetedUserResult.getError());
         }
         const shouldSuspend =
-            userFraudLevelResult.getValue() >= 3 ||
-            criticalCountResult.getValue() >= 1 ||
-            mediumCountResult.getValue() >= 2;
+            targetedUser.getUserFraudLevel() >=
+            USER_SUSPENSION_CONSTANTS.SUSPENSION_THRESHOLD;
 
         const notificationResult = Notification.create({
-            id: randomUUID(),
+            id: this._idGeneratingService.generateId(),
             userId: report.getTargetedUserId(),
             title: 'Fraud report decision',
             message:
@@ -104,7 +103,7 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         if (!shouldSuspend) return Result.ok(null);
 
         const previousSuspensionsResult =
-            await this._suspensionRepository.findSuspensionTimeline(
+            await this._suspensionRepository.findUserSuspensions(
                 report.getTargetedUserId(),
             );
         if (previousSuspensionsResult.isFailure) {
@@ -119,10 +118,13 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         const startsAt = new Date();
         const endsAt = hadPreviousSuspension
             ? null
-            : new Date(startsAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+            : new Date(
+                  startsAt.getTime() +
+                      USER_SUSPENSION_CONSTANTS.TEMPORARY_SUSPENSION_DURATION,
+              );
 
         const suspensionResult = UserSuspension.create({
-            id: randomUUID(),
+            id: this._idGeneratingService.generateId(),
             userId: report.getTargetedUserId(),
             reportId: report.getId(),
             type,
@@ -135,20 +137,18 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
             return Result.fail(suspensionResult.getError());
         }
 
-        const saveSuspensionResult =
-            await this._suspensionRepository.createSuspension(
-                suspensionResult.getValue(),
-            );
+        const saveSuspensionResult = await this._suspensionRepository.create(
+            suspensionResult.getValue(),
+        );
         if (saveSuspensionResult.isFailure) {
             return Result.fail(saveSuspensionResult.getError());
         }
 
-        const setSuspendedResult =
-            await this._suspensionRepository.markUserSuspended(
-                report.getTargetedUserId(),
-            );
-        if (setSuspendedResult.isFailure) {
-            return Result.fail(setSuspendedResult.getError());
+        targetedUser.suspend();
+        const saveSuspendedUserResult =
+            await this._userRepository.save(targetedUser);
+        if (saveSuspendedUserResult.isFailure) {
+            return Result.fail(saveSuspendedUserResult.getError());
         }
 
         return Result.ok(null);

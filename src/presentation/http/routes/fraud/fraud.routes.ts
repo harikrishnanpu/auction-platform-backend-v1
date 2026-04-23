@@ -28,13 +28,6 @@ export class FraudRoutes {
             this._fraudController.createReport,
         );
 
-        this._router.post(
-            '/reports/system',
-            this._authenticateMiddleware.authenticate,
-            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
-            this._fraudController.createSystemReport,
-        );
-
         this._router.get(
             '/reports',
             this._authenticateMiddleware.authenticate,

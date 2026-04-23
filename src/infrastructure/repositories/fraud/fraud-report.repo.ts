@@ -1,10 +1,5 @@
 import { TYPES } from '@di/types.di';
-import {
-    FraudAdminDecision,
-    FraudReport,
-    FraudReportLevel,
-    FraudReportStatus,
-} from '@domain/entities/fraud/fraud-report.entity';
+import { FraudReport } from '@domain/entities/fraud/fraud-report.entity';
 import { IDbMapper } from '@domain/mappers/IDbMapper';
 import {
     IFraudReportRepository,
@@ -34,92 +29,98 @@ export class PrismaFraudReportRepository
         super(_prisma.fraudReport, mapper);
     }
 
-    async findAll(
-        filters: IFindFraudReportsFilters,
-    ): Promise<Result<FraudReport[]>> {
-        const where = {
-            status: filters.status as FraudReportStatus,
-            ...(filters.search && {
-                // -- prisma OR but here $or --- change
-                $or: [
-                    {
-                        reportedUser: {
-                            name: {
-                                contains: filters.search,
-                                mode: 'insensitive',
-                            },
-                        },
-                    },
-                    {
-                        targetedUser: {
-                            name: {
-                                contains: filters.search,
-                                mode: 'insensitive',
-                            },
-                        },
-                    },
-                ],
-            }),
-        };
+    async save(report: FraudReport): Promise<Result<FraudReport>> {
+        try {
+            const persistence = this.mapper.toPersistence(
+                report,
+            ) as PrismaFraudReport;
+            const created = await this._prisma.fraudReport.create({
+                data: persistence,
+                include: {
+                    reportedUser: true,
+                    targetedUser: true,
+                    reviewedBy: true,
+                },
+            });
+            return this.mapper.toDomain(created);
+        } catch (error) {
+            console.log(error);
+            return Result.fail('Failed to save report');
+        }
+    }
 
-        const rows = await this._prisma.fraudReport.findMany({
-            where,
-            orderBy: { [filters.sort]: filters.order },
-            skip: (filters.page - 1) * filters.limit,
-            take: filters.limit,
+    async findById(id: string): Promise<Result<FraudReport | null>> {
+        const row = await this._prisma.fraudReport.findUnique({
+            where: { id },
             include: {
                 reportedUser: true,
                 targetedUser: true,
                 reviewedBy: true,
             },
         });
-
-        const reports: FraudReport[] = [];
-        for (const row of rows) {
-            const mapped = this.mapper.toDomain(row);
-            if (mapped.isFailure) return Result.fail(mapped.getError());
-            reports.push(mapped.getValue());
-        }
-
-        return Result.ok(reports);
+        if (!row) return Result.ok(null);
+        return this.mapper.toDomain(row);
     }
 
-    async updateReview(input: {
-        reportId: string;
-        reviewedById: string;
-        decision: FraudAdminDecision;
-        status: FraudReportStatus;
-    }): Promise<Result<FraudReport>> {
+    async findAll(
+        filters: IFindFraudReportsFilters,
+    ): Promise<Result<FraudReport[]>> {
         try {
-            const updated = await this._prisma.fraudReport.update({
-                where: { id: input.reportId },
-                data: {
-                    adminDecision: input.decision,
-                    status: input.status,
-                    reviewedById: input.reviewedById,
-                    reviewedAt: new Date(),
+            const where = {
+                ...(filters.status ? { status: filters.status } : {}),
+                ...(filters.search
+                    ? {
+                          OR: [
+                              {
+                                  reportedUser: {
+                                      name: {
+                                          contains: filters.search,
+                                          mode: 'insensitive' as const,
+                                      },
+                                  },
+                              },
+                              {
+                                  targetedUser: {
+                                      name: {
+                                          contains: filters.search,
+                                          mode: 'insensitive' as const,
+                                      },
+                                  },
+                              },
+                              {
+                                  reason: {
+                                      contains: filters.search,
+                                      mode: 'insensitive' as const,
+                                  },
+                              },
+                          ],
+                      }
+                    : {}),
+            };
+
+            const rows = await this._prisma.fraudReport.findMany({
+                where,
+                orderBy: { [filters.sort]: filters.order },
+                skip: (filters.page - 1) * filters.limit,
+                take: filters.limit,
+                include: {
+                    reportedUser: true,
+                    targetedUser: true,
+                    reviewedBy: true,
                 },
             });
-            return this.mapper.toDomain(updated);
-        } catch (error) {
-            console.log(error);
-            return Result.fail('Failed to update report');
-        }
-    }
 
-    async updateStatus(input: {
-        reportId: string;
-        status: FraudReportStatus;
-    }): Promise<Result<FraudReport>> {
-        try {
-            const updated = await this._prisma.fraudReport.update({
-                where: { id: input.reportId },
-                data: { status: input.status },
-            });
-            return this.mapper.toDomain(updated);
+            const reports: FraudReport[] = [];
+            for (const row of rows) {
+                const mapped = this.mapper.toDomain(row);
+                if (mapped.isFailure) return Result.fail(mapped.getError());
+                reports.push(mapped.getValue());
+            }
+
+            return Result.ok(reports);
         } catch (error) {
             console.log(error);
-            return Result.fail('Failed to update status');
+            return Result.fail('Failed to get reports');
         }
     }
 
@@ -143,62 +144,16 @@ export class PrismaFraudReportRepository
                     reviewedById: persistence.reviewedById,
                     reviewedAt: persistence.reviewedAt,
                 },
+                include: {
+                    reportedUser: true,
+                    targetedUser: true,
+                    reviewedBy: true,
+                },
             });
             return this.mapper.toDomain(updated);
         } catch (error) {
-            return Result.fail(
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to update report',
-            );
-        }
-    }
-
-    async getVerifiedFaultScore(userId: string): Promise<Result<number>> {
-        try {
-            const reports = await this._prisma.fraudReport.findMany({
-                where: {
-                    targetedUserId: userId,
-                    adminDecision: 'FAULT_VERIFIED',
-                    status: 'RESOLVED',
-                },
-                select: { level: true },
-            });
-            const score = reports.reduce((acc, report) => {
-                if (report.level === 'CRITICAL') return acc + 3;
-                if (report.level === 'MEDIUM') return acc + 2;
-                return acc + 1;
-            }, 0);
-            return Result.ok(score);
-        } catch (error) {
             console.log(error);
-            return Result.fail('Failed to calculate score');
+            return Result.fail('Failed to update report');
         }
-    }
-
-    async findResolvedFaultCount(userId: string): Promise<Result<number>> {
-        const count = await this._prisma.fraudReport.count({
-            where: {
-                targetedUserId: userId,
-                adminDecision: 'FAULT_VERIFIED',
-                status: 'RESOLVED',
-            },
-        });
-        return Result.ok(count);
-    }
-
-    async countByUserAndLevel(
-        userId: string,
-        level: FraudReportLevel,
-    ): Promise<Result<number>> {
-        const count = await this._prisma.fraudReport.count({
-            where: {
-                targetedUserId: userId,
-                level,
-                status: 'RESOLVED',
-                adminDecision: 'FAULT_VERIFIED',
-            },
-        });
-        return Result.ok(count);
     }
 }

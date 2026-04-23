@@ -238,7 +238,7 @@ export const TYPES = {
     ),
     IUpdateFraudReportUsecase: Symbol.for('IUpdateFraudReportUsecase'),
     IGetSuspendedUsersUsecase: Symbol.for('IGetSuspendedUsersUsecase'),
-    IGetSuspensionTimelineUsecase: Symbol.for('IGetSuspensionTimelineUsecase'),
+    IGetSuspensionUsersUsecase: Symbol.for('IGetSuspensionUsersUsecase'),
     FraudController: Symbol.for('FraudController'),
     FraudReportMapper: Symbol.for('FraudReportMapper'),
     UserSuspensionMapper: Symbol.for('UserSuspensionMapper'),

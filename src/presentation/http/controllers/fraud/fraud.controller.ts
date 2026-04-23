@@ -1,11 +1,9 @@
 import { ICreateFraudReportUsecase } from '@application/interfaces/usecases/fraud/ICreateFraudReportUsecase';
 import { IGetFraudReportsUsecase } from '@application/interfaces/usecases/fraud/IGetFraudReportsUsecase';
 import { IGetSuspendedUsersUsecase } from '@application/interfaces/usecases/fraud/IGetSuspendedUsersUsecase';
-import { IGetSuspensionTimelineUsecase } from '@application/interfaces/usecases/fraud/IGetSuspensionTimelineUsecase';
 import { IReviewFraudReportUsecase } from '@application/interfaces/usecases/fraud/IReviewFraudReportUsecase';
 import { IMarkFraudReportUnderReviewUsecase } from '@application/interfaces/usecases/fraud/IMarkFraudReportUnderReviewUsecase';
 import { IUpdateFraudReportUsecase } from '@application/interfaces/usecases/fraud/IUpdateFraudReportUsecase';
-import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { TYPES } from '@di/types.di';
 import {
     FraudAdminDecision,
@@ -46,6 +44,7 @@ import {
     updateFraudReportSchema,
     ZodUpdateFraudReportInputType,
 } from '@presentation/validators/schemas/fraud/updateFraudReport.schema';
+import { IGetSuspensionUsersUsecase } from '@application/interfaces/usecases/fraud/IGetSuspensionTimelineUsecase';
 
 @injectable()
 export class FraudController {
@@ -60,8 +59,8 @@ export class FraudController {
         private readonly _markFraudReportUnderReviewUsecase: IMarkFraudReportUnderReviewUsecase,
         @inject(TYPES.IGetSuspendedUsersUsecase)
         private readonly _getSuspendedUsersUsecase: IGetSuspendedUsersUsecase,
-        @inject(TYPES.IGetSuspensionTimelineUsecase)
-        private readonly _getSuspensionTimelineUsecase: IGetSuspensionTimelineUsecase,
+        @inject(TYPES.IGetSuspensionUsersUsecase)
+        private readonly _getSuspensionUsersUsecase: IGetSuspensionUsersUsecase,
         @inject(TYPES.IUpdateFraudReportUsecase)
         private readonly _updateFraudReportUsecase: IUpdateFraudReportUsecase,
     ) {}
@@ -73,41 +72,29 @@ export class FraudController {
                 FRAUD_CONSTANTS.CODES.UNAUTHORIZED,
             );
         }
-        const hasPermission = req.user.roles.some((role) =>
-            [
-                UserRoleType.USER,
-                UserRoleType.SELLER,
-                UserRoleType.ADMIN,
-            ].includes(role),
-        );
-        if (!hasPermission) {
-            throw new AppError(
-                'Unauthorized to create report',
-                FRAUD_CONSTANTS.CODES.UNAUTHORIZED,
-            );
-        }
+
         const body = ValidationHelper.validate<ZodCreateFraudReportInputType>(
             createFraudReportSchema,
             req.body,
         );
-        const reporterType = req.user.roles.includes(UserRoleType.SELLER)
-            ? FraudReporterType.SELLER
-            : FraudReporterType.USER;
+
         const result = await this._createFraudReportUsecase.execute({
             reportedUserId: req.user.id,
             targetedUserId: body.targetedUserId,
-            reporterType,
             source: FraudReportSource.MANUAL,
+            reportedUserType: body.reportedUserType as FraudReporterType,
             category: body.category as FraudReportCategory,
             level: body.level as FraudReportLevel,
             reason: body.reason,
         });
+
         if (result.isFailure) {
             throw new AppError(
                 result.getError(),
                 FRAUD_CONSTANTS.CODES.BAD_REQUEST,
             );
         }
+
         ResponseHelper.success(
             res,
             result.getValue(),
@@ -116,46 +103,17 @@ export class FraudController {
         );
     });
 
-    createSystemReport = expressAsyncHandler(
-        async (req: Request, res: Response) => {
-            const body =
-                ValidationHelper.validate<ZodCreateFraudReportInputType>(
-                    createFraudReportSchema,
-                    req.body,
-                );
-            const result = await this._createFraudReportUsecase.execute({
-                reportedUserId: req.user?.id ?? 'SYSTEM',
-                targetedUserId: body.targetedUserId,
-                reporterType: FraudReporterType.SYSTEM,
-                source: FraudReportSource.SYSTEM,
-                category: body.category as FraudReportCategory,
-                level: body.level as FraudReportLevel,
-                reason: body.reason,
-            });
-            if (result.isFailure) {
-                throw new AppError(
-                    result.getError(),
-                    FRAUD_CONSTANTS.CODES.BAD_REQUEST,
-                );
-            }
-            ResponseHelper.success(
-                res,
-                result.getValue(),
-                FRAUD_CONSTANTS.MESSAGES.CREATE_REPORT_SUCCESSFULLY,
-                FRAUD_CONSTANTS.CODES.CREATED,
-            );
-        },
-    );
-
     getReports = expressAsyncHandler(async (req: Request, res: Response) => {
         const query = ValidationHelper.validate<ZodGetFraudReportsInputType>(
             getFraudReportsSchema,
             req.query as unknown as ZodGetFraudReportsInputType,
         );
+
         const result = await this._getFraudReportsUsecase.execute({
             ...query,
             status: query.status as FraudReportStatus | undefined,
         });
+
         if (result.isFailure) {
             throw new AppError(
                 result.getError(),
@@ -206,17 +164,17 @@ export class FraudController {
             updateFraudReportSchema,
             { ...req.body, reportId: req.params.id as string },
         );
+
         const result = await this._updateFraudReportUsecase.execute({
             reportId: body.reportId,
             category: body.category as FraudReportCategory | undefined,
             status: body.status as FraudReportStatus | undefined,
-            decision:
-                (body.decision as FraudAdminDecision | null | undefined) ??
-                undefined,
-            reporterType: body.reporterType as FraudReporterType | undefined,
-            source: body.source as FraudReportSource | undefined,
+            decision: body.decision as FraudAdminDecision,
+            reporterType: body.reporterType as FraudReporterType,
+            source: body.source as FraudReportSource,
             level: body.level as FraudReportLevel | undefined,
         });
+
         if (result.isFailure) {
             throw new AppError(
                 result.getError(),
@@ -289,7 +247,7 @@ export class FraudController {
                     getSuspensionTimelineSchema,
                     { userId: req.params.userId as string },
                 );
-            const result = await this._getSuspensionTimelineUsecase.execute(
+            const result = await this._getSuspensionUsersUsecase.execute(
                 params.userId,
             );
             if (result.isFailure) {

@@ -32,33 +32,15 @@ export class GetFraudReportsUsecase implements IGetFraudReportsUsecase {
 
         if (result.isFailure) return Result.fail(result.getError());
 
-        const value = result.getValue();
+        const rawReports = result.getValue();
 
-        const userIds = Array.from(
-            new Set(
-                value.flatMap((report) => [
-                    report.getReportedUserId(),
-                    report.getTargetedUserId(),
-                ]),
-            ),
-        );
-
-        const usersResult = await this._userRepository.findManyByIds(userIds);
-        if (usersResult.isFailure) return Result.fail(usersResult.getError());
-        const userNameById = new Map(
-            usersResult
-                .getValue()
-                .map((user) => [user.getId(), user.getName()]),
-        );
         return Result.ok({
-            reports: value.map((report) => ({
+            reports: rawReports.map((report) => ({
                 id: report.getId(),
                 reportedUserId: report.getReportedUserId(),
-                reportedUserName:
-                    userNameById.get(report.getReportedUserId()) ?? null,
+                reportedUserName: report.getReportedUser()?.getName() ?? null,
                 targetedUserId: report.getTargetedUserId(),
-                targetedUserName:
-                    userNameById.get(report.getTargetedUserId()) ?? null,
+                targetedUserName: report.getTargetedUser()?.getName() ?? null,
                 reporterType: report.getReporterType(),
                 source: report.getSource(),
                 category: report.getCategory(),
@@ -72,8 +54,8 @@ export class GetFraudReportsUsecase implements IGetFraudReportsUsecase {
             })),
             page: input.page,
             limit: input.limit,
-            total: value.length,
-            totalPages: Math.max(1, Math.ceil(value.length / input.limit)),
+            total: rawReports.length,
+            totalPages: Math.max(1, Math.ceil(rawReports.length / input.limit)),
         });
     }
 }

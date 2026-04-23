@@ -63,6 +63,7 @@ export class UserMapper implements IDbMapper<User, PrismaUserWithRoles> {
             roles: [...roles],
             isVerified: dbUser.isVerified,
             status: UserStatus[dbUser.status],
+            userFraudLevel: dbUser.userFraudLevel,
         });
 
         return finalDomainUser;
@@ -92,6 +93,7 @@ export class UserMapper implements IDbMapper<User, PrismaUserWithRoles> {
             authProvider: user.getAuthProvider().getType(),
             isVerified: user.getIsVerified(),
             roles: user.getRoles().map((r) => r.getValue()),
+            userFraudLevel: user.getUserFraudLevel(),
         };
     }
 }

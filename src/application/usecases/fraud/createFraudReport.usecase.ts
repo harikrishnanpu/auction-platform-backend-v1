@@ -2,33 +2,52 @@ import {
     ICreateFraudReportInputDto,
     IFraudReportOutputDto,
 } from '@application/dtos/fraud/fraud-report.dto';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ICreateFraudReportUsecase } from '@application/interfaces/usecases/fraud/ICreateFraudReportUsecase';
 import { TYPES } from '@di/types.di';
 import { FraudReport } from '@domain/entities/fraud/fraud-report.entity';
 import { IFraudReportRepository } from '@domain/repositories/IFraudReportRepository';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { randomUUID } from 'crypto';
 
 @injectable()
 export class CreateFraudReportUsecase implements ICreateFraudReportUsecase {
     constructor(
         @inject(TYPES.IFraudReportRepository)
         private readonly _fraudRepository: IFraudReportRepository,
+        @inject(TYPES.IIdGeneratingService)
+        private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
     ) {}
 
     async execute(
         input: ICreateFraudReportInputDto,
     ): Promise<Result<IFraudReportOutputDto>> {
+        const reportedUserResult = await this._userRepository.findById(
+            input.reportedUserId,
+        );
+        if (reportedUserResult.isFailure)
+            return Result.fail(reportedUserResult.getError());
+        const targetedUserResult = await this._userRepository.findById(
+            input.targetedUserId,
+        );
+        if (targetedUserResult.isFailure)
+            return Result.fail(targetedUserResult.getError());
+
         const reportResult = FraudReport.create({
-            id: randomUUID(),
+            id: this._idGeneratingService.generateId(),
             reportedUserId: input.reportedUserId,
             targetedUserId: input.targetedUserId,
-            reporterType: input.reporterType,
+            reporterType: input.reportedUserType,
             source: input.source,
             category: input.category,
             level: input.level,
             reason: input.reason,
+            reportedUser: reportedUserResult.getValue(),
+            targetedUser: targetedUserResult.getValue(),
+            reviewedBy: null,
         });
 
         if (reportResult.isFailure) return Result.fail(reportResult.getError());

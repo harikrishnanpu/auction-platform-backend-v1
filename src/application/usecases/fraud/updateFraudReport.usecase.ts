@@ -44,6 +44,9 @@ export class UpdateFraudReportUsecase implements IUpdateFraudReportUsecase {
             reviewedById: existingReport.getReviewedById(),
             reviewedAt: existingReport.getReviewedAt(),
             createdAt: existingReport.getCreatedAt(),
+            reportedUser: existingReport.getReportedUser(),
+            targetedUser: existingReport.getTargetedUser(),
+            reviewedBy: existingReport.getReviewedBy(),
         });
         if (updatedEntityResult.isFailure) {
             return Result.fail(updatedEntityResult.getError());

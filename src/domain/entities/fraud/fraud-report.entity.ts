@@ -1,4 +1,5 @@
 import { Result } from '@domain/shared/result';
+import { User } from '../user/user.entity';
 
 export enum FraudReportSource {
     MANUAL = 'MANUAL',
@@ -49,6 +50,9 @@ export class FraudReport {
         private reviewedById: string | null,
         private reviewedAt: Date | null,
         private readonly createdAt: Date,
+        public readonly reportedUser: User,
+        public readonly targetedUser: User,
+        public readonly reviewedBy: User | null,
     ) {}
 
     static create(input: {
@@ -65,6 +69,9 @@ export class FraudReport {
         reviewedById?: string | null;
         reviewedAt?: Date | null;
         createdAt?: Date;
+        reportedUser: User;
+        targetedUser: User;
+        reviewedBy: User | null;
     }): Result<FraudReport> {
         return Result.ok(
             new FraudReport(
@@ -81,14 +88,19 @@ export class FraudReport {
                 input.reviewedById ?? null,
                 input.reviewedAt ?? null,
                 input.createdAt ?? new Date(),
+                input.reportedUser,
+                input.targetedUser,
+                input.reviewedBy,
             ),
         );
     }
 
     markUnderReview() {
-        if (this.status === FraudReportStatus.OPEN) {
-            this.status = FraudReportStatus.UNDER_REVIEW;
+        if (this.status !== FraudReportStatus.OPEN) {
+            return Result.fail('Report is not open');
         }
+        this.status = FraudReportStatus.UNDER_REVIEW;
+        return Result.ok();
     }
 
     resolve(reviewedById: string, decision: FraudAdminDecision) {
@@ -137,5 +149,14 @@ export class FraudReport {
     }
     getCreatedAt() {
         return this.createdAt;
+    }
+    getReportedUser() {
+        return this.reportedUser;
+    }
+    getTargetedUser() {
+        return this.targetedUser;
+    }
+    getReviewedBy() {
+        return this.reviewedBy;
     }
 }

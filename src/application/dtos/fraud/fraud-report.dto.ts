@@ -11,7 +11,7 @@ import { SuspensionType } from '@domain/entities/fraud/user-suspension.entity';
 export interface ICreateFraudReportInputDto {
     reportedUserId: string;
     targetedUserId: string;
-    reporterType: FraudReporterType;
+    reportedUserType: FraudReporterType;
     source?: FraudReportSource;
     category: FraudReportCategory;
     level: FraudReportLevel;
@@ -98,7 +98,7 @@ export interface IGetSuspendedUsersOutputDto {
     totalPages: number;
 }
 
-export interface ISuspensionTimelineItemDto {
+export interface ISuspensionUserItemDto {
     id: string;
     userId: string;
     reportId: string | null;

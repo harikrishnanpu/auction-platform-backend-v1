@@ -4,21 +4,21 @@ import {
 } from '@application/dtos/fraud/fraud-report.dto';
 import { IGetSuspendedUsersUsecase } from '@application/interfaces/usecases/fraud/IGetSuspendedUsersUsecase';
 import { TYPES } from '@di/types.di';
-import { IUserSuspensionRepository } from '@domain/repositories/IUserSuspensionRepository';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
 @injectable()
 export class GetSuspendedUsersUsecase implements IGetSuspendedUsersUsecase {
     constructor(
-        @inject(TYPES.IUserSuspensionRepository)
-        private readonly _suspensionRepository: IUserSuspensionRepository,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
     ) {}
 
     async execute(
         input: IGetSuspendedUsersInputDto,
     ): Promise<Result<IGetSuspendedUsersOutputDto>> {
-        const result = await this._suspensionRepository.findSuspendedUsers({
+        const result = await this._userRepository.findSuspendedUsers({
             page: input.page,
             limit: input.limit,
             search: input.search,

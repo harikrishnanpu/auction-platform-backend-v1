@@ -1,6 +1,10 @@
 import { User } from '@domain/entities/user/user.entity';
 import { Result } from '@domain/shared/result';
-import { IFindAllUsersInput } from '@domain/types/userRepo.types';
+import {
+    IFindAllUsersInput,
+    IFindSuspendedUsersInput,
+    IFindSuspendedUsersOutput,
+} from '@domain/types/userRepo.types';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
@@ -16,5 +20,8 @@ export interface IUserRepository {
         role?: UserRoleType;
         status?: UserStatus;
     }): Promise<Result<number>>;
+    findSuspendedUsers(
+        input: IFindSuspendedUsersInput,
+    ): Promise<Result<IFindSuspendedUsersOutput>>;
     save(user: User): Promise<Result<User>>;
 }
