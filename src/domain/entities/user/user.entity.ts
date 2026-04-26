@@ -6,202 +6,214 @@ import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
 
 export enum AuthProviderType {
-  LOCAL = 'LOCAL',
-  GOOGLE = 'GOOGLE',
+    LOCAL = 'LOCAL',
+    GOOGLE = 'GOOGLE',
 }
 
 export enum UserStatus {
-  ACTIVE = 'ACTIVE',
-  SUSPENDED = 'SUSPENDED',
-  BLOCKED = 'BLOCKED',
+    ACTIVE = 'ACTIVE',
+    SUSPENDED = 'SUSPENDED',
+    BLOCKED = 'BLOCKED',
 }
 
 export class User {
-  private roles: Set<UserRole>;
-  private kyc?: Kyc;
-  private status: UserStatus;
+    private roles: Set<UserRole>;
+    private kyc?: Kyc;
+    private status: UserStatus;
 
-  private constructor(
-    private readonly id: string,
-    private name: string,
-    private email: Email,
-    private phone: Phone | null,
-    private address: string | null,
-    private avatar_url: string | null,
-    private authProvider: AuthProvider,
-    private isVerified: boolean,
-    roles: UserRole[],
-    status: UserStatus = UserStatus.ACTIVE,
-    kyc?: Kyc,
-  ) {
-    this.roles = new Set(roles);
-    this.status = status;
-    this.kyc = kyc;
-  }
-
-  public static create({
-    id,
-    name,
-    email,
-    phone = null,
-    address = null,
-    authProvider,
-    avatar_url = null,
-    isVerified = false,
-    roles = [],
-    status,
-  }: {
-    id: string;
-    name: string;
-    email: Email;
-    phone?: Phone | null;
-    address?: string | null;
-    authProvider: AuthProvider;
-    avatar_url?: string | null;
-    isVerified?: boolean;
-    roles: UserRole[];
-    status: UserStatus;
-  }): Result<User> {
-    if (!name.trim() || name.length < 3) {
-      return Result.fail('name must be at least 3 characters long');
+    private constructor(
+        private readonly id: string,
+        private name: string,
+        private email: Email,
+        private phone: Phone | null,
+        private address: string | null,
+        private avatar_url: string | null,
+        private authProvider: AuthProvider,
+        private isVerified: boolean,
+        roles: UserRole[],
+        status: UserStatus = UserStatus.ACTIVE,
+        private userFraudLevel: number = 0,
+        kyc?: Kyc,
+    ) {
+        this.roles = new Set(roles);
+        this.status = status;
+        this.kyc = kyc;
     }
 
-    if (!roles || roles.length === 0) {
-      return Result.fail('roles must be at least 1');
+    public static create({
+        id,
+        name,
+        email,
+        phone = null,
+        address = null,
+        authProvider,
+        avatar_url = null,
+        isVerified = false,
+        roles = [],
+        status,
+        userFraudLevel = 0,
+    }: {
+        id: string;
+        name: string;
+        email: Email;
+        phone?: Phone | null;
+        address?: string | null;
+        authProvider: AuthProvider;
+        avatar_url?: string | null;
+        isVerified?: boolean;
+        roles: UserRole[];
+        status: UserStatus;
+        userFraudLevel?: number;
+    }): Result<User> {
+        if (!name.trim() || name.length < 3) {
+            return Result.fail('name must be at least 3 characters long');
+        }
+
+        if (!roles || roles.length === 0) {
+            return Result.fail('roles must be at least 1');
+        }
+
+        if (!status) {
+            return Result.fail('status is required');
+        }
+
+        const user = new User(
+            id,
+            name,
+            email,
+            phone,
+            address,
+            avatar_url,
+            authProvider,
+            isVerified,
+            roles,
+            status,
+            userFraudLevel,
+        );
+        return Result.ok(user);
     }
 
-    if (!status) {
-      return Result.fail('status is required');
+    public addRole(role: UserRole) {
+        this.roles.add(role);
     }
 
-    const user = new User(
-      id,
-      name,
-      email,
-      phone,
-      address,
-      avatar_url,
-      authProvider,
-      isVerified,
-      roles,
-      status,
-    );
-    return Result.ok(user);
-  }
-
-  public addRole(role: UserRole) {
-    this.roles.add(role);
-  }
-
-  public removeRole(role: UserRole) {
-    this.roles.delete(role);
-  }
-
-  public verifyKyc() {
-    if (!this.kyc) {
-      return Result.fail('no KYC submitted');
+    public removeRole(role: UserRole) {
+        this.roles.delete(role);
     }
 
-    this.kyc = this.kyc.verify();
-  }
+    public verifyKyc() {
+        if (!this.kyc) {
+            return Result.fail('no KYC submitted');
+        }
 
-  public submitKyc(documentId: string) {
-    this.kyc = new Kyc(false, documentId);
-  }
-
-  public hasRole(role: UserRole): boolean {
-    return Array.from(this.roles).some((r) => r.equals(role));
-  }
-
-  public suspend() {
-    this.status = UserStatus.SUSPENDED;
-  }
-
-  public isActive(): boolean {
-    return this.status === UserStatus.ACTIVE;
-  }
-
-  public getId(): string {
-    return this.id;
-  }
-
-  public getName(): string {
-    return this.name;
-  }
-
-  public getEmail(): Email {
-    return this.email;
-  }
-
-  public getPhone(): Phone | null {
-    return this.phone;
-  }
-
-  public getAddress(): string | null {
-    return this.address;
-  }
-
-  public getAuthProvider(): AuthProvider {
-    return this.authProvider;
-  }
-
-  public getRoles(): UserRole[] {
-    return Array.from(this.roles);
-  }
-
-  public getStatus(): UserStatus {
-    return this.status;
-  }
-
-  public getAvatarUrl(): string | null {
-    return this.avatar_url;
-  }
-
-  public isProfileCompleted(): boolean {
-    const phone = this.phone?.getValue();
-    const address = this.address ?? '';
-    const email = this.email.getValue();
-
-    if (!phone || !address || !email) {
-      return false;
+        this.kyc = this.kyc.verify();
     }
 
-    return true;
-  }
+    public submitKyc(documentId: string) {
+        this.kyc = new Kyc(false, documentId);
+    }
 
-  public getIsVerified(): boolean {
-    return this.isVerified;
-  }
+    public hasRole(role: UserRole): boolean {
+        return Array.from(this.roles).some((r) => r.equals(role));
+    }
 
-  public setIsVerified(isVerified: boolean) {
-    this.isVerified = isVerified;
-  }
+    public suspend() {
+        this.status = UserStatus.SUSPENDED;
+    }
 
-  public setPhone(phone: Phone) {
-    this.phone = phone;
-  }
+    public isActive(): boolean {
+        return this.status === UserStatus.ACTIVE;
+    }
 
-  public setAddress(address: string) {
-    this.address = address;
-  }
+    public getId(): string {
+        return this.id;
+    }
 
-  public setAvatarUrl(avatar_url: string) {
-    this.avatar_url = avatar_url;
-  }
+    public getName(): string {
+        return this.name;
+    }
 
-  public setAuthProvider(authProvider: AuthProvider) {
-    this.authProvider = authProvider;
-  }
+    public getEmail(): Email {
+        return this.email;
+    }
 
-  public setName(name: string) {
-    this.name = name;
-  }
+    public getPhone(): Phone | null {
+        return this.phone;
+    }
 
-  public setEmail(email: Email) {
-    this.email = email;
-  }
+    public getAddress(): string | null {
+        return this.address;
+    }
 
-  public setStatus(status: UserStatus) {
-    this.status = status;
-  }
+    public getAuthProvider(): AuthProvider {
+        return this.authProvider;
+    }
+
+    public getRoles(): UserRole[] {
+        return Array.from(this.roles);
+    }
+
+    public getStatus(): UserStatus {
+        return this.status;
+    }
+
+    public getAvatarUrl(): string | null {
+        return this.avatar_url;
+    }
+
+    public isProfileCompleted(): boolean {
+        const phone = this.phone?.getValue();
+        const address = this.address ?? '';
+        const email = this.email.getValue();
+
+        if (!phone || !address || !email) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public getIsVerified(): boolean {
+        return this.isVerified;
+    }
+
+    public setIsVerified(isVerified: boolean) {
+        this.isVerified = isVerified;
+    }
+
+    public setPhone(phone: Phone) {
+        this.phone = phone;
+    }
+
+    public setAddress(address: string) {
+        this.address = address;
+    }
+
+    public setAvatarUrl(avatar_url: string) {
+        this.avatar_url = avatar_url;
+    }
+
+    public setAuthProvider(authProvider: AuthProvider) {
+        this.authProvider = authProvider;
+    }
+
+    public setName(name: string) {
+        this.name = name;
+    }
+
+    public setEmail(email: Email) {
+        this.email = email;
+    }
+
+    public setStatus(status: UserStatus) {
+        this.status = status;
+    }
+
+    public setUserFraudLevel(userFraudLevel: number) {
+        this.userFraudLevel = userFraudLevel;
+    }
+
+    public getUserFraudLevel(): number {
+        return this.userFraudLevel;
+    }
 }

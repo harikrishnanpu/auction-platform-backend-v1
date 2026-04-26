@@ -19,7 +19,6 @@ import { sellerContainer } from './modules/seller.container';
 import { SellerController } from '@presentation/http/controllers/seller/seller.controller';
 import { IEncryptionService } from '@application/interfaces/services/IEncryptionService';
 import { EncryptService } from '@infrastructure/services/encrypt/encrypt.service';
-import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 import { INotificationRepository } from '@domain/repositories/INotificationRepo';
 import { EventBus } from '@infrastructure/events/event-bus';
 import { IEventBus } from '@application/interfaces/events/IEventBus';
@@ -30,6 +29,9 @@ import { WalletController } from '@presentation/http/controllers/wallet/wallet.c
 import { paymentsContainer } from './modules/payments.container';
 import { PaymentsController } from '@presentation/http/controllers/payments/payments.controller';
 import { dbMappersContainer } from './modules/mappers.container';
+import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
+import { fraudContainer } from './modules/fraud.container';
+import { FraudController } from '@presentation/http/controllers/fraud/fraud.controller';
 
 const container = new Container();
 
@@ -44,6 +46,7 @@ container.load(sellerContainer);
 container.load(walletContainer);
 container.load(paymentsContainer);
 container.load(dbMappersContainer);
+container.load(fraudContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
@@ -53,6 +56,7 @@ container.bind<WalletController>(TYPES.WalletController).to(WalletController);
 container
     .bind<PaymentsController>(TYPES.PaymentsController)
     .to(PaymentsController);
+container.bind<FraudController>(TYPES.FraudController).to(FraudController);
 
 // --move for test only
 

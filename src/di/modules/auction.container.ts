@@ -80,6 +80,7 @@ import { AddAuctionParticipantUsecase } from '@application/usecases/auction/addA
 import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
 import { ReleaseParticipantsWalletUsecase } from '@application/usecases/auction/releaseParticipantsWallet.usecase';
 import { IReleaseParticipantsWalletUsecase } from '@application/interfaces/usecases/auction/IReleaseParticipantsWalletUsecase';
+import { LiveAuctionCreatePolicy } from '@domain/policies/auction/liveAuction.create.policy';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -220,4 +221,7 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IReleaseParticipantsWalletUsecase>(
         TYPES.IReleaseParticipantsWalletUsecase,
     ).to(ReleaseParticipantsWalletUsecase);
+    bind<LiveAuctionCreatePolicy>(TYPES.LiveAuctionCreatePolicy).to(
+        LiveAuctionCreatePolicy,
+    );
 });

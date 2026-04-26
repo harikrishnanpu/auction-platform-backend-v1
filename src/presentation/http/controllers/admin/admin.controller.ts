@@ -18,10 +18,12 @@ import { IBlockUserUsecase } from '@application/interfaces/usecases/admin/IBlock
 import { IGetUserOutput } from '@application/dtos/admin/getUser.dto';
 import { IGetAdminUserUsecase } from '@application/interfaces/usecases/admin/IGetAdminUserUsecase';
 import { IGetAllSellersUsecase } from '@application/interfaces/usecases/admin/IGetAllSellersUsecase';
+import { IGetAdminDashboardStatsUsecase } from '@application/interfaces/usecases/admin/IGetAdminDashboardStatsUsecase';
 import { IGetAdminSellerUsecase } from '@application/interfaces/usecases/admin/IGetAdminSellerUsecase';
 import { IApproveSellerKycUsecase } from '@application/interfaces/usecases/admin/IApproveSellerKycUsecase';
 import { IRejectSellerKycUsecase } from '@application/interfaces/usecases/admin/IRejectSellerKycUsecase';
 import { IGetAllSellersOutput } from '@application/dtos/admin/getSellers.dto';
+import { IGetAdminDashboardStatsOutputDto } from '@application/dtos/admin/getAdminDashboardStats.dto';
 import { IRejectSellerKycOutput } from '@application/dtos/admin/rejectSellerKyc.dto';
 import {
     getAdminUserSchema,
@@ -102,6 +104,8 @@ export class AdminController {
         private readonly _getAdminUserUsecase: IGetAdminUserUsecase,
         @inject(TYPES.IGetAllSellersUsecase)
         private readonly _getAllSellersUsecase: IGetAllSellersUsecase,
+        @inject(TYPES.IGetAdminDashboardStatsUsecase)
+        private readonly _getAdminDashboardStatsUsecase: IGetAdminDashboardStatsUsecase,
         @inject(TYPES.IGetAdminSellerUsecase)
         private readonly _getAdminSellerUsecase: IGetAdminSellerUsecase,
         @inject(TYPES.IApproveSellerKycUsecase)
@@ -232,6 +236,25 @@ export class AdminController {
             ADMIN_CONSTANTS.CODES.OK,
         );
     });
+
+    getDashboardStats = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getAdminDashboardStatsUsecase.execute();
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetAdminDashboardStatsOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_DASHBOARD_STATS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
 
     getSeller = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult =

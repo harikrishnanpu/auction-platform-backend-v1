@@ -1,4 +1,5 @@
 import { IAuctionWinnerFallbackQueue } from '@application/interfaces/queue/IWinnerFallbackQueue';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import {
     IDeclinePaymentInputDto,
     IDeclinePaymentUsecase,
@@ -6,11 +7,19 @@ import {
 import { TYPES } from '@di/types.di';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import {
+    FraudReport,
+    FraudReportCategory,
+    FraudReporterType,
+    FraudReportLevel,
+} from '@domain/entities/fraud/fraud-report.entity';
+import {
     PaymentFor,
     PaymentStatus,
 } from '@domain/entities/payments/payments.entity';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { IFraudReportRepository } from '@domain/repositories/IFraudReportRepository';
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository';
+import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -23,6 +32,12 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
         private readonly _auctionRepository: IAuctionRepository,
         @inject(TYPES.IAuctionWinnerFallbackQueue)
         private readonly _auctionWinnerFallbackQueue: IAuctionWinnerFallbackQueue,
+        @inject(TYPES.IFraudReportRepository)
+        private readonly _fraudReportRepository: IFraudReportRepository,
+        @inject(TYPES.IIdGeneratingService)
+        private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.IUserRepository)
+        private readonly _userRepository: IUserRepository,
     ) {}
 
     async execute(input: IDeclinePaymentInputDto): Promise<Result<void>> {
@@ -85,6 +100,39 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
                         });
                     }
                 }
+            }
+
+            const targetedUserResult = await this._userRepository.findById(
+                input.userId,
+            );
+            if (targetedUserResult.isFailure) {
+                return Result.fail(targetedUserResult.getError());
+            }
+            const targetedUser = targetedUserResult.getValue();
+
+            const newFraudReport = FraudReport.create({
+                id: this._idGeneratingService.generateId(),
+                reportedUserId: '',
+                targetedUserId: payment.getUserId(),
+                reason: 'Payment declined',
+                category: FraudReportCategory.PAYMENT_CRITICAL,
+                level: FraudReportLevel.MEDIUM,
+                reporterType: FraudReporterType.SYSTEM,
+                reportedUser: null,
+                targetedUser: targetedUser,
+                reviewedBy: null,
+            });
+
+            if (newFraudReport.isFailure) {
+                return Result.fail(newFraudReport.getError());
+            }
+
+            const savedFraudReport = await this._fraudReportRepository.save(
+                newFraudReport.getValue(),
+            );
+
+            if (savedFraudReport.isFailure) {
+                return Result.fail(savedFraudReport.getError());
             }
 
             return Result.ok();

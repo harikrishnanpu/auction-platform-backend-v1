@@ -21,4 +21,5 @@ export interface IAuctionRepository {
 
     countAuctionStats(): Promise<Result<IAuctionStatsPublicCounts>>;
     countParticipatedByUserId(userId: string): Promise<Result<number>>;
+    countAdminVisibleAuctions(): Promise<Result<number>>;
 }

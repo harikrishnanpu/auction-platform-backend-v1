@@ -5,6 +5,7 @@ import { inject, injectable } from 'inversify';
 import { TYPES } from '@di/types.di';
 import { Result } from '@domain/shared/result';
 import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity';
+import { LiveAuctionCreatePolicy } from '@domain/policies/auction/liveAuction.create.policy';
 
 export interface ICreateAuctionPolicyInput {
     userId: string;
@@ -34,6 +35,8 @@ export class AuctionCreatePolicyFactory {
         private readonly _longAuctionCreatePolicy: LongAuctionCreatePolicy,
         @inject(TYPES.SealedAuctionCreatePolicy)
         private readonly _sealedAuctionCreatePolicy: SealedAuctionCreatePolicy,
+        @inject(TYPES.LiveAuctionCreatePolicy)
+        private readonly _liveAuctionCreatePolicy: LiveAuctionCreatePolicy,
     ) {}
 
     validate(
@@ -44,6 +47,8 @@ export class AuctionCreatePolicyFactory {
                 return this._longAuctionCreatePolicy.validate(input);
             case AuctionType.SEALED:
                 return this._sealedAuctionCreatePolicy.validate(input);
+            case AuctionType.LIVE:
+                return this._liveAuctionCreatePolicy.validate(input);
             default:
                 return this._longAuctionCreatePolicy.validate(input);
         }

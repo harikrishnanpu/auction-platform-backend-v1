@@ -83,4 +83,21 @@ export class PrismaKycRepo
         }
         return Result.ok({ kycs: domainKycs, total });
     }
+
+    async countByKycFor(
+        kycFor: KycFor,
+        status?: KycStatus,
+    ): Promise<Result<number>> {
+        try {
+            const total = await this._prisma.kyc.count({
+                where: {
+                    for: kycFor,
+                    status: status,
+                },
+            });
+            return Result.ok(total);
+        } catch {
+            return Result.fail('Failed to count kyc');
+        }
+    }
 }

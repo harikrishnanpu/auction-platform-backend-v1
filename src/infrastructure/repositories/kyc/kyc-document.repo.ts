@@ -27,7 +27,7 @@ export class PrismaKycDocumentRepo
         super(_prisma.kycDocument, mapper);
     }
 
-    async save(kycDocument: KycDocument): Promise<Result<void>> {
+    async save(kycDocument: KycDocument): Promise<Result<KycDocument>> {
         await this._prisma.kycDocument.upsert({
             where: {
                 kycId_documentType_side: {
@@ -62,6 +62,6 @@ export class PrismaKycDocumentRepo
             },
         });
 
-        return Result.ok();
+        return Result.ok(kycDocument);
     }
 }
