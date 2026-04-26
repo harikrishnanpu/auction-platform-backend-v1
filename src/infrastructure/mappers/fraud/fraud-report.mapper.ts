@@ -28,19 +28,21 @@ export class FraudReportMapper implements IDbMapper<
     PrismaFraudReport
 > {
     toDomain(raw: PrismaFraudReportWithUsers): Result<FraudReport> {
-        const reportedUserResult = User.create({
-            id: raw.reportedUserId,
-            name: raw.reportedUser.name,
-            email: Email.create(raw.reportedUser.email).getValue(),
-            phone: Phone.create(raw.reportedUser.phone ?? '').getValue(),
-            address: raw.reportedUser.address,
-            avatar_url: raw.reportedUser.avatar_url,
-            authProvider: AuthProvider.createLocal(
-                raw.reportedUser.password ?? '',
-            ).getValue(),
-            roles: [UserRole.USER],
-            status: raw.reportedUser.status as UserStatus,
-        });
+        const reportedUserResult = raw.reportedUser
+            ? User.create({
+                  id: raw.reportedUserId,
+                  name: raw.reportedUser.name,
+                  email: Email.create(raw.reportedUser.email).getValue(),
+                  phone: Phone.create(raw.reportedUser.phone ?? '').getValue(),
+                  address: raw.reportedUser.address,
+                  avatar_url: raw.reportedUser.avatar_url,
+                  authProvider: AuthProvider.createLocal(
+                      raw.reportedUser.password ?? '',
+                  ).getValue(),
+                  roles: [UserRole.USER],
+                  status: raw.reportedUser.status as UserStatus,
+              })
+            : null;
 
         const targetedUserResult = User.create({
             id: raw.targetedUserId,
@@ -86,7 +88,7 @@ export class FraudReportMapper implements IDbMapper<
             reviewedById: raw.reviewedById,
             reviewedAt: raw.reviewedAt,
             createdAt: raw.createdAt,
-            reportedUser: reportedUserResult.getValue(),
+            reportedUser: reportedUserResult?.getValue() ?? null,
             targetedUser: targetedUserResult.getValue(),
             reviewedBy: reviewedByResult?.getValue() ?? null,
         });

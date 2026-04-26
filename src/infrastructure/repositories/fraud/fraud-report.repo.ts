@@ -156,4 +156,35 @@ export class PrismaFraudReportRepository
             return Result.fail('Failed to update report');
         }
     }
+
+    async findAllTodayReportsByTragetedUserId(
+        userId: string,
+    ): Promise<Result<FraudReport[]>> {
+        const startTime = new Date().setHours(0, 0, 0, 0);
+        const endTime = new Date().setHours(23, 23, 23, 23);
+
+        const rawResult = await this._prisma.fraudReport.findMany({
+            where: {
+                targetedUserId: userId,
+                createdAt: {
+                    gt: new Date(startTime),
+                    lte: new Date(endTime),
+                },
+            },
+            include: {
+                reportedUser: true,
+                targetedUser: true,
+                reviewedBy: true,
+            },
+        });
+
+        const result: FraudReport[] = [];
+
+        for (const raw of rawResult) {
+            const entity = this.mapper.toDomain(raw);
+            result.push(entity.getValue());
+        }
+
+        return Result.ok(result);
+    }
 }

@@ -18,4 +18,7 @@ export interface IFraudReportRepository {
     findById(id: string): Promise<Result<FraudReport | null>>;
     findAll(filters: IFindFraudReportsFilters): Promise<Result<FraudReport[]>>;
     updateReport(report: FraudReport): Promise<Result<FraudReport>>;
+    findAllTodayReportsByTragetedUserId(
+        userId: string,
+    ): Promise<Result<FraudReport[]>>;
 }

@@ -50,9 +50,9 @@ export class FraudReport {
         private reviewedById: string | null,
         private reviewedAt: Date | null,
         private readonly createdAt: Date,
-        public readonly reportedUser: User,
         public readonly targetedUser: User,
         public readonly reviewedBy: User | null,
+        public readonly reportedUser: User | null,
     ) {}
 
     static create(input: {
@@ -69,7 +69,7 @@ export class FraudReport {
         reviewedById?: string | null;
         reviewedAt?: Date | null;
         createdAt?: Date;
-        reportedUser: User;
+        reportedUser: User | null;
         targetedUser: User;
         reviewedBy: User | null;
     }): Result<FraudReport> {
@@ -88,9 +88,9 @@ export class FraudReport {
                 input.reviewedById ?? null,
                 input.reviewedAt ?? null,
                 input.createdAt ?? new Date(),
-                input.reportedUser,
                 input.targetedUser,
                 input.reviewedBy,
+                input.reportedUser,
             ),
         );
     }

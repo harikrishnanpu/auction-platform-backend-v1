@@ -5,7 +5,11 @@ import {
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ICreateFraudReportUsecase } from '@application/interfaces/usecases/fraud/ICreateFraudReportUsecase';
 import { TYPES } from '@di/types.di';
-import { FraudReport } from '@domain/entities/fraud/fraud-report.entity';
+import {
+    FraudReport,
+    FraudReporterType,
+} from '@domain/entities/fraud/fraud-report.entity';
+import { UserStatus } from '@domain/entities/user/user.entity';
 import { IFraudReportRepository } from '@domain/repositories/IFraudReportRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
@@ -55,7 +59,36 @@ export class CreateFraudReportUsecase implements ICreateFraudReportUsecase {
         const saveResult = await this._fraudRepository.save(
             reportResult.getValue(),
         );
+
+        const previousReportsResult =
+            await this._fraudRepository.findAllTodayReportsByTragetedUserId(
+                targetedUserResult.getValue().getId(),
+            );
+
+        const previousReports = previousReportsResult.getValue();
+
+        const totalSellerReports = previousReports.filter((report) => {
+            if (report.getReporterType() === FraudReporterType.SELLER) {
+                return report;
+            }
+        });
+
+        const totalUserReports = previousReports.filter((report) => {
+            if (report.getReporterType() === FraudReporterType.USER) {
+                return report;
+            }
+        });
+
         if (saveResult.isFailure) return Result.fail(saveResult.getError());
+
+        const isSuspentionNeeeded =
+            totalSellerReports.length === 3 && totalUserReports.length === 3;
+
+        const targetUser = targetedUserResult.getValue();
+        if (isSuspentionNeeeded) {
+            targetUser.setStatus(UserStatus.SUSPENDED);
+            await this._userRepository.save(targetUser);
+        }
 
         const report = saveResult.getValue();
 

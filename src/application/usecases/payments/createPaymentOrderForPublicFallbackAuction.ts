@@ -128,6 +128,8 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
                 return Result.fail(paymentOrder.getError());
             const order = paymentOrder.getValue();
 
+            console.log('order', order);
+
             return Result.ok({
                 orderId: order.orderId,
                 paymentId: order.orderId,
