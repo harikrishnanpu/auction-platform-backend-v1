@@ -3,6 +3,7 @@ import { IApproveSellerKycInput } from '@application/dtos/admin/approveSellerKyc
 import { IBlockUserInput } from '@application/dtos/admin/blockuser.dto';
 import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
 import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
+import { ICreateSubscriptionPlanInputDto } from '@application/dtos/admin/subscription.dto';
 import { ISystemConfigInputDto } from '@application/dtos/admin/systemConfig.dto';
 import { IGetAdminSellerInput } from '@application/dtos/admin/getAdminSeller.dto';
 import { IGetAllUsersInput } from '@application/dtos/admin/getAllusers.dto';
@@ -23,6 +24,7 @@ import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/sch
 import { ZodBlockUserInputType } from '@presentation/validators/schemas/admin/blockUsers.schema';
 import { ZodChangeAuctionCategoryStatusInputType } from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
 import { ZodCreateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
+import { ZodCreateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/createSubscriptionPlan.schema';
 import { ZodGetAdminSellerInputType } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
 import { ZodGetAdminUserInputType } from '@presentation/validators/schemas/admin/getAdminUser.schema';
 import { ZodGetAllUsersInputType } from '@presentation/validators/schemas/admin/getAllUsers.schema';
@@ -188,6 +190,22 @@ export class AdminMapperProfile {
             key: data.key,
             value: data.value,
             description: data.description ?? null,
+        };
+    }
+
+    public static toCreateSubscriptionPlanInputDto(
+        data: ZodCreateSubscriptionPlanInputType,
+    ): ICreateSubscriptionPlanInputDto {
+        return {
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            durationDays: data.durationDays,
+            features: data.features.map((feature) => ({
+                featureKey: feature.featureKey,
+                value: feature.value,
+                type: feature.type,
+            })),
         };
     }
 }

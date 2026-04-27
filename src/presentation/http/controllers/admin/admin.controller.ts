@@ -93,9 +93,13 @@ import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/
 import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
 import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
 import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
+import { IGetSystemConfigKeysUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigKeysUsecase';
 import { ICreateSystemConfigUsecase } from '@application/interfaces/usecases/admin/ICreateSystemConfigUsecase';
 import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
-import { IGetSystemConfigsOutputDto } from '@application/dtos/admin/systemConfig.dto';
+import {
+    IGetSystemConfigKeysOutputDto,
+    IGetSystemConfigsOutputDto,
+} from '@application/dtos/admin/systemConfig.dto';
 import {
     createSystemConfigSchema,
     ZodCreateSystemConfigInputType,
@@ -104,6 +108,20 @@ import {
     editSystemConfigSchema,
     ZodEditSystemConfigInputType,
 } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
+import {
+    createSubscriptionPlanSchema,
+    ZodCreateSubscriptionPlanInputType,
+} from '@presentation/validators/schemas/admin/createSubscriptionPlan.schema';
+import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
+import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionPlansUsecase';
+import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/admin/IGetSubscribedUsersUsecase';
+import { IGetSubscriptionFeatureMetadataUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureMetadataUsecase';
+import {
+    IGetSubscribedUsersOutputDto,
+    IGetSubscriptionFeatureMetadataOutputDto,
+    IGetSubscriptionPlansOutputDto,
+    ISubscriptionPlanDto,
+} from '@application/dtos/admin/subscription.dto';
 
 @injectable()
 export class AdminController {
@@ -144,10 +162,20 @@ export class AdminController {
         private readonly _rejectAuctionCategoryUsecase: IRejectAuctionCategoryrequestUsecase,
         @inject(TYPES.IGetSystemConfigsUsecase)
         private readonly _getSystemConfigsUsecase: IGetSystemConfigsUsecase,
+        @inject(TYPES.IGetSystemConfigKeysUsecase)
+        private readonly _getSystemConfigKeysUsecase: IGetSystemConfigKeysUsecase,
         @inject(TYPES.ICreateSystemConfigUsecase)
         private readonly _createSystemConfigUsecase: ICreateSystemConfigUsecase,
         @inject(TYPES.IEditSystemConfigUsecase)
         private readonly _editSystemConfigUsecase: IEditSystemConfigUsecase,
+        @inject(TYPES.ICreateSubscriptionPlanUsecase)
+        private readonly _createSubscriptionPlanUsecase: ICreateSubscriptionPlanUsecase,
+        @inject(TYPES.IGetSubscriptionPlansUsecase)
+        private readonly _getSubscriptionPlansUsecase: IGetSubscriptionPlansUsecase,
+        @inject(TYPES.IGetSubscribedUsersUsecase)
+        private readonly _getSubscribedUsersUsecase: IGetSubscribedUsersUsecase,
+        @inject(TYPES.IGetSubscriptionFeatureMetadataUsecase)
+        private readonly _getSubscriptionFeatureMetadataUsecase: IGetSubscriptionFeatureMetadataUsecase,
     ) {}
 
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -661,6 +689,26 @@ export class AdminController {
         },
     );
 
+    getSystemConfigKeys = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSystemConfigKeysUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSystemConfigKeysOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SYSTEM_CONFIG_KEYS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
     createSystemConfig = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -710,6 +758,96 @@ export class AdminController {
                 res,
                 result.getValue(),
                 ADMIN_CONSTANTS.MESSAGES.EDIT_SYSTEM_CONFIG_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    createSubscriptionPlan = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodCreateSubscriptionPlanInputType>(
+                    createSubscriptionPlanSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._createSubscriptionPlanUsecase.execute(
+                    validationResult,
+                );
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISubscriptionPlanDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.CREATE_SUBSCRIPTION_PLAN_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSubscriptionPlans = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSubscriptionPlansUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSubscriptionPlansOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_PLANS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSubscribedUsers = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSubscribedUsersUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSubscribedUsersOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIBED_USERS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSubscriptionFeatureMetadata = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result =
+                await this._getSubscriptionFeatureMetadataUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSubscriptionFeatureMetadataOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_FEATURES_SUCCESSFULLY,
                 ADMIN_CONSTANTS.CODES.OK,
             );
         },

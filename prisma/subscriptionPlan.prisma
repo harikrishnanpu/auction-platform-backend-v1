@@ -1,0 +1,35 @@
+model SubscriptionPlan {
+  id String @id @default(uuid())
+  name String
+  description String
+  price Float
+  durationDays Int
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userSubscriptions UserSubscription[]
+  features SubscriptionPlanFeature[]
+}
+
+model SubscriptionPlanFeature {
+  id String @id @default(uuid())
+  subscriptionPlanId String
+  feature SubscriptionPlanFeatureEnum
+  value String
+  type SubscriptionPlanFeatureType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  subscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+}
+
+enum SubscriptionPlanFeatureType {
+  BOOLEAN
+  NUMBER
+  STRING
+}
+
+enum SubscriptionPlanFeatureEnum {
+  AUCTION_CREATION
+  AUCTION_BIDDING
+  AI_AGENT
+}

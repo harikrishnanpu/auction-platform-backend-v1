@@ -16,3 +16,7 @@ export interface ISystemConfigInputDto {
 export interface IGetSystemConfigsOutputDto {
     configs: ISystemConfigDto[];
 }
+
+export interface IGetSystemConfigKeysOutputDto {
+    keys: string[];
+}

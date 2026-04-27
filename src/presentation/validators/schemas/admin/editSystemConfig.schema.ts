@@ -1,8 +1,8 @@
 import z from 'zod';
-import { SYSTEM_CONFIG_KEY_ENUM } from '../../../../domain/constants/systemConfig.constants';
+import { SystemConfigKey } from '../../../../domain/constants/systemConfig.constants';
 
 export const editSystemConfigSchema = z.object({
-    key: z.enum(SYSTEM_CONFIG_KEY_ENUM, {
+    key: z.enum(SystemConfigKey, {
         error: 'Invalid system config key',
     }),
     description: z.string().trim().max(300).nullable().optional(),

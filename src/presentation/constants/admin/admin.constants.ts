@@ -44,11 +44,24 @@ export const ADMIN_MESSAGES = {
     GET_ALL_ADMIN_AUCTIONS_SUCCESSFULLY: 'All auctions fetched successfully',
     GET_ALL_ADMIN_AUCTIONS_FAILED: 'Failed to fetch all auctions',
     GET_SYSTEM_CONFIGS_SUCCESSFULLY: 'System configs fetched successfully',
+    GET_SYSTEM_CONFIG_KEYS_SUCCESSFULLY:
+        'System config keys fetched successfully',
     GET_SYSTEM_CONFIGS_FAILED: 'Failed to fetch system configs',
     CREATE_SYSTEM_CONFIG_SUCCESSFULLY: 'System config created successfully',
     CREATE_SYSTEM_CONFIG_FAILED: 'Failed to create system config',
     EDIT_SYSTEM_CONFIG_SUCCESSFULLY: 'System config updated successfully',
     EDIT_SYSTEM_CONFIG_FAILED: 'Failed to update system config',
+    CREATE_SUBSCRIPTION_PLAN_SUCCESSFULLY:
+        'Subscription plan created successfully',
+    CREATE_SUBSCRIPTION_PLAN_FAILED: 'Failed to create subscription plan',
+    GET_SUBSCRIPTION_PLANS_SUCCESSFULLY:
+        'Subscription plans fetched successfully',
+    GET_SUBSCRIPTION_PLANS_FAILED: 'Failed to fetch subscription plans',
+    GET_SUBSCRIBED_USERS_SUCCESSFULLY: 'Subscribed users fetched successfully',
+    GET_SUBSCRIBED_USERS_FAILED: 'Failed to fetch subscribed users',
+    GET_SUBSCRIPTION_FEATURES_SUCCESSFULLY:
+        'Subscription features fetched successfully',
+    GET_SUBSCRIPTION_FEATURES_FAILED: 'Failed to fetch subscription features',
 };
 
 export const ADMIN_CONSTANTS = {

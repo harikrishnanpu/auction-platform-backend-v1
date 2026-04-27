@@ -18,7 +18,7 @@ import { inject, injectable } from 'inversify';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
-import { SYSTEM_CONFIG_KEYS } from '../../../domain/constants/systemConfig.constants';
+import { SystemConfigKey } from '../../../domain/constants/systemConfig.constants';
 import { USER_SUSPENSION_CONSTANTS } from '@domain/constants/userSuspension.constants';
 
 @injectable()
@@ -85,7 +85,7 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         }
         const suspensionThresholdResult =
             await this._systemConfigService.getNumber(
-                SYSTEM_CONFIG_KEYS.FRAUD_SUSPENSION_THRESHOLD,
+                SystemConfigKey.FRAUD_SUSPENSION_THRESHOLD,
                 USER_SUSPENSION_CONSTANTS.SUSPENSION_THRESHOLD,
             );
         if (suspensionThresholdResult.isFailure) {
@@ -130,7 +130,7 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         const startsAt = new Date();
         const temporarySuspensionDurationResult =
             await this._systemConfigService.getNumber(
-                SYSTEM_CONFIG_KEYS.FRAUD_TEMPORARY_SUSPENSION_DURATION_MS,
+                SystemConfigKey.FRAUD_TEMPORARY_SUSPENSION_DURATION_MS,
                 USER_SUSPENSION_CONSTANTS.TEMPORARY_SUSPENSION_DURATION,
             );
         if (temporarySuspensionDurationResult.isFailure) {

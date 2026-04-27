@@ -36,14 +36,30 @@ import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/
 import { CreateAuctionCategoryUsecase } from '@application/usecases/admin/createAuctionCategory.usecase';
 import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
 import { GetSystemConfigsUsecase } from '@application/usecases/admin/getSystemConfigs.usecase';
+import { IGetSystemConfigKeysUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigKeysUsecase';
+import { GetSystemConfigKeysUsecase } from '@application/usecases/admin/getSystemConfigKeys.usecase';
 import { ICreateSystemConfigUsecase } from '@application/interfaces/usecases/admin/ICreateSystemConfigUsecase';
 import { CreateSystemConfigUsecase } from '@application/usecases/admin/createSystemConfig.usecase';
 import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
 import { EditSystemConfigUsecase } from '@application/usecases/admin/editSystemConfig.usecase';
 import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { SystemConfigService } from '@infrastructure/services/system-config/system-config.service';
+import { ISubscriptionFeaturesService } from '@application/interfaces/services/ISubscriptionFeaturesService';
+import { SubscriptionFeaturesService } from '@infrastructure/services/subscription/subscription-features.service';
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { PrismaSystemConfigRepository } from '@infrastructure/repositories/system-config/system-config.repo';
+import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
+import { CreateSubscriptionPlanUsecase } from '@application/usecases/admin/createSubscriptionPlan.usecase';
+import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionPlansUsecase';
+import { GetSubscriptionPlansUsecase } from '@application/usecases/admin/getSubscriptionPlans.usecase';
+import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/admin/IGetSubscribedUsersUsecase';
+import { GetSubscribedUsersUsecase } from '@application/usecases/admin/getSubscribedUsers.usecase';
+import { IGetSubscriptionFeatureMetadataUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureMetadataUsecase';
+import { GetSubscriptionFeatureMetadataUsecase } from '@application/usecases/admin/getSubscriptionFeatureMetadata.usecase';
+import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
+import { PrismaSubscriptionPlanRepository } from '@infrastructure/repositories/subscription/subscription-plan.repo';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
+import { PrismaUserSubscriptionRepository } from '@infrastructure/repositories/subscription/user-subscription.repo';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
     console.log('Admin container loaded');
@@ -99,6 +115,9 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IGetSystemConfigsUsecase>(TYPES.IGetSystemConfigsUsecase).to(
         GetSystemConfigsUsecase,
     );
+    bind<IGetSystemConfigKeysUsecase>(TYPES.IGetSystemConfigKeysUsecase).to(
+        GetSystemConfigKeysUsecase,
+    );
     bind<ICreateSystemConfigUsecase>(TYPES.ICreateSystemConfigUsecase).to(
         CreateSystemConfigUsecase,
     );
@@ -110,5 +129,26 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     );
     bind<ISystemConfigService>(TYPES.ISystemConfigService).to(
         SystemConfigService,
+    );
+    bind<ICreateSubscriptionPlanUsecase>(
+        TYPES.ICreateSubscriptionPlanUsecase,
+    ).to(CreateSubscriptionPlanUsecase);
+    bind<IGetSubscriptionPlansUsecase>(TYPES.IGetSubscriptionPlansUsecase).to(
+        GetSubscriptionPlansUsecase,
+    );
+    bind<IGetSubscribedUsersUsecase>(TYPES.IGetSubscribedUsersUsecase).to(
+        GetSubscribedUsersUsecase,
+    );
+    bind<IGetSubscriptionFeatureMetadataUsecase>(
+        TYPES.IGetSubscriptionFeatureMetadataUsecase,
+    ).to(GetSubscriptionFeatureMetadataUsecase);
+    bind<ISubscriptionPlanRepository>(TYPES.ISubscriptionPlanRepository).to(
+        PrismaSubscriptionPlanRepository,
+    );
+    bind<IUserSubscriptionRepository>(TYPES.IUserSubscriptionRepository).to(
+        PrismaUserSubscriptionRepository,
+    );
+    bind<ISubscriptionFeaturesService>(TYPES.ISubscriptionFeaturesService).to(
+        SubscriptionFeaturesService,
     );
 });

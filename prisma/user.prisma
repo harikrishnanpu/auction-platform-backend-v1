@@ -30,6 +30,7 @@ model User {
   fraudReportsTargeted             FraudReport[]          @relation("FraudTargetedUser")
   fraudReportsReviewed             FraudReport[]          @relation("FraudReviewedByAdmin")
   suspensions                      UserSuspension[] @relation("SuspendedUser")
+  subscriptions                    UserSubscription[]
 }
 
 model UserRole {

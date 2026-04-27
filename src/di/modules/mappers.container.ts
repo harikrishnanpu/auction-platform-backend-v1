@@ -18,6 +18,7 @@ import { UserMapper } from '@infrastructure/mappers/user/user.mapper';
 import { WalletMapper } from '@infrastructure/mappers/wallet/wallet.mapper';
 import { WalletTransactionMapper } from '@infrastructure/mappers/wallet/wallet.transactions.mapper';
 import { SystemConfigMapper } from '@infrastructure/mappers/system-config/system-config.mapper';
+import { SubscriptionPlanMapper } from '@infrastructure/mappers/subscription/subscription-plan.mapper';
 import { ContainerModule } from 'inversify';
 
 export const dbMappersContainer = new ContainerModule(({ bind }) => {
@@ -48,6 +49,9 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<PaymentsMapper>(TYPES.PaymentsMapper).to(PaymentsMapper);
     bind<UserMapper>(TYPES.UserMapper).to(UserMapper);
     bind<SystemConfigMapper>(TYPES.SystemConfigMapper).to(SystemConfigMapper);
+    bind<SubscriptionPlanMapper>(TYPES.SubscriptionPlanMapper).to(
+        SubscriptionPlanMapper,
+    );
     bind<WalletMapper>(TYPES.WalletMapper).to(WalletMapper);
     bind<WalletTransactionMapper>(TYPES.WalletTransactionMapper).to(
         WalletTransactionMapper,
