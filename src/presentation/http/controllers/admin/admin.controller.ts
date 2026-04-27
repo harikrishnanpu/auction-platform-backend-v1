@@ -92,6 +92,18 @@ import { IApproveAuctionCategoryOutputDto } from '@application/dtos/admin/approv
 import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/rejectAuctionCategory.dto';
 import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
 import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
+import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
+import { ICreateSystemConfigUsecase } from '@application/interfaces/usecases/admin/ICreateSystemConfigUsecase';
+import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+import { IGetSystemConfigsOutputDto } from '@application/dtos/admin/systemConfig.dto';
+import {
+    createSystemConfigSchema,
+    ZodCreateSystemConfigInputType,
+} from '@presentation/validators/schemas/admin/createSystemConfig.schema';
+import {
+    editSystemConfigSchema,
+    ZodEditSystemConfigInputType,
+} from '@presentation/validators/schemas/admin/editSystemConfig.schema';
 
 @injectable()
 export class AdminController {
@@ -130,6 +142,12 @@ export class AdminController {
         private readonly _viewKycUsecase: IViewKycUsecase,
         @inject(TYPES.IRejectAuctionCategoryUsecase)
         private readonly _rejectAuctionCategoryUsecase: IRejectAuctionCategoryrequestUsecase,
+        @inject(TYPES.IGetSystemConfigsUsecase)
+        private readonly _getSystemConfigsUsecase: IGetSystemConfigsUsecase,
+        @inject(TYPES.ICreateSystemConfigUsecase)
+        private readonly _createSystemConfigUsecase: ICreateSystemConfigUsecase,
+        @inject(TYPES.IEditSystemConfigUsecase)
+        private readonly _editSystemConfigUsecase: IEditSystemConfigUsecase,
     ) {}
 
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -622,4 +640,78 @@ export class AdminController {
 
         result.getValue().stream.pipe(res);
     });
+
+    getSystemConfigs = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSystemConfigsUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSystemConfigsOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SYSTEM_CONFIGS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    createSystemConfig = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodCreateSystemConfigInputType>(
+                    createSystemConfigSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._createSystemConfigUsecase.execute(validationResult);
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.CREATE_SYSTEM_CONFIG_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    editSystemConfig = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodEditSystemConfigInputType>(
+                    editSystemConfigSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._editSystemConfigUsecase.execute(validationResult);
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.EDIT_SYSTEM_CONFIG_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
 }

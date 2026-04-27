@@ -43,6 +43,12 @@ export const ADMIN_MESSAGES = {
     CREATE_AUCTION_CATEGORY_FAILED: 'Failed to create auction category',
     GET_ALL_ADMIN_AUCTIONS_SUCCESSFULLY: 'All auctions fetched successfully',
     GET_ALL_ADMIN_AUCTIONS_FAILED: 'Failed to fetch all auctions',
+    GET_SYSTEM_CONFIGS_SUCCESSFULLY: 'System configs fetched successfully',
+    GET_SYSTEM_CONFIGS_FAILED: 'Failed to fetch system configs',
+    CREATE_SYSTEM_CONFIG_SUCCESSFULLY: 'System config created successfully',
+    CREATE_SYSTEM_CONFIG_FAILED: 'Failed to create system config',
+    EDIT_SYSTEM_CONFIG_SUCCESSFULLY: 'System config updated successfully',
+    EDIT_SYSTEM_CONFIG_FAILED: 'Failed to update system config',
 };
 
 export const ADMIN_CONSTANTS = {

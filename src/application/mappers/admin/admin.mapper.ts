@@ -3,6 +3,7 @@ import { IApproveSellerKycInput } from '@application/dtos/admin/approveSellerKyc
 import { IBlockUserInput } from '@application/dtos/admin/blockuser.dto';
 import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
 import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
+import { ISystemConfigInputDto } from '@application/dtos/admin/systemConfig.dto';
 import { IGetAdminSellerInput } from '@application/dtos/admin/getAdminSeller.dto';
 import { IGetAllUsersInput } from '@application/dtos/admin/getAllusers.dto';
 import { IGetAllSellersInput } from '@application/dtos/admin/getSellers.dto';
@@ -29,6 +30,8 @@ import { ZodGetAllSellersInputType } from '@presentation/validators/schemas/admi
 import { ZodRejectAuctionCategoryInputType } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 import { ZodRejectSellerKycInputType } from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
 import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import { ZodCreateSystemConfigInputType } from '@presentation/validators/schemas/admin/createSystemConfig.schema';
+import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
 import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/viewKyc.schema';
 import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 
@@ -165,6 +168,26 @@ export class AdminMapperProfile {
     ): IViewKycInputDto {
         return {
             documentId: data.documentId,
+        };
+    }
+
+    public static toCreateSystemConfigInputDto(
+        data: ZodCreateSystemConfigInputType,
+    ): ISystemConfigInputDto {
+        return {
+            key: data.key,
+            value: data.value,
+            description: data.description ?? null,
+        };
+    }
+
+    public static toEditSystemConfigInputDto(
+        data: ZodEditSystemConfigInputType,
+    ): ISystemConfigInputDto {
+        return {
+            key: data.key,
+            value: data.value,
+            description: data.description ?? null,
         };
     }
 }

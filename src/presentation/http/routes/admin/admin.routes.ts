@@ -22,6 +22,27 @@ export class AdminRoutes {
 
     register(): Router {
         this._router.get(
+            '/system-configs',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.getSystemConfigs,
+        );
+
+        this._router.post(
+            '/system-configs',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.createSystemConfig,
+        );
+
+        this._router.put(
+            '/system-configs',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.editSystemConfig,
+        );
+
+        this._router.get(
             '/stats',
             this._authenticateMiddleware.authenticate,
             this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),

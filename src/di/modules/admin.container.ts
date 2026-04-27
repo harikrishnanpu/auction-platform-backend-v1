@@ -34,6 +34,16 @@ import { IGetAdminAuctionsUsecase } from '@application/interfaces/usecases/admin
 import { GetAdminAuctionsUsecase } from '@application/usecases/admin/getAdminAuctions.usecase';
 import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/ICreateAuctionCategoryUsecase';
 import { CreateAuctionCategoryUsecase } from '@application/usecases/admin/createAuctionCategory.usecase';
+import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
+import { GetSystemConfigsUsecase } from '@application/usecases/admin/getSystemConfigs.usecase';
+import { ICreateSystemConfigUsecase } from '@application/interfaces/usecases/admin/ICreateSystemConfigUsecase';
+import { CreateSystemConfigUsecase } from '@application/usecases/admin/createSystemConfig.usecase';
+import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+import { EditSystemConfigUsecase } from '@application/usecases/admin/editSystemConfig.usecase';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
+import { SystemConfigService } from '@infrastructure/services/system-config/system-config.service';
+import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
+import { PrismaSystemConfigRepository } from '@infrastructure/repositories/system-config/system-config.repo';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
     console.log('Admin container loaded');
@@ -86,4 +96,19 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IRejectAuctionCategoryrequestUsecase>(
         TYPES.IRejectAuctionCategoryUsecase,
     ).to(RejectAuctionCategoryUsecase);
+    bind<IGetSystemConfigsUsecase>(TYPES.IGetSystemConfigsUsecase).to(
+        GetSystemConfigsUsecase,
+    );
+    bind<ICreateSystemConfigUsecase>(TYPES.ICreateSystemConfigUsecase).to(
+        CreateSystemConfigUsecase,
+    );
+    bind<IEditSystemConfigUsecase>(TYPES.IEditSystemConfigUsecase).to(
+        EditSystemConfigUsecase,
+    );
+    bind<ISystemConfigRepository>(TYPES.ISystemConfigRepository).to(
+        PrismaSystemConfigRepository,
+    );
+    bind<ISystemConfigService>(TYPES.ISystemConfigService).to(
+        SystemConfigService,
+    );
 });
