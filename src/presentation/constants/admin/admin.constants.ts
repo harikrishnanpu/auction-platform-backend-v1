@@ -62,6 +62,10 @@ export const ADMIN_MESSAGES = {
     GET_SUBSCRIPTION_FEATURES_SUCCESSFULLY:
         'Subscription features fetched successfully',
     GET_SUBSCRIPTION_FEATURES_FAILED: 'Failed to fetch subscription features',
+    UPDATE_SUBSCRIPTION_PLAN_STATUS_SUCCESSFULLY:
+        'Subscription plan status updated successfully',
+    UPDATE_SUBSCRIPTION_PLAN_STATUS_FAILED:
+        'Failed to update subscription plan status',
 };
 
 export const ADMIN_CONSTANTS = {

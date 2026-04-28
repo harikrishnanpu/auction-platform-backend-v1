@@ -118,6 +118,9 @@ export const TYPES = {
     ICreateSubscriptionPlanUsecase: Symbol.for(
         'ICreateSubscriptionPlanUsecase',
     ),
+    IUpdateSubscriptionPlanStatusUsecase: Symbol.for(
+        'IUpdateSubscriptionPlanStatusUsecase',
+    ),
     IGetSubscriptionPlansUsecase: Symbol.for('IGetSubscriptionPlansUsecase'),
     IGetSubscribedUsersUsecase: Symbol.for('IGetSubscribedUsersUsecase'),
     IGetSubscriptionFeatureMetadataUsecase: Symbol.for(
@@ -125,6 +128,18 @@ export const TYPES = {
     ),
     ISubscriptionPlanRepository: Symbol.for('ISubscriptionPlanRepository'),
     IUserSubscriptionRepository: Symbol.for('IUserSubscriptionRepository'),
+    IAssignDefaultSubscriptionToUserUsecase: Symbol.for(
+        'IAssignDefaultSubscriptionToUserUsecase',
+    ),
+    IRazorpaySubscriptionGatewayService: Symbol.for(
+        'IRazorpaySubscriptionGatewayService',
+    ),
+    IGetPublicSubscriptionPlansUsecase: Symbol.for(
+        'IGetPublicSubscriptionPlansUsecase',
+    ),
+    IStartUserSubscriptionCheckoutUsecase: Symbol.for(
+        'IStartUserSubscriptionCheckoutUsecase',
+    ),
     IViewKycUsecase: Symbol.for('IViewKycUsecase'),
     IGetAllSellerAuctionCategoryRequestUsecase: Symbol.for(
         'IGetAllSellerAuctionCategoryRequestUsecase',
@@ -246,6 +261,7 @@ export const TYPES = {
     WalletTransactionMapper: Symbol.for('WalletTransactionMapper'),
     SystemConfigMapper: Symbol.for('SystemConfigMapper'),
     SubscriptionPlanMapper: Symbol.for('SubscriptionPlanMapper'),
+    UserSubscriptionMapper: Symbol.for('UserSubscriptionMapper'),
     LiveAuctionCreatePolicy: Symbol.for('LiveAuctionCreatePolicy'),
     IFraudReportRepository: Symbol.for('IFraudReportRepository'),
     IUserSuspensionRepository: Symbol.for('IUserSuspensionRepository'),

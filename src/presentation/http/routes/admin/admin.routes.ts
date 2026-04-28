@@ -62,6 +62,13 @@ export class AdminRoutes {
             this._adminController.getSubscriptionPlans,
         );
 
+        this._router.patch(
+            '/subscriptions/plans/:id',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.updateSubscriptionPlanStatus,
+        );
+
         this._router.get(
             '/subscriptions/features',
             this._authenticateMiddleware.authenticate,

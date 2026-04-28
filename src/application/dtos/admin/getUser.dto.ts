@@ -1,9 +1,9 @@
 import { userResponseDto } from '../user/userResponse.dto';
 
 export interface IGetUserInput {
-  userId: string;
+    userId: string;
 }
 
 export interface IGetUserOutput {
-  user: userResponseDto;
+    user: userResponseDto;
 }

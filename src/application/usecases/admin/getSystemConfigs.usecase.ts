@@ -13,7 +13,7 @@ export class GetSystemConfigsUsecase implements IGetSystemConfigsUsecase {
     ) {}
 
     async execute(): Promise<Result<IGetSystemConfigsOutputDto>> {
-        const configsResult = await this._systemConfigRepository.findAll();
+        const configsResult = await this._systemConfigRepository.findAll({});
         if (configsResult.isFailure)
             return Result.fail(configsResult.getError());
 

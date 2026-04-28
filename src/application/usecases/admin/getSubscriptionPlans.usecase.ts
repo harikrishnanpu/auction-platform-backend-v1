@@ -1,5 +1,6 @@
 import { IGetSubscriptionPlansOutputDto } from '@application/dtos/admin/subscription.dto';
 import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionPlansUsecase';
+import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { Result } from '@domain/shared/result';
@@ -16,6 +17,10 @@ export class GetSubscriptionPlansUsecase implements IGetSubscriptionPlansUsecase
         const plansResult = await this._subscriptionPlanRepository.findAll();
         if (plansResult.isFailure) return Result.fail(plansResult.getError());
 
-        return Result.ok({ plans: plansResult.getValue() });
+        return Result.ok({
+            plans: plansResult
+                .getValue()
+                .map((plan) => AdminMapperProfile.toSubscriptionPlanDto(plan)),
+        });
     }
 }

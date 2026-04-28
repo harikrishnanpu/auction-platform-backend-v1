@@ -22,7 +22,7 @@ export class SystemConfigService implements ISystemConfigService {
         const config = configResult.getValue();
         if (!config) {
             if (fallbackValue !== undefined) return Result.ok(fallbackValue);
-            return Result.fail(`System config not found: ${key}`);
+            return Result.fail('System config not found');
         }
 
         return Result.ok(config.getValue());
@@ -40,7 +40,7 @@ export class SystemConfigService implements ISystemConfigService {
 
         const parsed = Number(valueResult.getValue());
         if (Number.isNaN(parsed)) {
-            return Result.fail(`System config ${key} must be a number`);
+            return Result.fail(`System config must be a number`);
         }
 
         return Result.ok(parsed);

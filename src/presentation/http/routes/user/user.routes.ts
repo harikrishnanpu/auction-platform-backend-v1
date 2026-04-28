@@ -23,6 +23,20 @@ export class UserRoutes {
             this._userController.getHomeStats,
         );
 
+        this._router.get(
+            '/subscription-plans',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.getSubscriptionPlans,
+        );
+
+        this._router.post(
+            '/subscriptions/start',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.startSubscriptionCheckout,
+        );
+
         this._router.post(
             '/send-profile-change-password-otp',
             this._authenticateMiddleware.authenticate,

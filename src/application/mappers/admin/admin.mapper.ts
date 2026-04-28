@@ -3,7 +3,10 @@ import { IApproveSellerKycInput } from '@application/dtos/admin/approveSellerKyc
 import { IBlockUserInput } from '@application/dtos/admin/blockuser.dto';
 import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
 import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
-import { ICreateSubscriptionPlanInputDto } from '@application/dtos/admin/subscription.dto';
+import {
+    ICreateSubscriptionPlanRequestDto,
+    ISubscriptionPlanDto,
+} from '@application/dtos/admin/subscription.dto';
 import { ISystemConfigInputDto } from '@application/dtos/admin/systemConfig.dto';
 import { IGetAdminSellerInput } from '@application/dtos/admin/getAdminSeller.dto';
 import { IGetAllUsersInput } from '@application/dtos/admin/getAllusers.dto';
@@ -20,6 +23,7 @@ import {
     AuthProviderType,
     UserStatus,
 } from '@domain/entities/user/user.entity';
+import { SubscriptionPlan } from '@domain/entities/subscription/subscription-plan.entity';
 import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
 import { ZodBlockUserInputType } from '@presentation/validators/schemas/admin/blockUsers.schema';
 import { ZodChangeAuctionCategoryStatusInputType } from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
@@ -193,18 +197,42 @@ export class AdminMapperProfile {
         };
     }
 
-    public static toCreateSubscriptionPlanInputDto(
+    public static toCreateSubscriptionPlanRequestDto(
         data: ZodCreateSubscriptionPlanInputType,
-    ): ICreateSubscriptionPlanInputDto {
+    ): ICreateSubscriptionPlanRequestDto {
         return {
             name: data.name,
             description: data.description,
             price: data.price,
             durationDays: data.durationDays,
+            isDefault: data.isDefault,
             features: data.features.map((feature) => ({
                 featureKey: feature.featureKey,
                 value: feature.value,
-                type: feature.type,
+            })),
+        };
+    }
+
+    public static toSubscriptionPlanDto(
+        plan: SubscriptionPlan,
+    ): ISubscriptionPlanDto {
+        return {
+            id: plan.getId(),
+            name: plan.getName(),
+            description: plan.getDescription(),
+            price: plan.getPrice(),
+            durationDays: plan.getDurationDays(),
+            isDefault: plan.getIsDefault(),
+            isActive: plan.getIsActive(),
+            razorpayPlanId: plan.getRazorpayPlanId(),
+            createdAt: plan.getCreatedAt(),
+            updatedAt: plan.getUpdatedAt(),
+            features: plan.getFeatures().map((feature) => ({
+                id: feature.getId(),
+                featureKey: feature.getFeatureKey(),
+                description: feature.getDescription(),
+                value: feature.getValue(),
+                type: feature.getType(),
             })),
         };
     }

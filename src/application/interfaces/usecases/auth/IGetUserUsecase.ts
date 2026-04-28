@@ -1,6 +1,6 @@
-import { userResponseDto } from '@application/dtos/auth/loginUser.dto';
+import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { Result } from '@domain/shared/result';
 
 export interface IGetUserUsecase {
-  execute(id: string): Promise<Result<userResponseDto>>;
+    execute(id: string): Promise<Result<userResponseDto>>;
 }

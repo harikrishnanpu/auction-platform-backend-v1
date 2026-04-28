@@ -56,10 +56,14 @@ import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/adm
 import { GetSubscribedUsersUsecase } from '@application/usecases/admin/getSubscribedUsers.usecase';
 import { IGetSubscriptionFeatureMetadataUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureMetadataUsecase';
 import { GetSubscriptionFeatureMetadataUsecase } from '@application/usecases/admin/getSubscriptionFeatureMetadata.usecase';
+import { IUpdateSubscriptionPlanStatusUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
+import { UpdateSubscriptionPlanStatusUsecase } from '@application/usecases/admin/updateSubscriptionPlanStatus.usecase';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { PrismaSubscriptionPlanRepository } from '@infrastructure/repositories/subscription/subscription-plan.repo';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { PrismaUserSubscriptionRepository } from '@infrastructure/repositories/subscription/user-subscription.repo';
+import { IAssignDefaultSubscriptionToUserUsecase } from '@application/interfaces/usecases/subscription/IAssignDefaultSubscriptionToUserUsecase';
+import { AssignDefaultSubscriptionToUserUsecase } from '@application/usecases/subscription/assignDefaultSubscriptionToUser.usecase';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
     console.log('Admin container loaded');
@@ -133,6 +137,9 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<ICreateSubscriptionPlanUsecase>(
         TYPES.ICreateSubscriptionPlanUsecase,
     ).to(CreateSubscriptionPlanUsecase);
+    bind<IUpdateSubscriptionPlanStatusUsecase>(
+        TYPES.IUpdateSubscriptionPlanStatusUsecase,
+    ).to(UpdateSubscriptionPlanStatusUsecase);
     bind<IGetSubscriptionPlansUsecase>(TYPES.IGetSubscriptionPlansUsecase).to(
         GetSubscriptionPlansUsecase,
     );
@@ -148,6 +155,9 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IUserSubscriptionRepository>(TYPES.IUserSubscriptionRepository).to(
         PrismaUserSubscriptionRepository,
     );
+    bind<IAssignDefaultSubscriptionToUserUsecase>(
+        TYPES.IAssignDefaultSubscriptionToUserUsecase,
+    ).to(AssignDefaultSubscriptionToUserUsecase);
     bind<ISubscriptionFeaturesService>(TYPES.ISubscriptionFeaturesService).to(
         SubscriptionFeaturesService,
     );

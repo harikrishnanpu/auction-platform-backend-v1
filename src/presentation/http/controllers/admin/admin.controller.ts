@@ -116,12 +116,17 @@ import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases
 import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionPlansUsecase';
 import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/admin/IGetSubscribedUsersUsecase';
 import { IGetSubscriptionFeatureMetadataUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureMetadataUsecase';
+import { IUpdateSubscriptionPlanStatusUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
 import {
     IGetSubscribedUsersOutputDto,
     IGetSubscriptionFeatureMetadataOutputDto,
     IGetSubscriptionPlansOutputDto,
     ISubscriptionPlanDto,
 } from '@application/dtos/admin/subscription.dto';
+import {
+    updateSubscriptionPlanStatusSchema,
+    ZodUpdateSubscriptionPlanStatusInputType,
+} from '@presentation/validators/schemas/admin/updateSubscriptionPlanStatus.schema';
 
 @injectable()
 export class AdminController {
@@ -176,6 +181,8 @@ export class AdminController {
         private readonly _getSubscribedUsersUsecase: IGetSubscribedUsersUsecase,
         @inject(TYPES.IGetSubscriptionFeatureMetadataUsecase)
         private readonly _getSubscriptionFeatureMetadataUsecase: IGetSubscriptionFeatureMetadataUsecase,
+        @inject(TYPES.IUpdateSubscriptionPlanStatusUsecase)
+        private readonly _updateSubscriptionPlanStatusUsecase: IUpdateSubscriptionPlanStatusUsecase,
     ) {}
 
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -807,6 +814,40 @@ export class AdminController {
                 res,
                 result.getValue(),
                 ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_PLANS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    updateSubscriptionPlanStatus = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodUpdateSubscriptionPlanStatusInputType>(
+                    updateSubscriptionPlanStatusSchema,
+                    {
+                        planId: req.params.id as string,
+                        isDefault: req.body.isDefault,
+                        isActive: req.body.isActive,
+                    },
+                );
+
+            const result =
+                await this._updateSubscriptionPlanStatusUsecase.execute(
+                    validationResult,
+                );
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISubscriptionPlanDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES
+                    .UPDATE_SUBSCRIPTION_PLAN_STATUS_SUCCESSFULLY,
                 ADMIN_CONSTANTS.CODES.OK,
             );
         },

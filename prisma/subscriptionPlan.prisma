@@ -4,7 +4,9 @@ model SubscriptionPlan {
   description String
   price Float
   durationDays Int
+  isDefault Boolean @default(false)
   isActive Boolean @default(true)
+  razorpayPlanId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userSubscriptions UserSubscription[]
@@ -15,6 +17,7 @@ model SubscriptionPlanFeature {
   id String @id @default(uuid())
   subscriptionPlanId String
   feature SubscriptionPlanFeatureEnum
+  description String
   value String
   type SubscriptionPlanFeatureType
   createdAt DateTime @default(now())
