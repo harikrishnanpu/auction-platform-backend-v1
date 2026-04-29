@@ -1,6 +1,11 @@
+import { ISystemConfigDto } from '@application/dtos/admin/systemConfig.dto';
 import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { TYPES } from '@di/types.di';
-import { SystemConfigKey } from '../../../domain/constants/systemConfig.constants';
+import {
+    SystemConfig,
+    SystemConfigKey,
+    SystemConfigValueType,
+} from '@domain/entities/system-config/system-config.entity';
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
@@ -12,37 +17,41 @@ export class SystemConfigService implements ISystemConfigService {
         private readonly _systemConfigRepository: ISystemConfigRepository,
     ) {}
 
-    async getString(
+    async getConfigByKey(
         key: SystemConfigKey,
-        fallbackValue?: string,
-    ): Promise<Result<string>> {
+    ): Promise<Result<ISystemConfigDto>> {
         const configResult = await this._systemConfigRepository.findByKey(key);
         if (configResult.isFailure) return Result.fail(configResult.getError());
 
         const config = configResult.getValue();
         if (!config) {
-            if (fallbackValue !== undefined) return Result.ok(fallbackValue);
             return Result.fail('System config not found');
         }
 
-        return Result.ok(config.getValue());
+        return this.toDto(config);
     }
 
-    async getNumber(
-        key: SystemConfigKey,
-        fallbackValue?: number,
-    ): Promise<Result<number>> {
-        const valueResult = await this.getString(
-            key,
-            fallbackValue !== undefined ? String(fallbackValue) : undefined,
-        );
-        if (valueResult.isFailure) return Result.fail(valueResult.getError());
+    private toDto(config: SystemConfig): Result<ISystemConfigDto> {
+        const valueType = config.getValueType();
+        let value: string | number | boolean = config.getValue();
 
-        const parsed = Number(valueResult.getValue());
-        if (Number.isNaN(parsed)) {
-            return Result.fail(`System config must be a number`);
+        switch (valueType) {
+            case SystemConfigValueType.NUMBER:
+                value = Number(value);
+                break;
+            case SystemConfigValueType.BOOLEAN:
+                value = Boolean(value);
+                break;
         }
 
-        return Result.ok(parsed);
+        return Result.ok({
+            id: config.getId(),
+            key: config.getKey(),
+            value: value,
+            valueType: config.getValueType(),
+            description: config.getDescription(),
+            createdAt: config.getCreatedAt(),
+            updatedAt: config.getUpdatedAt(),
+        });
     }
 }

@@ -1,7 +1,7 @@
 import {
-    CreateRazorpayPlanGatewayInput,
-    CreateRazorpaySubscriptionGatewayInput,
-    CreateRazorpaySubscriptionGatewayOutput,
+    CreateRazorpayPlanInput,
+    CreateRazorpaySubscriptionInput,
+    CreateRazorpaySubscriptionOutput,
     EnsureRazorpayCustomerInput,
     IRazorpaySubscriptionGatewayService,
 } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
@@ -16,9 +16,11 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
     constructor() {
         const keyId = process.env.RAZORPAY_KEY_ID ?? '';
         const keySecret = process.env.RAZORPAY_KEY_SECRET ?? '';
+
         if (!keyId || !keySecret) {
             throw new Error('Razorpay keys are not configured');
         }
+
         this._razorpay = new Razorpay({
             key_id: keyId,
             key_secret: keySecret,
@@ -29,11 +31,10 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
         input: EnsureRazorpayCustomerInput,
     ): Promise<Result<{ customerId: string }>> {
         try {
-            const contact = this.normalizeContact(input.phone);
             const customer = await this._razorpay.customers.create({
-                name: input.name.slice(0, 50),
+                name: input.name,
                 email: input.email,
-                contact: contact ?? undefined,
+                contact: input.phone,
                 fail_existing: 0,
                 notes: { userId: input.userId },
             });
@@ -45,27 +46,31 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
     }
 
     async createPlan(
-        input: CreateRazorpayPlanGatewayInput,
+        input: CreateRazorpayPlanInput,
     ): Promise<Result<{ razorpayPlanId: string }>> {
         try {
             const amountPaise = Math.round(input.amountRupees * 100);
+
             if (amountPaise < 100) {
                 return Result.fail('Plan amount must be at least ₹1');
             }
+
             const { period, interval } = this.mapDurationDaysToBilling(
                 input.durationDays,
             );
+
             const plan = await this._razorpay.plans.create({
                 item: {
-                    name: input.name.slice(0, 200),
+                    name: input.name,
                     amount: amountPaise,
                     currency: 'INR',
-                    description: input.description.slice(0, 500),
+                    description: input.description,
                 },
                 period,
                 interval,
                 notes: { appPlanId: input.appPlanId },
-            } as never);
+            });
+
             return Result.ok({ razorpayPlanId: plan.id });
         } catch (err) {
             console.log(err);
@@ -74,21 +79,20 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
     }
 
     async createSubscription(
-        input: CreateRazorpaySubscriptionGatewayInput,
-    ): Promise<Result<CreateRazorpaySubscriptionGatewayOutput>> {
+        input: CreateRazorpaySubscriptionInput,
+    ): Promise<Result<CreateRazorpaySubscriptionOutput>> {
         try {
             const sub = await this._razorpay.subscriptions.create({
                 plan_id: input.razorpayPlanId,
-                customer_id: input.customerId,
                 customer_notify: 1,
-                total_count: 240,
+                total_count: 12,
                 quantity: 1,
                 notes: {
                     userSubscriptionId: input.userSubscriptionId,
                     userId: input.userId,
                     appSubscriptionPlanId: input.appSubscriptionPlanId,
                 },
-            } as never);
+            });
 
             return Result.ok({
                 razorpaySubscriptionId: sub.id,
@@ -121,12 +125,5 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
                 interval: Math.max(1, Math.round(d / 7)),
             };
         return { period: 'daily', interval: d };
-    }
-
-    private normalizeContact(phone: string | null): string | undefined {
-        if (!phone?.trim()) return undefined;
-        const digits = phone.replace(/\D/g, '');
-        if (!digits.length) return undefined;
-        return digits.slice(-15);
     }
 }

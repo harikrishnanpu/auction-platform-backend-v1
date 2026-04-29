@@ -5,9 +5,13 @@ import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/ch
 import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
 import {
     ICreateSubscriptionPlanRequestDto,
+    IGetSubscriptionFeaturesDto,
     ISubscriptionPlanDto,
 } from '@application/dtos/admin/subscription.dto';
-import { ISystemConfigInputDto } from '@application/dtos/admin/systemConfig.dto';
+import {
+    ISystemConfigDto,
+    ISystemConfigInputDto,
+} from '@application/dtos/admin/systemConfig.dto';
 import { IGetAdminSellerInput } from '@application/dtos/admin/getAdminSeller.dto';
 import { IGetAllUsersInput } from '@application/dtos/admin/getAllusers.dto';
 import { IGetAllSellersInput } from '@application/dtos/admin/getSellers.dto';
@@ -36,10 +40,11 @@ import { ZodGetAllSellersInputType } from '@presentation/validators/schemas/admi
 import { ZodRejectAuctionCategoryInputType } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 import { ZodRejectSellerKycInputType } from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
 import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
-import { ZodCreateSystemConfigInputType } from '@presentation/validators/schemas/admin/createSystemConfig.schema';
 import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
 import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/viewKyc.schema';
 import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import { SystemConfig } from '@domain/entities/system-config/system-config.entity';
+import { Features } from '@domain/entities/subscription/features.entity';
 
 export class AdminMapperProfile {
     public static toGetAllUsersInputDto(
@@ -177,27 +182,29 @@ export class AdminMapperProfile {
         };
     }
 
-    public static toCreateSystemConfigInputDto(
-        data: ZodCreateSystemConfigInputType,
-    ): ISystemConfigInputDto {
-        return {
-            key: data.key,
-            value: data.value,
-            description: data.description ?? null,
-        };
-    }
-
-    public static toEditSystemConfigInputDto(
+    public static saveSystemConfigInputDto(
         data: ZodEditSystemConfigInputType,
     ): ISystemConfigInputDto {
         return {
             key: data.key,
             value: data.value,
-            description: data.description ?? null,
+            description: data.description,
         };
     }
 
-    public static toCreateSubscriptionPlanRequestDto(
+    public static toSystemConfigDto(config: SystemConfig): ISystemConfigDto {
+        return {
+            id: config.getId(),
+            key: config.getKey(),
+            value: config.getValue(),
+            valueType: config.getValueType(),
+            description: config.getDescription(),
+            createdAt: config.getCreatedAt(),
+            updatedAt: config.getUpdatedAt(),
+        };
+    }
+
+    public static toCreateSubscriptionPlanDto(
         data: ZodCreateSubscriptionPlanInputType,
     ): ICreateSubscriptionPlanRequestDto {
         return {
@@ -207,7 +214,7 @@ export class AdminMapperProfile {
             durationDays: data.durationDays,
             isDefault: data.isDefault,
             features: data.features.map((feature) => ({
-                featureKey: feature.featureKey,
+                featureId: feature.featureId,
                 value: feature.value,
             })),
         };
@@ -229,11 +236,21 @@ export class AdminMapperProfile {
             updatedAt: plan.getUpdatedAt(),
             features: plan.getFeatures().map((feature) => ({
                 id: feature.getId(),
-                featureKey: feature.getFeatureKey(),
-                description: feature.getDescription(),
+                description: feature.getFeature().getDescription(),
                 value: feature.getValue(),
-                type: feature.getType(),
+                type: feature.getFeature().getType(),
+                featureKey: feature.getFeature().getFeatureKey(),
             })),
         };
+    }
+
+    public static toSubscriptionFeaturesDto(
+        features: Features[],
+    ): IGetSubscriptionFeaturesDto[] {
+        return features.map((feature) => ({
+            key: feature.getFeatureKey(),
+            valueType: feature.getType(),
+            description: feature.getDescription(),
+        }));
     }
 }

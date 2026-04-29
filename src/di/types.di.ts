@@ -5,7 +5,6 @@ export const TYPES = {
     IPasswordService: Symbol.for('IPasswordService'),
     IIdGeneratingService: Symbol.for('IIdGeneratingService'),
     ISystemConfigService: Symbol.for('ISystemConfigService'),
-    ISubscriptionFeaturesService: Symbol.for('ISubscriptionFeaturesService'),
     IPaymentGatewayService: Symbol.for('IPaymentGatewayService'),
     IOtpService: Symbol.for('IOtpService'),
     IRegisterUseCase: Symbol.for('IRegisterUseCase'),
@@ -123,8 +122,8 @@ export const TYPES = {
     ),
     IGetSubscriptionPlansUsecase: Symbol.for('IGetSubscriptionPlansUsecase'),
     IGetSubscribedUsersUsecase: Symbol.for('IGetSubscribedUsersUsecase'),
-    IGetSubscriptionFeatureMetadataUsecase: Symbol.for(
-        'IGetSubscriptionFeatureMetadataUsecase',
+    IGetSubscriptionFeaturesUsecase: Symbol.for(
+        'IGetSubscriptionFeaturesUsecase',
     ),
     ISubscriptionPlanRepository: Symbol.for('ISubscriptionPlanRepository'),
     IUserSubscriptionRepository: Symbol.for('IUserSubscriptionRepository'),
@@ -277,4 +276,8 @@ export const TYPES = {
     FraudController: Symbol.for('FraudController'),
     FraudReportMapper: Symbol.for('FraudReportMapper'),
     UserSuspensionMapper: Symbol.for('UserSuspensionMapper'),
+    ISubscriptionFeaturesRepository: Symbol.for(
+        'ISubscriptionFeaturesRepository',
+    ),
+    SubscriptionFeaturesMapper: Symbol.for('SubscriptionFeaturesMapper'),
 };

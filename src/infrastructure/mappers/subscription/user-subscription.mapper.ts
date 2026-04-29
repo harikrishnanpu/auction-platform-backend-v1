@@ -4,9 +4,7 @@ import {
 } from '@domain/entities/subscription/user-subscription.entity';
 import { Result } from '@domain/shared/result';
 import { UserSubscription as PrismaUserSubscriptionRow } from '@prisma/client';
-import { injectable } from 'inversify';
 
-@injectable()
 export class UserSubscriptionMapper {
     toPersistence(entity: UserSubscription): PrismaUserSubscriptionRow {
         return {

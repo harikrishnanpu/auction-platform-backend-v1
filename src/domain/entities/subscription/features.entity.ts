@@ -1,16 +1,23 @@
-import {
-    SubscriptionFeatureKey,
-    SubscriptionFeatureValueType,
-} from '@domain/constants/subscriptionFeature.constants';
 import { Result } from '@domain/shared/result';
 
-export class SubscriptionPlanFeature {
+export enum SubscriptionFeatureKey {
+    AUCTION_CREATION = 'AUCTION_CREATION',
+    AUCTION_BIDDING = 'AUCTION_BIDDING',
+    AI_AGENT = 'AI_AGENT',
+}
+
+export enum SubscriptionFeatureValueType {
+    BOOLEAN = 'BOOLEAN',
+    NUMBER = 'NUMBER',
+    STRING = 'STRING',
+}
+
+export class Features {
     private constructor(
         private readonly id: string,
         private readonly featureKey: SubscriptionFeatureKey,
-        private readonly description: string,
-        private readonly value: string,
         private readonly type: SubscriptionFeatureValueType,
+        private readonly description: string,
         private readonly createdAt: Date,
         private readonly updatedAt: Date,
     ) {}
@@ -19,26 +26,23 @@ export class SubscriptionPlanFeature {
         id,
         featureKey,
         description,
-        value,
         type,
         createdAt,
         updatedAt,
     }: {
         id: string;
         featureKey: SubscriptionFeatureKey;
-        description: string;
-        value: string;
         type: SubscriptionFeatureValueType;
+        description: string;
         createdAt: Date;
         updatedAt: Date;
-    }): Result<SubscriptionPlanFeature> {
+    }): Result<Features> {
         return Result.ok(
-            new SubscriptionPlanFeature(
+            new Features(
                 id,
                 featureKey,
-                description,
-                value,
                 type,
+                description,
                 createdAt,
                 updatedAt,
             ),
@@ -55,10 +59,6 @@ export class SubscriptionPlanFeature {
 
     public getDescription(): string {
         return this.description;
-    }
-
-    public getValue(): string {
-        return this.value;
     }
 
     public getType(): SubscriptionFeatureValueType {

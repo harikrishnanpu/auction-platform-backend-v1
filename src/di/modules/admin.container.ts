@@ -44,8 +44,6 @@ import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin
 import { EditSystemConfigUsecase } from '@application/usecases/admin/editSystemConfig.usecase';
 import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { SystemConfigService } from '@infrastructure/services/system-config/system-config.service';
-import { ISubscriptionFeaturesService } from '@application/interfaces/services/ISubscriptionFeaturesService';
-import { SubscriptionFeaturesService } from '@infrastructure/services/subscription/subscription-features.service';
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { PrismaSystemConfigRepository } from '@infrastructure/repositories/system-config/system-config.repo';
 import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
@@ -54,8 +52,8 @@ import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/a
 import { GetSubscriptionPlansUsecase } from '@application/usecases/admin/getSubscriptionPlans.usecase';
 import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/admin/IGetSubscribedUsersUsecase';
 import { GetSubscribedUsersUsecase } from '@application/usecases/admin/getSubscribedUsers.usecase';
-import { IGetSubscriptionFeatureMetadataUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureMetadataUsecase';
-import { GetSubscriptionFeatureMetadataUsecase } from '@application/usecases/admin/getSubscriptionFeatureMetadata.usecase';
+import { IGetSubscriptionFeaturesUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureUsecase';
+import { GetSubscriptionFeaturesUsecase } from '@application/usecases/admin/getSubscriptionFeatures.usecase';
 import { IUpdateSubscriptionPlanStatusUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
 import { UpdateSubscriptionPlanStatusUsecase } from '@application/usecases/admin/updateSubscriptionPlanStatus.usecase';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
@@ -64,6 +62,8 @@ import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscript
 import { PrismaUserSubscriptionRepository } from '@infrastructure/repositories/subscription/user-subscription.repo';
 import { IAssignDefaultSubscriptionToUserUsecase } from '@application/interfaces/usecases/subscription/IAssignDefaultSubscriptionToUserUsecase';
 import { AssignDefaultSubscriptionToUserUsecase } from '@application/usecases/subscription/assignDefaultSubscriptionToUser.usecase';
+import { ISubscriptionFeaturesRepository } from '@domain/repositories/ISubscriptionFetauresRepository';
+import { PrismaSubscriptionFeaturesRepository } from '@infrastructure/repositories/subscription/subscription-features.repo';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
     console.log('Admin container loaded');
@@ -146,9 +146,9 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IGetSubscribedUsersUsecase>(TYPES.IGetSubscribedUsersUsecase).to(
         GetSubscribedUsersUsecase,
     );
-    bind<IGetSubscriptionFeatureMetadataUsecase>(
-        TYPES.IGetSubscriptionFeatureMetadataUsecase,
-    ).to(GetSubscriptionFeatureMetadataUsecase);
+    bind<IGetSubscriptionFeaturesUsecase>(
+        TYPES.IGetSubscriptionFeaturesUsecase,
+    ).to(GetSubscriptionFeaturesUsecase);
     bind<ISubscriptionPlanRepository>(TYPES.ISubscriptionPlanRepository).to(
         PrismaSubscriptionPlanRepository,
     );
@@ -158,7 +158,8 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IAssignDefaultSubscriptionToUserUsecase>(
         TYPES.IAssignDefaultSubscriptionToUserUsecase,
     ).to(AssignDefaultSubscriptionToUserUsecase);
-    bind<ISubscriptionFeaturesService>(TYPES.ISubscriptionFeaturesService).to(
-        SubscriptionFeaturesService,
-    );
+
+    bind<ISubscriptionFeaturesRepository>(
+        TYPES.ISubscriptionFeaturesRepository,
+    ).to(PrismaSubscriptionFeaturesRepository);
 });

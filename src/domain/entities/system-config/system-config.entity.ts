@@ -1,32 +1,55 @@
 import { Result } from '@domain/shared/result';
 
+export enum SystemConfigKey {
+    FRAUD_SUSPENSION_THRESHOLD = 'FRAUD_SUSPENSION_THRESHOLD',
+    FRAUD_TEMPORARY_SUSPENSION_DURATION_MS = 'FRAUD_TEMPORARY_SUSPENSION_DURATION_MS',
+}
+
+export enum SystemConfigValueType {
+    NUMBER = 'NUMBER',
+    STRING = 'STRING',
+    BOOLEAN = 'BOOLEAN',
+}
+
 export class SystemConfig {
     private constructor(
         private readonly id: string,
-        private readonly key: string,
+        private readonly key: SystemConfigKey,
+        private readonly valueType: SystemConfigValueType,
         private readonly value: string,
-        private readonly description: string | null,
+        private readonly description: string,
         private readonly createdAt: Date,
         private readonly updatedAt: Date,
     ) {}
 
-    static create(input: {
+    static create({
+        id,
+        key,
+        valueType,
+        value,
+        description,
+        createdAt,
+        updatedAt,
+    }: {
         id: string;
-        key: string;
+        key: SystemConfigKey;
+        valueType: SystemConfigValueType;
         value: string;
-        description?: string | null;
+        description: string;
         createdAt?: Date;
         updatedAt?: Date;
     }): Result<SystemConfig> {
         const now = new Date();
+
         return Result.ok(
             new SystemConfig(
-                input.id,
-                input.key.trim(),
-                input.value,
-                input.description ?? null,
-                input.createdAt ?? now,
-                input.updatedAt ?? now,
+                id,
+                key,
+                valueType,
+                value,
+                description,
+                createdAt ?? now,
+                updatedAt ?? now,
             ),
         );
     }
@@ -35,15 +58,19 @@ export class SystemConfig {
         return this.id;
     }
 
-    getKey(): string {
+    getKey(): SystemConfigKey {
         return this.key;
+    }
+
+    getValueType(): SystemConfigValueType {
+        return this.valueType;
     }
 
     getValue(): string {
         return this.value;
     }
 
-    getDescription(): string | null {
+    getDescription(): string {
         return this.description;
     }
 

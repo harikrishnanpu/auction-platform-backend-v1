@@ -1,7 +1,6 @@
-import { SubscriptionFeatureKey } from '@domain/constants/subscriptionFeature.constants';
 import z from 'zod';
 
-const baseCreateSubscriptionPlanSchema = z.object({
+export const createSubscriptionPlanSchema = z.object({
     name: z.string().trim().min(1, 'Name is required'),
     description: z.string().trim().min(1, 'Description is required'),
     price: z.number().min(0, 'Price cannot be negative'),
@@ -13,14 +12,12 @@ const baseCreateSubscriptionPlanSchema = z.object({
     features: z
         .array(
             z.object({
-                featureKey: z.enum(SubscriptionFeatureKey),
-                value: z.string().trim().min(1, 'Feature value is required'),
+                featureId: z.uuid('Feature ID is required'),
+                value: z.string().trim().min(1, 'Value is required'),
             }),
         )
         .min(1, 'At least one feature is required'),
 });
-
-export const createSubscriptionPlanSchema = baseCreateSubscriptionPlanSchema;
 
 export type ZodCreateSubscriptionPlanInputType = z.infer<
     typeof createSubscriptionPlanSchema

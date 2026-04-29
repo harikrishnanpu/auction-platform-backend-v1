@@ -115,11 +115,11 @@ import {
 import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
 import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionPlansUsecase';
 import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/admin/IGetSubscribedUsersUsecase';
-import { IGetSubscriptionFeatureMetadataUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureMetadataUsecase';
+import { IGetSubscriptionFeaturesUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureUsecase';
 import { IUpdateSubscriptionPlanStatusUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
 import {
     IGetSubscribedUsersOutputDto,
-    IGetSubscriptionFeatureMetadataOutputDto,
+    IGetSubscriptionFeaturesOutputDto,
     IGetSubscriptionPlansOutputDto,
     ISubscriptionPlanDto,
 } from '@application/dtos/admin/subscription.dto';
@@ -179,8 +179,8 @@ export class AdminController {
         private readonly _getSubscriptionPlansUsecase: IGetSubscriptionPlansUsecase,
         @inject(TYPES.IGetSubscribedUsersUsecase)
         private readonly _getSubscribedUsersUsecase: IGetSubscribedUsersUsecase,
-        @inject(TYPES.IGetSubscriptionFeatureMetadataUsecase)
-        private readonly _getSubscriptionFeatureMetadataUsecase: IGetSubscriptionFeatureMetadataUsecase,
+        @inject(TYPES.IGetSubscriptionFeaturesUsecase)
+        private readonly _getSubscriptionFeaturesUsecase: IGetSubscriptionFeaturesUsecase,
         @inject(TYPES.IUpdateSubscriptionPlanStatusUsecase)
         private readonly _updateSubscriptionPlanStatusUsecase: IUpdateSubscriptionPlanStatusUsecase,
     ) {}
@@ -873,10 +873,9 @@ export class AdminController {
         },
     );
 
-    getSubscriptionFeatureMetadata = expressAsyncHandler(
+    getSubscriptionFeatures = expressAsyncHandler(
         async (_req: Request, res: Response) => {
-            const result =
-                await this._getSubscriptionFeatureMetadataUsecase.execute();
+            const result = await this._getSubscriptionFeaturesUsecase.execute();
 
             if (result.isFailure) {
                 throw new AppError(
@@ -885,7 +884,7 @@ export class AdminController {
                 );
             }
 
-            ResponseHelper.success<IGetSubscriptionFeatureMetadataOutputDto>(
+            ResponseHelper.success<IGetSubscriptionFeaturesOutputDto>(
                 res,
                 result.getValue(),
                 ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_FEATURES_SUCCESSFULLY,

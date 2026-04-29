@@ -21,6 +21,7 @@ import { SystemConfigMapper } from '@infrastructure/mappers/system-config/system
 import { SubscriptionPlanMapper } from '@infrastructure/mappers/subscription/subscription-plan.mapper';
 import { UserSubscriptionMapper } from '@infrastructure/mappers/subscription/user-subscription.mapper';
 import { ContainerModule } from 'inversify';
+import { SubscriptionFeaturesMapper } from '@infrastructure/mappers/subscription/subscriptionFeatures.mapper';
 
 export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<AuctionCategoryMapper>(TYPES.AuctionCategoryMapper).to(
@@ -63,5 +64,9 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<FraudReportMapper>(TYPES.FraudReportMapper).to(FraudReportMapper);
     bind<UserSuspensionMapper>(TYPES.UserSuspensionMapper).to(
         UserSuspensionMapper,
+    );
+
+    bind<SubscriptionFeaturesMapper>(TYPES.SubscriptionFeaturesMapper).to(
+        SubscriptionFeaturesMapper,
     );
 });

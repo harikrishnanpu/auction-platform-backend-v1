@@ -73,7 +73,7 @@ export class AdminRoutes {
             '/subscriptions/features',
             this._authenticateMiddleware.authenticate,
             this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
-            this._adminController.getSubscriptionFeatureMetadata,
+            this._adminController.getSubscriptionFeatures,
         );
 
         this._router.get(

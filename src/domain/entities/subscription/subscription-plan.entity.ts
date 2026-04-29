@@ -1,5 +1,5 @@
 import { Result } from '@domain/shared/result';
-import { SubscriptionPlanFeature } from './subscription-plan-feature.entity';
+import { SubscriptionPlanFeature } from './subscriptionPlanFetaure.entity';
 
 export class SubscriptionPlan {
     private constructor(
@@ -41,13 +41,6 @@ export class SubscriptionPlan {
         createdAt: Date;
         updatedAt: Date;
     }): Result<SubscriptionPlan> {
-        if (price < 0) {
-            return Result.fail('Subscription plan price cannot be negative');
-        }
-        if (durationDays < 0) {
-            return Result.fail('Subscription plan duration cannot be negative');
-        }
-
         return Result.ok(
             new SubscriptionPlan(
                 id,

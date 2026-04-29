@@ -1,13 +1,7 @@
 import { Result } from '@domain/shared/result';
-import { SystemConfigKey } from '../../../domain/constants/systemConfig.constants';
+import { SystemConfigKey } from '@domain/entities/system-config/system-config.entity';
+import { ISystemConfigDto } from '@application/dtos/admin/systemConfig.dto';
 
 export interface ISystemConfigService {
-    getString(
-        key: SystemConfigKey,
-        fallbackValue?: string,
-    ): Promise<Result<string>>;
-    getNumber(
-        key: SystemConfigKey,
-        fallbackValue?: number,
-    ): Promise<Result<number>>;
+    getConfigByKey(key: SystemConfigKey): Promise<Result<ISystemConfigDto>>;
 }

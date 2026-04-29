@@ -2,8 +2,14 @@ model SystemDbConfig {
   id          String   @id @default(uuid())
   key         String   @unique
   value       String
-  description String?
+  type   SystemConfigValueType
+  description String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
 
+enum SystemConfigValueType {
+  NUMBER
+  STRING
+  BOOLEAN
+}

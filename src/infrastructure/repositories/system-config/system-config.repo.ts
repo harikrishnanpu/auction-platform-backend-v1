@@ -15,7 +15,7 @@ export class PrismaSystemConfigRepository
     extends BaseRepository<
         SystemConfig,
         PrismaSystemDbConfig,
-        { id: string; key: string },
+        { updatedAt?: Date },
         IDbMapper<SystemConfig, PrismaSystemDbConfig>
     >
     implements ISystemConfigRepository

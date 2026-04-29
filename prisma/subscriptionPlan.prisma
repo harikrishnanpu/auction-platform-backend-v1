@@ -13,17 +13,29 @@ model SubscriptionPlan {
   features SubscriptionPlanFeature[]
 }
 
+
 model SubscriptionPlanFeature {
   id String @id @default(uuid())
   subscriptionPlanId String
-  feature SubscriptionPlanFeatureEnum
-  description String
+  featureId String
   value String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  feature Features @relation(fields: [featureId], references: [id])
+  subSubscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  @@unique([subscriptionPlanId, featureId])
+}
+
+model Features {
+  id String @id @default(uuid())
+  feature SubscriptionPlanFeatureEnum @unique
+  description String
   type SubscriptionPlanFeatureType
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  subscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionPlanFeatures SubscriptionPlanFeature[]
 }
+
 
 enum SubscriptionPlanFeatureType {
   BOOLEAN

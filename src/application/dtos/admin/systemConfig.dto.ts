@@ -1,16 +1,22 @@
+import {
+    SystemConfigKey,
+    SystemConfigValueType,
+} from '@domain/entities/system-config/system-config.entity';
+
 export interface ISystemConfigDto {
     id: string;
-    key: string;
-    value: string;
-    description: string | null;
+    key: SystemConfigKey;
+    valueType: SystemConfigValueType;
+    value: string | number | boolean;
+    description: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
 export interface ISystemConfigInputDto {
-    key: string;
+    key: SystemConfigKey;
     value: string;
-    description: string | null;
+    description: string;
 }
 
 export interface IGetSystemConfigsOutputDto {
@@ -18,5 +24,5 @@ export interface IGetSystemConfigsOutputDto {
 }
 
 export interface IGetSystemConfigKeysOutputDto {
-    keys: string[];
+    configs: ISystemConfigDto[];
 }

@@ -4,23 +4,24 @@ export interface EnsureRazorpayCustomerInput {
     userId: string;
     name: string;
     email: string;
-    phone: string | null;
+    phone: string;
 }
 
-export interface CreateRazorpaySubscriptionGatewayInput {
+export interface CreateRazorpaySubscriptionInput {
     razorpayPlanId: string;
     customerId: string;
     userSubscriptionId: string;
+    durationDays: number;
     userId: string;
     appSubscriptionPlanId: string;
 }
 
-export interface CreateRazorpaySubscriptionGatewayOutput {
+export interface CreateRazorpaySubscriptionOutput {
     razorpaySubscriptionId: string;
     shortUrl: string;
 }
 
-export interface CreateRazorpayPlanGatewayInput {
+export interface CreateRazorpayPlanInput {
     name: string;
     description: string;
     amountRupees: number;
@@ -33,9 +34,9 @@ export interface IRazorpaySubscriptionGatewayService {
         input: EnsureRazorpayCustomerInput,
     ): Promise<Result<{ customerId: string }>>;
     createPlan(
-        input: CreateRazorpayPlanGatewayInput,
+        input: CreateRazorpayPlanInput,
     ): Promise<Result<{ razorpayPlanId: string }>>;
     createSubscription(
-        input: CreateRazorpaySubscriptionGatewayInput,
-    ): Promise<Result<CreateRazorpaySubscriptionGatewayOutput>>;
+        input: CreateRazorpaySubscriptionInput,
+    ): Promise<Result<CreateRazorpaySubscriptionOutput>>;
 }

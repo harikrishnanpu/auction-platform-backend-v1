@@ -1,48 +1,40 @@
 import { ISubscriptionPlanDto } from '@application/dtos/admin/subscription.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
-import { ISubscriptionFeaturesService } from '@application/interfaces/services/ISubscriptionFeaturesService';
 import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { SubscriptionPlan } from '@domain/entities/subscription/subscription-plan.entity';
-import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscription-plan-feature.entity';
+import { SubscriptionFeatureValueType } from '@domain/entities/subscription/features.entity';
 import { IRazorpaySubscriptionGatewayService } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { Result } from '@domain/shared/result';
 import { ZodCreateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/createSubscriptionPlan.schema';
 import { inject, injectable } from 'inversify';
+import { ISubscriptionFeaturesRepository } from '@domain/repositories/ISubscriptionFetauresRepository';
+import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscriptionPlanFetaure.entity';
 
 @injectable()
 export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUsecase {
     constructor(
         @inject(TYPES.ISubscriptionPlanRepository)
         private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
-        @inject(TYPES.ISubscriptionFeaturesService)
-        private readonly _subscriptionFeaturesService: ISubscriptionFeaturesService,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
         @inject(TYPES.IRazorpaySubscriptionGatewayService)
         private readonly _razorpaySubscriptionGateway: IRazorpaySubscriptionGatewayService,
+        @inject(TYPES.ISubscriptionFeaturesRepository)
+        private readonly _subscriptionPFeatureRepository: ISubscriptionFeaturesRepository,
     ) {}
 
     async execute(
         input: ZodCreateSubscriptionPlanInputType,
     ): Promise<Result<ISubscriptionPlanDto>> {
-        const request =
-            AdminMapperProfile.toCreateSubscriptionPlanRequestDto(input);
+        const dto = AdminMapperProfile.toCreateSubscriptionPlanDto(input);
+        const planId = this._idGeneratingService.generateId();
 
-        const normalizedResult =
-            this._subscriptionFeaturesService.validateAndNormalizePlanInput(
-                request,
-            );
-        if (normalizedResult.isFailure)
-            return Result.fail(normalizedResult.getError());
-
-        const normalized = normalizedResult.getValue();
-
-        if (normalized.isDefault) {
+        if (dto.isDefault) {
             const hasDefaultResult =
-                await this._subscriptionPlanRepository.hasDefaultPlan();
+                await this._subscriptionPlanRepository.findActiveDefault();
             if (hasDefaultResult.isFailure)
                 return Result.fail(hasDefaultResult.getError());
             if (hasDefaultResult.getValue()) {
@@ -52,55 +44,79 @@ export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUse
             }
         }
 
-        const now = new Date();
-        const planId = this._idGeneratingService.generateId();
+        const features = await this._subscriptionPFeatureRepository.findByIds(
+            dto.features.map((feature) => feature.featureId),
+        );
+        if (features.isFailure) return Result.fail(features.getError());
+
+        const featuresEntities: SubscriptionPlanFeature[] = [];
+        for (const feat of dto.features) {
+            const dbFeature = features
+                .getValue()
+                .find((itm) => itm.getId() == feat.featureId);
+            if (!dbFeature) return Result.fail('Feature not found');
+
+            const valueType = dbFeature.getType();
+
+            switch (valueType) {
+                case SubscriptionFeatureValueType.BOOLEAN:
+                    if (!['true', 'false'].includes(feat.value.toLowerCase()))
+                        return Result.fail('Invalid value for boolean feature');
+                    break;
+                case SubscriptionFeatureValueType.NUMBER:
+                    if (isNaN(Number(feat.value)))
+                        return Result.fail('Invalid value for number feature');
+                    break;
+                case SubscriptionFeatureValueType.STRING:
+                    break;
+                default:
+                    return Result.fail('Invalid value type');
+            }
+
+            featuresEntities.push(
+                SubscriptionPlanFeature.create({
+                    id: this._idGeneratingService.generateId(),
+                    subscriptionPlanId: planId,
+                    featureId: feat.featureId,
+                    value: feat.value,
+                    feature: dbFeature,
+                }).getValue(),
+            );
+        }
 
         let razorpayPlanId: string | null = null;
-        const needsRazorpayPlan = normalized.price > 0 && !normalized.isDefault;
+
+        const needsRazorpayPlan = dto.price > 0 && !dto.isDefault;
+
         if (needsRazorpayPlan) {
             const rzPlan = await this._razorpaySubscriptionGateway.createPlan({
-                name: normalized.name,
-                description: normalized.description,
-                amountRupees: normalized.price,
-                durationDays: normalized.durationDays,
+                name: dto.name,
+                description: dto.description,
+                amountRupees: dto.price,
+                durationDays: dto.durationDays,
                 appPlanId: planId,
             });
+
             if (rzPlan.isFailure) {
                 return Result.fail(rzPlan.getError());
             }
             razorpayPlanId = rzPlan.getValue().razorpayPlanId;
         }
 
-        const featureEntities: SubscriptionPlanFeature[] = [];
-        for (const f of normalized.features) {
-            const featureResult = SubscriptionPlanFeature.create({
-                id: this._idGeneratingService.generateId(),
-                featureKey: f.featureKey,
-                description: f.description,
-                value: f.value,
-                type: f.type,
-                createdAt: now,
-                updatedAt: now,
-            });
-            if (featureResult.isFailure) {
-                return Result.fail(featureResult.getError());
-            }
-            featureEntities.push(featureResult.getValue());
-        }
-
         const planResult = SubscriptionPlan.create({
             id: planId,
-            name: normalized.name,
-            description: normalized.description,
-            price: normalized.price,
-            durationDays: normalized.durationDays,
-            isDefault: normalized.isDefault,
+            name: dto.name,
+            description: dto.description,
+            price: dto.price,
+            durationDays: dto.durationDays,
+            isDefault: dto.isDefault,
             isActive: true,
             razorpayPlanId,
-            features: featureEntities,
-            createdAt: now,
-            updatedAt: now,
+            features: featuresEntities,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         });
+
         if (planResult.isFailure) {
             return Result.fail(planResult.getError());
         }

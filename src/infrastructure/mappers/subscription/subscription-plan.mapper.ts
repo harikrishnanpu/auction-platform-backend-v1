@@ -1,40 +1,44 @@
-import {
-    SubscriptionFeatureKey,
-    SubscriptionFeatureValueType,
-} from '@domain/constants/subscriptionFeature.constants';
+import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscriptionPlanFetaure.entity';
 import { SubscriptionPlan } from '@domain/entities/subscription/subscription-plan.entity';
-import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscription-plan-feature.entity';
+import { Features } from '@domain/entities/subscription/features.entity';
 import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { Result } from '@domain/shared/result';
 import {
-    SubscriptionPlan as PrismaSubscriptionPlanRow,
-    SubscriptionPlanFeature as PrismaSubscriptionPlanFeatureRow,
     SubscriptionPlanFeatureEnum,
     SubscriptionPlanFeatureType,
+    SubscriptionPlan as PrismaSubscriptionPlan,
+    SubscriptionPlanFeature as PrismaSubscriptionPlanFeature,
 } from '@prisma/client';
-import { injectable } from 'inversify';
 
-export type SubscriptionPlanPersistenceRow = PrismaSubscriptionPlanRow & {
-    features: PrismaSubscriptionPlanFeatureRow[];
+export type PrismaSubscriptionPlanWithFeatures = PrismaSubscriptionPlan & {
+    features: PrismaSubscriptionPlanFeature[];
 };
 
-@injectable()
 export class SubscriptionPlanMapper implements IDbMapper<
     SubscriptionPlan,
-    SubscriptionPlanPersistenceRow
+    PrismaSubscriptionPlanWithFeatures
 > {
-    toDomain(raw: SubscriptionPlanPersistenceRow): Result<SubscriptionPlan> {
-        const features: SubscriptionPlanFeature[] = [];
+    toDomain(
+        raw: PrismaSubscriptionPlanWithFeatures,
+    ): Result<SubscriptionPlan> {
+        const features: Features[] = [];
+
         for (const rawFeature of raw.features) {
             const mapped = SubscriptionPlanFeature.create({
                 id: rawFeature.id,
-                featureKey: rawFeature.feature as SubscriptionFeatureKey,
-                description: rawFeature.description,
+                subscriptionPlanId: raw.id,
+                featureId: rawFeature.featureId,
                 value: rawFeature.value,
-                type: rawFeature.type as SubscriptionFeatureValueType,
-                createdAt: rawFeature.createdAt,
-                updatedAt: rawFeature.updatedAt,
+                feature: Features.create({
+                    id: rawFeature.featureId,
+                    featureKey: rawFeature.featureId,
+                    description: rawFeature.description,
+                    type: rawFeature.type as SubscriptionFeatureValueType,
+                    createdAt: rawFeature.createdAt,
+                    updatedAt: rawFeature.updatedAt,
+                }).getValue(),
             });
+
             if (mapped.isFailure) return Result.fail(mapped.getError());
             features.push(mapped.getValue());
         }
@@ -48,7 +52,7 @@ export class SubscriptionPlanMapper implements IDbMapper<
             isDefault: raw.isDefault,
             isActive: raw.isActive,
             razorpayPlanId: raw.razorpayPlanId ?? null,
-            features,
+            features: featuresEntities,
             createdAt: raw.createdAt,
             updatedAt: raw.updatedAt,
         });
@@ -73,8 +77,6 @@ export class SubscriptionPlanMapper implements IDbMapper<
                 description: feature.getDescription(),
                 value: feature.getValue(),
                 type: feature.getType() as SubscriptionPlanFeatureType,
-                createdAt: feature.getCreatedAt(),
-                updatedAt: feature.getUpdatedAt(),
             })),
         };
     }

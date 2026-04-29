@@ -1,10 +1,8 @@
-import {
-    SubscriptionFeatureKey,
-    SubscriptionFeatureValueType,
-} from '@domain/constants/subscriptionFeature.constants';
+import { SubscriptionFeatureKey } from '@domain/entities/subscription/features.entity';
+import { SubscriptionFeatureValueType } from '@domain/entities/subscription/features.entity';
 
 export interface ICreateSubscriptionPlanFeatureRequestDto {
-    featureKey: SubscriptionFeatureKey;
+    featureId: string;
     value: string;
 }
 
@@ -75,12 +73,12 @@ export interface IGetSubscribedUsersOutputDto {
     subscriptions: ISubscribedUserDto[];
 }
 
-export interface IAllowedSubscriptionFeatureMetadataDto {
+export interface IGetSubscriptionFeaturesDto {
     key: SubscriptionFeatureKey;
     valueType: SubscriptionFeatureValueType;
     description: string;
 }
 
-export interface IGetSubscriptionFeatureMetadataOutputDto {
-    features: IAllowedSubscriptionFeatureMetadataDto[];
+export interface IGetSubscriptionFeaturesOutputDto {
+    features: IGetSubscriptionFeaturesDto[];
 }
