@@ -1,3 +1,18 @@
+
+enum SubscriptionPlanFeatureType {
+  BOOLEAN
+  NUMBER
+  STRING
+}
+
+enum SubscriptionPlanFeatureEnum {
+  AUCTION_CREATION
+  AUCTION_BIDDING
+  AI_AGENT
+}
+
+
+
 model SubscriptionPlan {
   id String @id @default(uuid())
   name String
@@ -34,17 +49,5 @@ model Features {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   subscriptionPlanFeatures SubscriptionPlanFeature[]
-}
-
-
-enum SubscriptionPlanFeatureType {
-  BOOLEAN
-  NUMBER
-  STRING
-}
-
-enum SubscriptionPlanFeatureEnum {
-  AUCTION_CREATION
-  AUCTION_BIDDING
-  AI_AGENT
+  @@unique([feature])
 }

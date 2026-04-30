@@ -127,9 +127,6 @@ export const TYPES = {
     ),
     ISubscriptionPlanRepository: Symbol.for('ISubscriptionPlanRepository'),
     IUserSubscriptionRepository: Symbol.for('IUserSubscriptionRepository'),
-    IAssignDefaultSubscriptionToUserUsecase: Symbol.for(
-        'IAssignDefaultSubscriptionToUserUsecase',
-    ),
     IRazorpaySubscriptionGatewayService: Symbol.for(
         'IRazorpaySubscriptionGatewayService',
     ),
@@ -280,4 +277,8 @@ export const TYPES = {
         'ISubscriptionFeaturesRepository',
     ),
     SubscriptionFeaturesMapper: Symbol.for('SubscriptionFeaturesMapper'),
+    IUpdateSubscriptionPlanUsecase: Symbol.for(
+        'IUpdateSubscriptionPlanUsecase',
+    ),
+    ISubscriptionService: Symbol.for('ISubscriptionService'),
 };

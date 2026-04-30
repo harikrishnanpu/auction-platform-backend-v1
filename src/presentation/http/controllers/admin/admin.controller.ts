@@ -93,17 +93,7 @@ import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/
 import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
 import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
 import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
-import { IGetSystemConfigKeysUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigKeysUsecase';
-import { ICreateSystemConfigUsecase } from '@application/interfaces/usecases/admin/ICreateSystemConfigUsecase';
 import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
-import {
-    IGetSystemConfigKeysOutputDto,
-    IGetSystemConfigsOutputDto,
-} from '@application/dtos/admin/systemConfig.dto';
-import {
-    createSystemConfigSchema,
-    ZodCreateSystemConfigInputType,
-} from '@presentation/validators/schemas/admin/createSystemConfig.schema';
 import {
     editSystemConfigSchema,
     ZodEditSystemConfigInputType,
@@ -127,6 +117,12 @@ import {
     updateSubscriptionPlanStatusSchema,
     ZodUpdateSubscriptionPlanStatusInputType,
 } from '@presentation/validators/schemas/admin/updateSubscriptionPlanStatus.schema';
+import {
+    updateSubscriptionPlanSchema,
+    ZodUpdateSubscriptionPlanInputType,
+} from '@presentation/validators/schemas/admin/updateSubscriptionPlan.schema';
+import { IUpdateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+import { IGetSystemConfigsOutputDto } from '@application/dtos/admin/systemConfig.dto';
 
 @injectable()
 export class AdminController {
@@ -167,10 +163,6 @@ export class AdminController {
         private readonly _rejectAuctionCategoryUsecase: IRejectAuctionCategoryrequestUsecase,
         @inject(TYPES.IGetSystemConfigsUsecase)
         private readonly _getSystemConfigsUsecase: IGetSystemConfigsUsecase,
-        @inject(TYPES.IGetSystemConfigKeysUsecase)
-        private readonly _getSystemConfigKeysUsecase: IGetSystemConfigKeysUsecase,
-        @inject(TYPES.ICreateSystemConfigUsecase)
-        private readonly _createSystemConfigUsecase: ICreateSystemConfigUsecase,
         @inject(TYPES.IEditSystemConfigUsecase)
         private readonly _editSystemConfigUsecase: IEditSystemConfigUsecase,
         @inject(TYPES.ICreateSubscriptionPlanUsecase)
@@ -183,6 +175,8 @@ export class AdminController {
         private readonly _getSubscriptionFeaturesUsecase: IGetSubscriptionFeaturesUsecase,
         @inject(TYPES.IUpdateSubscriptionPlanStatusUsecase)
         private readonly _updateSubscriptionPlanStatusUsecase: IUpdateSubscriptionPlanStatusUsecase,
+        @inject(TYPES.IUpdateSubscriptionPlanUsecase)
+        private readonly _updateSubscriptionPlanUsecase: IUpdateSubscriptionPlanUsecase,
     ) {}
 
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -696,54 +690,7 @@ export class AdminController {
         },
     );
 
-    getSystemConfigKeys = expressAsyncHandler(
-        async (_req: Request, res: Response) => {
-            const result = await this._getSystemConfigKeysUsecase.execute();
-
-            if (result.isFailure) {
-                throw new AppError(
-                    result.getError(),
-                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
-                );
-            }
-
-            ResponseHelper.success<IGetSystemConfigKeysOutputDto>(
-                res,
-                result.getValue(),
-                ADMIN_CONSTANTS.MESSAGES.GET_SYSTEM_CONFIG_KEYS_SUCCESSFULLY,
-                ADMIN_CONSTANTS.CODES.OK,
-            );
-        },
-    );
-
-    createSystemConfig = expressAsyncHandler(
-        async (req: Request, res: Response) => {
-            const validationResult =
-                ValidationHelper.validate<ZodCreateSystemConfigInputType>(
-                    createSystemConfigSchema,
-                    req.body,
-                );
-
-            const result =
-                await this._createSystemConfigUsecase.execute(validationResult);
-
-            if (result.isFailure) {
-                throw new AppError(
-                    result.getError(),
-                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
-                );
-            }
-
-            ResponseHelper.success(
-                res,
-                result.getValue(),
-                ADMIN_CONSTANTS.MESSAGES.CREATE_SYSTEM_CONFIG_SUCCESSFULLY,
-                ADMIN_CONSTANTS.CODES.OK,
-            );
-        },
-    );
-
-    editSystemConfig = expressAsyncHandler(
+    updateSystemConfig = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
                 ValidationHelper.validate<ZodEditSystemConfigInputType>(
@@ -772,6 +719,8 @@ export class AdminController {
 
     createSubscriptionPlan = expressAsyncHandler(
         async (req: Request, res: Response) => {
+            console.log(req.body);
+
             const validationResult =
                 ValidationHelper.validate<ZodCreateSubscriptionPlanInputType>(
                     createSubscriptionPlanSchema,
@@ -888,6 +837,35 @@ export class AdminController {
                 res,
                 result.getValue(),
                 ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_FEATURES_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    updateSubscriptionPlan = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodUpdateSubscriptionPlanInputType>(
+                    updateSubscriptionPlanSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._updateSubscriptionPlanUsecase.execute(
+                    validationResult,
+                );
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISubscriptionPlanDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.UPDATE_SUBSCRIPTION_PLAN_SUCCESSFULLY,
                 ADMIN_CONSTANTS.CODES.OK,
             );
         },

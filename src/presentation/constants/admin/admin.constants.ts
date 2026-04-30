@@ -66,6 +66,9 @@ export const ADMIN_MESSAGES = {
         'Subscription plan status updated successfully',
     UPDATE_SUBSCRIPTION_PLAN_STATUS_FAILED:
         'Failed to update subscription plan status',
+    UPDATE_SUBSCRIPTION_PLAN_SUCCESSFULLY:
+        'Subscription plan updated successfully',
+    UPDATE_SUBSCRIPTION_PLAN_FAILED: 'Failed to update subscription plan',
 };
 
 export const ADMIN_CONSTANTS = {

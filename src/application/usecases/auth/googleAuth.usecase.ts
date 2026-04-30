@@ -4,7 +4,7 @@ import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { IGoogleAuthUsecase } from '@application/interfaces/usecases/auth/IGoogleAuthUsecase';
-import { IAssignDefaultSubscriptionToUserUsecase } from '@application/interfaces/usecases/subscription/IAssignDefaultSubscriptionToUserUsecase';
+import { ISubscriptionService } from '@application/interfaces/services/ISubscriptionService';
 import { TYPES } from '@di/types.di';
 import {
     AuthProviderType,
@@ -29,17 +29,15 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
         private readonly _tokenGenerator: ITokenGeneratorService,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
-        @inject(TYPES.IAssignDefaultSubscriptionToUserUsecase)
-        private readonly _assignDefaultSubscriptionToUserUsecase: IAssignDefaultSubscriptionToUserUsecase,
+        @inject(TYPES.ISubscriptionService)
+        private readonly _subscriptionService: ISubscriptionService,
         @inject(TYPES.IUserSubscriptionRepository)
         private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
         @inject(TYPES.ISubscriptionPlanRepository)
         private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
     ) {}
 
-    async execute(
-        data: GoogleUserDto,
-    ): Promise<
+    async execute(data: GoogleUserDto): Promise<
         Result<{
             user: userResponseDto;
             accessToken: string;
@@ -144,7 +142,9 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
         await this._userRepository.save(newUserEntity.getValue());
 
         const assignSub =
-            await this._assignDefaultSubscriptionToUserUsecase.execute(userId);
+            await this._subscriptionService.assignDefaultSubscriptionToUser(
+                userId,
+            );
         if (assignSub.isFailure) {
             console.error(
                 'Assign default subscription failed',

@@ -4,14 +4,14 @@ import { SubscriptionPlanFeature } from './subscriptionPlanFetaure.entity';
 export class SubscriptionPlan {
     private constructor(
         private readonly id: string,
-        private readonly name: string,
-        private readonly description: string,
-        private readonly price: number,
-        private readonly durationDays: number,
-        private readonly isDefault: boolean,
-        private readonly isActive: boolean,
-        private readonly razorpayPlanId: string | null,
-        private readonly features: SubscriptionPlanFeature[],
+        private name: string,
+        private description: string,
+        private price: number,
+        private durationDays: number,
+        private isDefault: boolean,
+        private isActive: boolean,
+        private razorpayPlanId: string | null,
+        private features: SubscriptionPlanFeature[],
         private readonly createdAt: Date,
         private readonly updatedAt: Date,
     ) {}
@@ -56,6 +56,38 @@ export class SubscriptionPlan {
                 updatedAt,
             ),
         );
+    }
+
+    public updateStatus(isDefault: boolean, isActive: boolean): Result<void> {
+        this.isDefault = isDefault;
+        this.isActive = isActive;
+        return Result.ok();
+    }
+
+    public update(
+        name: string,
+        description: string,
+        durationDays: number,
+    ): Result<void> {
+        this.name = name;
+        this.description = description;
+        this.durationDays = durationDays;
+        return Result.ok();
+    }
+
+    public updateFeatures(features: SubscriptionPlanFeature[]): Result<void> {
+        this.features = features;
+        return Result.ok();
+    }
+
+    public updatePrice(price: number): Result<void> {
+        this.price = price;
+        return Result.ok();
+    }
+
+    public updateRazorpayPlanId(razorpayPlanId: string): Result<void> {
+        this.razorpayPlanId = razorpayPlanId;
+        return Result.ok();
     }
 
     public getId(): string {

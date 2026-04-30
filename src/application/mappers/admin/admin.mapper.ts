@@ -7,6 +7,7 @@ import {
     ICreateSubscriptionPlanRequestDto,
     IGetSubscriptionFeaturesDto,
     ISubscriptionPlanDto,
+    IUpdateSubscriptionPlanInputDto,
 } from '@application/dtos/admin/subscription.dto';
 import {
     ISystemConfigDto,
@@ -45,6 +46,7 @@ import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/view
 import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { SystemConfig } from '@domain/entities/system-config/system-config.entity';
 import { Features } from '@domain/entities/subscription/features.entity';
+import { ZodUpdateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/updateSubscriptionPlan.schema';
 
 export class AdminMapperProfile {
     public static toGetAllUsersInputDto(
@@ -220,6 +222,24 @@ export class AdminMapperProfile {
         };
     }
 
+    public static toUpdateSubscriptionPlanDto(
+        data: ZodUpdateSubscriptionPlanInputType,
+    ): IUpdateSubscriptionPlanInputDto {
+        return {
+            planId: data.planId,
+            name: data.name,
+            description: data.description,
+            durationDays: data.durationDays,
+            price: data.price,
+            isDefault: data.isDefault,
+            isActive: data.isActive,
+            features: data.features.map((feature) => ({
+                featureId: feature.featureId,
+                value: feature.value,
+            })),
+        };
+    }
+
     public static toSubscriptionPlanDto(
         plan: SubscriptionPlan,
     ): ISubscriptionPlanDto {
@@ -248,9 +268,20 @@ export class AdminMapperProfile {
         features: Features[],
     ): IGetSubscriptionFeaturesDto[] {
         return features.map((feature) => ({
+            id: feature.getId(),
             key: feature.getFeatureKey(),
             valueType: feature.getType(),
             description: feature.getDescription(),
         }));
+    }
+
+    public static toEditSystemConfigInputDto(
+        data: ZodEditSystemConfigInputType,
+    ): ISystemConfigInputDto {
+        return {
+            key: data.key,
+            value: data.value,
+            description: data.description,
+        };
     }
 }

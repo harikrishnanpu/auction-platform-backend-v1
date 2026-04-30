@@ -17,18 +17,19 @@ export class UpdateSubscriptionPlanStatusUsecase implements IUpdateSubscriptionP
     async execute(
         input: ZodUpdateSubscriptionPlanStatusInputType,
     ): Promise<Result<ISubscriptionPlanDto>> {
-        const planResult = await this._subscriptionPlanRepository.findById(
-            input.planId,
-        );
-        if (planResult.isFailure) return Result.fail(planResult.getError());
-        if (!planResult.getValue())
+        const planEntityResult =
+            await this._subscriptionPlanRepository.findById(input.planId);
+
+        if (planEntityResult.isFailure)
+            return Result.fail(planEntityResult.getError());
+        const planEntity = planEntityResult.getValue();
+        if (!planEntity) {
             return Result.fail('Subscription plan not found');
+        }
 
         if (input.isDefault) {
             const defaultCheckResult =
-                await this._subscriptionPlanRepository.hasAnotherDefaultPlan(
-                    input.planId,
-                );
+                await this._subscriptionPlanRepository.findActiveDefault();
             if (defaultCheckResult.isFailure)
                 return Result.fail(defaultCheckResult.getError());
             if (defaultCheckResult.getValue()) {
@@ -36,13 +37,14 @@ export class UpdateSubscriptionPlanStatusUsecase implements IUpdateSubscriptionP
             }
         }
 
+        planEntity.updateStatus(input.isDefault, input.isActive);
+
         const updatedResult =
-            await this._subscriptionPlanRepository.updateStatus(input.planId, {
-                isDefault: input.isDefault,
-                isActive: input.isActive,
-            });
-        if (updatedResult.isFailure)
+            await this._subscriptionPlanRepository.save(planEntity);
+
+        if (updatedResult.isFailure) {
             return Result.fail(updatedResult.getError());
+        }
 
         return Result.ok(
             AdminMapperProfile.toSubscriptionPlanDto(updatedResult.getValue()),

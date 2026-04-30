@@ -48,9 +48,13 @@ export class PrismaUserSubscriptionRepository implements IUserSubscriptionReposi
 
     async save(subscription: UserSubscription): Promise<Result<void>> {
         const row = this._mapper.toPersistence(subscription);
-        await this._prisma.userSubscription.create({
-            data: row,
+
+        await this._prisma.userSubscription.upsert({
+            where: { id: row.id },
+            update: row,
+            create: row,
         });
+
         return Result.ok(undefined);
     }
 

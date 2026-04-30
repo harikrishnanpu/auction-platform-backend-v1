@@ -1,5 +1,9 @@
-import { IGetSystemConfigsOutputDto } from '@application/dtos/admin/systemConfig.dto';
+import {
+    IGetSystemConfigsOutputDto,
+    ISystemConfigDto,
+} from '@application/dtos/admin/systemConfig.dto';
 import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
+import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { Result } from '@domain/shared/result';
@@ -17,15 +21,14 @@ export class GetSystemConfigsUsecase implements IGetSystemConfigsUsecase {
         if (configsResult.isFailure)
             return Result.fail(configsResult.getError());
 
+        const configs: ISystemConfigDto[] = [];
+
+        for (const config of configsResult.getValue()) {
+            configs.push(AdminMapperProfile.toSystemConfigDto(config));
+        }
+
         return Result.ok({
-            configs: configsResult.getValue().map((config) => ({
-                id: config.getId(),
-                key: config.getKey(),
-                value: config.getValue(),
-                description: config.getDescription(),
-                createdAt: config.getCreatedAt(),
-                updatedAt: config.getUpdatedAt(),
-            })),
+            configs,
         });
     }
 }

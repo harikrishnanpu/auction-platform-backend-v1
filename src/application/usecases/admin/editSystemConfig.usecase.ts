@@ -2,7 +2,10 @@ import { ISystemConfigDto } from '@application/dtos/admin/systemConfig.dto';
 import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
-import { SystemConfig } from '@domain/entities/system-config/system-config.entity';
+import {
+    SystemConfig,
+    SystemConfigValueType,
+} from '@domain/entities/system-config/system-config.entity';
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { Result } from '@domain/shared/result';
 import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
@@ -31,11 +34,29 @@ export class EditSystemConfigUsecase implements IEditSystemConfigUsecase {
             return Result.fail('System config not found');
         }
 
+        switch (existingConfig.getValueType()) {
+            case SystemConfigValueType.NUMBER:
+                if (isNaN(Number(dto.value))) {
+                    return Result.fail('Invalid value: neeed number');
+                }
+                break;
+            case SystemConfigValueType.BOOLEAN:
+                if (!['true', 'false'].includes(dto.value.toLowerCase())) {
+                    return Result.fail('Invalid value: need boolean');
+                }
+                break;
+            case SystemConfigValueType.STRING:
+                break;
+            default:
+                return Result.fail('Invalid value type');
+        }
+
         const config = SystemConfig.create({
             id: existingConfig.getId(),
             key: dto.key,
             value: dto.value,
-            description: dto.description ?? null,
+            valueType: existingConfig.getValueType(),
+            description: dto.description,
             createdAt: existingConfig.getCreatedAt(),
         });
 
@@ -46,14 +67,10 @@ export class EditSystemConfigUsecase implements IEditSystemConfigUsecase {
         );
         if (result.isFailure) return Result.fail(result.getError());
 
-        const configResult = result.getValue();
-        return Result.ok({
-            id: configResult.getId(),
-            key: configResult.getKey(),
-            value: configResult.getValue(),
-            description: configResult.getDescription(),
-            createdAt: configResult.getCreatedAt(),
-            updatedAt: configResult.getUpdatedAt(),
-        });
+        const outputDto = AdminMapperProfile.toSystemConfigDto(
+            result.getValue(),
+        );
+
+        return Result.ok(outputDto);
     }
 }

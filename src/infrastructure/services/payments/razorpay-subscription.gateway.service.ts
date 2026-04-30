@@ -6,10 +6,8 @@ import {
     IRazorpaySubscriptionGatewayService,
 } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
 import { Result } from '@domain/shared/result';
-import { injectable } from 'inversify';
 import Razorpay from 'razorpay';
 
-@injectable()
 export class RazorpaySubscriptionGatewayService implements IRazorpaySubscriptionGatewayService {
     private readonly _razorpay: Razorpay;
 

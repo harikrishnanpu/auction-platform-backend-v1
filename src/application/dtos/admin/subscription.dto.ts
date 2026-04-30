@@ -82,3 +82,14 @@ export interface IGetSubscriptionFeaturesDto {
 export interface IGetSubscriptionFeaturesOutputDto {
     features: IGetSubscriptionFeaturesDto[];
 }
+
+export interface IUpdateSubscriptionPlanInputDto {
+    planId: string;
+    name: string;
+    description: string;
+    durationDays: number;
+    price: number;
+    isDefault: boolean;
+    isActive: boolean;
+    features: ICreateSubscriptionPlanFeatureRequestDto[];
+}

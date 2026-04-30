@@ -36,10 +36,6 @@ import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/
 import { CreateAuctionCategoryUsecase } from '@application/usecases/admin/createAuctionCategory.usecase';
 import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
 import { GetSystemConfigsUsecase } from '@application/usecases/admin/getSystemConfigs.usecase';
-import { IGetSystemConfigKeysUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigKeysUsecase';
-import { GetSystemConfigKeysUsecase } from '@application/usecases/admin/getSystemConfigKeys.usecase';
-import { ICreateSystemConfigUsecase } from '@application/interfaces/usecases/admin/ICreateSystemConfigUsecase';
-import { CreateSystemConfigUsecase } from '@application/usecases/admin/createSystemConfig.usecase';
 import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
 import { EditSystemConfigUsecase } from '@application/usecases/admin/editSystemConfig.usecase';
 import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
@@ -60,10 +56,12 @@ import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionP
 import { PrismaSubscriptionPlanRepository } from '@infrastructure/repositories/subscription/subscription-plan.repo';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { PrismaUserSubscriptionRepository } from '@infrastructure/repositories/subscription/user-subscription.repo';
-import { IAssignDefaultSubscriptionToUserUsecase } from '@application/interfaces/usecases/subscription/IAssignDefaultSubscriptionToUserUsecase';
-import { AssignDefaultSubscriptionToUserUsecase } from '@application/usecases/subscription/assignDefaultSubscriptionToUser.usecase';
 import { ISubscriptionFeaturesRepository } from '@domain/repositories/ISubscriptionFetauresRepository';
 import { PrismaSubscriptionFeaturesRepository } from '@infrastructure/repositories/subscription/subscription-features.repo';
+import { IUpdateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+import { UpdateSubscriptionPlanUsecase } from '@application/usecases/admin/updateSubscriptionPlan.usecase';
+import { SubscriptionService } from '@infrastructure/services/subscription/subscription.service';
+import { ISubscriptionService } from '@application/interfaces/services/ISubscriptionService';
 
 export const adminContainer = new ContainerModule(({ bind }) => {
     console.log('Admin container loaded');
@@ -119,12 +117,6 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IGetSystemConfigsUsecase>(TYPES.IGetSystemConfigsUsecase).to(
         GetSystemConfigsUsecase,
     );
-    bind<IGetSystemConfigKeysUsecase>(TYPES.IGetSystemConfigKeysUsecase).to(
-        GetSystemConfigKeysUsecase,
-    );
-    bind<ICreateSystemConfigUsecase>(TYPES.ICreateSystemConfigUsecase).to(
-        CreateSystemConfigUsecase,
-    );
     bind<IEditSystemConfigUsecase>(TYPES.IEditSystemConfigUsecase).to(
         EditSystemConfigUsecase,
     );
@@ -155,11 +147,13 @@ export const adminContainer = new ContainerModule(({ bind }) => {
     bind<IUserSubscriptionRepository>(TYPES.IUserSubscriptionRepository).to(
         PrismaUserSubscriptionRepository,
     );
-    bind<IAssignDefaultSubscriptionToUserUsecase>(
-        TYPES.IAssignDefaultSubscriptionToUserUsecase,
-    ).to(AssignDefaultSubscriptionToUserUsecase);
-
     bind<ISubscriptionFeaturesRepository>(
         TYPES.ISubscriptionFeaturesRepository,
     ).to(PrismaSubscriptionFeaturesRepository);
+    bind<IUpdateSubscriptionPlanUsecase>(
+        TYPES.IUpdateSubscriptionPlanUsecase,
+    ).to(UpdateSubscriptionPlanUsecase);
+    bind<ISubscriptionService>(TYPES.ISubscriptionService).to(
+        SubscriptionService,
+    );
 });

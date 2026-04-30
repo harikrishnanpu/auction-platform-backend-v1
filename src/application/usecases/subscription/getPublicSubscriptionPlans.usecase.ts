@@ -13,27 +13,18 @@ export class GetPublicSubscriptionPlansUsecase implements IGetPublicSubscription
     ) {}
 
     async execute(): Promise<Result<PublicSubscriptionPlanDto[]>> {
-        const allRes = await this._subscriptionPlanRepository.findAll();
+        const allRes = await this._subscriptionPlanRepository.findAll({});
         if (allRes.isFailure) {
             return Result.fail(allRes.getError());
         }
 
-        const plans = allRes
-            .getValue()
-            .filter(
-                (p) =>
-                    p.getIsActive() &&
-                    !p.getIsDefault() &&
-                    p.getPrice() > 0 &&
-                    !!p.getRazorpayPlanId()?.trim(),
-            )
-            .map((p) => ({
-                id: p.getId(),
-                name: p.getName(),
-                description: p.getDescription(),
-                price: p.getPrice(),
-                durationDays: p.getDurationDays(),
-            }));
+        const plans = allRes.getValue().map((p) => ({
+            id: p.getId(),
+            name: p.getName(),
+            description: p.getDescription(),
+            price: p.getPrice(),
+            durationDays: p.getDurationDays(),
+        }));
 
         return Result.ok(plans);
     }
