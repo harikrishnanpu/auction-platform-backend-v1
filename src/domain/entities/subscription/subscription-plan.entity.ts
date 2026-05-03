@@ -64,14 +64,9 @@ export class SubscriptionPlan {
         return Result.ok();
     }
 
-    public update(
-        name: string,
-        description: string,
-        durationDays: number,
-    ): Result<void> {
+    public update(name: string, description: string): Result<void> {
         this.name = name;
         this.description = description;
-        this.durationDays = durationDays;
         return Result.ok();
     }
 
@@ -87,6 +82,11 @@ export class SubscriptionPlan {
 
     public updateRazorpayPlanId(razorpayPlanId: string): Result<void> {
         this.razorpayPlanId = razorpayPlanId;
+        return Result.ok();
+    }
+
+    public updateDurationDays(days: number): Result<void> {
+        this.durationDays = days;
         return Result.ok();
     }
 

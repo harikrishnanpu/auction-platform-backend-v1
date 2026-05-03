@@ -40,7 +40,13 @@ export class PrismaUserSubscriptionRepository
                 user: true,
                 subscriptionPlan: true,
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [
+                {
+                    subscriptionPlan: {
+                        price: 'asc',
+                    },
+                },
+            ],
         });
 
         const items: ISubscribedUserDto[] = [];
@@ -108,5 +114,33 @@ export class PrismaUserSubscriptionRepository
             },
         });
         return Result.ok(undefined);
+    }
+
+    async findAllPlansByUserId(
+        userId: string,
+    ): Promise<Result<UserSubscription[]>> {
+        const rows = await this._prisma.userSubscription.findMany({
+            where: { userId },
+            include: {
+                subscriptionPlan: true,
+            },
+            orderBy: [
+                {
+                    subscriptionPlan: {
+                        price: 'asc',
+                    },
+                },
+            ],
+        });
+
+        const items: UserSubscription[] = [];
+
+        for (const row of rows) {
+            const mapped = this._mapper.toDomain(row);
+            if (mapped.isFailure) return Result.fail(mapped.getError());
+            items.push(mapped.getValue());
+        }
+
+        return Result.ok(items);
     }
 }

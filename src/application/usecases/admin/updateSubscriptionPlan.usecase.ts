@@ -32,13 +32,19 @@ export class UpdateSubscriptionPlanUsecase implements IUpdateSubscriptionPlanUse
 
         const planEntityResult =
             await this._subscriptionPlanRepository.findById(dto.planId);
-        if (planEntityResult.isFailure)
+
+        if (planEntityResult.isFailure) {
             return Result.fail(planEntityResult.getError());
+        }
+
         const planEntity = planEntityResult.getValue();
-        if (!planEntity) return Result.fail('Plan not found');
+
+        if (!planEntity) {
+            return Result.fail('Plan not found');
+        }
 
         planEntity.updateStatus(dto.isDefault, dto.isActive);
-        planEntity.update(dto.name, dto.description, dto.durationDays);
+        planEntity.update(dto.name, dto.description);
 
         const isPriceChanged = planEntity.getPrice() !== dto.price;
         const isFeaturesChanged =
@@ -53,31 +59,33 @@ export class UpdateSubscriptionPlanUsecase implements IUpdateSubscriptionPlanUse
                 return existing.getValue() !== incoming.value;
             });
 
+        const isDurationDaysChanged =
+            dto.durationDays !== planEntity.getDurationDays();
+
         const isSubscribedUsersExist =
             await this._subscriptionPlanRepository.isSubscribedUsersExist(
                 dto.planId,
             );
-        if (isSubscribedUsersExist.isFailure)
+
+        if (isSubscribedUsersExist.isFailure) {
             return Result.fail(isSubscribedUsersExist.getError());
+        }
 
-        const isCreateNewRazorpayPlan = isPriceChanged || isFeaturesChanged;
+        const isCreateNewRazorpayPlan =
+            isPriceChanged || isFeaturesChanged || isDurationDaysChanged;
 
-        if (isCreateNewRazorpayPlan) {
-            const rzPlan = await this._razorpaySubscriptionGateway.createPlan({
-                name: dto.name,
-                description: dto.description,
-                amountRupees: dto.price,
-                durationDays: dto.durationDays,
-                appPlanId: dto.planId,
-            });
+        console.log(isCreateNewRazorpayPlan);
 
-            if (rzPlan.isFailure) return Result.fail(rzPlan.getError());
-            console.log('new razorpay plan created and lnkd');
-            planEntity.updateRazorpayPlanId(rzPlan.getValue().razorpayPlanId);
+        if (isCreateNewRazorpayPlan && isSubscribedUsersExist.getValue()) {
+            return Result.fail('Plan already in use. Create a new version.');
         }
 
         if (isPriceChanged) {
             planEntity.updatePrice(dto.price);
+        }
+
+        if (isDurationDaysChanged) {
+            planEntity.updateDurationDays(dto.durationDays);
         }
 
         if (isFeaturesChanged) {

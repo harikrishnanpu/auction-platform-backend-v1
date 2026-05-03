@@ -5,6 +5,7 @@ export class PublicUsersubcriptionPlanMapper {
     public static toPublicSubscriptionPlanDto(
         plan: SubscriptionPlan,
         isCurrentPlan: boolean,
+        rank: number,
     ): IPublicSubscriptionPlaDto {
         return {
             id: plan.getId(),
@@ -13,6 +14,7 @@ export class PublicUsersubcriptionPlanMapper {
             price: plan.getPrice(),
             durationDays: plan.getDurationDays(),
             isDefault: plan.getIsDefault(),
+            rank,
             features: plan.getFeatures().map((f) => ({
                 id: f.getId(),
                 featureKey: f.getFeature().getFeatureKey(),

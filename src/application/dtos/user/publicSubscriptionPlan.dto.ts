@@ -15,6 +15,7 @@ export interface IPublicSubscriptionPlaDto {
     price: number;
     durationDays: number;
     isDefault: boolean;
+    rank: number;
     features: ISubscriptionPlanFeature[];
     isCurrentPlan: boolean;
 }

@@ -34,29 +34,47 @@ export class checkoutUserSubscriptionUsecase implements ICheckoutUserSubscriptio
         userId: string;
         subscriptionPlanId: string;
     }): Promise<Result<StartSubscriptionCheckoutOutputDto>> {
-        const currentUserSubscriptionRes =
-            await this._userSubscriptionRepository.getByUserId(userId);
+        const currentAllUserSubscriptionsRes =
+            await this._userSubscriptionRepository.findAllPlansByUserId(userId);
 
-        if (currentUserSubscriptionRes.isFailure) {
-            return Result.fail(currentUserSubscriptionRes.getError());
+        if (currentAllUserSubscriptionsRes.isFailure) {
+            return Result.fail(currentAllUserSubscriptionsRes.getError());
         }
 
-        const currentUserSubscription = currentUserSubscriptionRes.getValue();
+        const currentAllUserSubscriptions =
+            currentAllUserSubscriptionsRes.getValue();
 
-        if (!currentUserSubscription) {
-            return Result.fail(
-                'something went wrong =-- default plan is not asnged',
-            );
+        const razorpayKeyId = process.env.RAZORPAY_KEY_ID ?? '';
+
+        if (!razorpayKeyId) {
+            return Result.fail('Razorpay key id is not configured');
         }
 
-        if (
-            currentUserSubscription.getSubscriptionPlanId() ===
-                subscriptionPlanId &&
-            currentUserSubscription.getStatus() ===
-                UserSubscriptionStatus.ACTIVE &&
-            currentUserSubscription.getEndDate() > new Date()
-        ) {
-            return Result.fail('User is already subscribed to this plan');
+        for (const currentUserSubscription of currentAllUserSubscriptions) {
+            if (
+                currentUserSubscription.getSubscriptionPlanId() ===
+                    subscriptionPlanId &&
+                currentUserSubscription.getStatus() ===
+                    UserSubscriptionStatus.ACTIVE &&
+                currentUserSubscription.getEndDate() > new Date()
+            ) {
+                return Result.fail('User is already subscribed to this plan');
+            }
+
+            if (
+                currentUserSubscription.getSubscriptionPlanId() ===
+                    subscriptionPlanId &&
+                currentUserSubscription.getStatus() ===
+                    UserSubscriptionStatus.PENDING
+            ) {
+                return Result.ok({
+                    userSubscriptionId: currentUserSubscription.getId(),
+                    razorpaySubscriptionId:
+                        currentUserSubscription.getRazorpaySubscriptionId() ??
+                        '',
+                    razorpayKeyId: razorpayKeyId,
+                });
+            }
         }
 
         const subscriptionPlanRes =
@@ -159,18 +177,11 @@ export class checkoutUserSubscriptionUsecase implements ICheckoutUserSubscriptio
             return Result.fail(updateRes.getError());
         }
 
-        const keyId = process.env.RAZORPAY_KEY_ID ?? '';
-
-        if (!keyId) {
-            return Result.fail('Razorpay key id is not configured');
-        }
-
         return Result.ok({
             userSubscriptionId: newUserSubscriptionEntity.getValue().getId(),
             razorpaySubscriptionId:
                 currRazorpaySubscription.razorpaySubscriptionId,
-            shortUrl: currRazorpaySubscription.shortUrl,
-            razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? '',
+            razorpayKeyId: razorpayKeyId,
         });
     }
 }

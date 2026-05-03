@@ -109,8 +109,12 @@ export class PrismaSubscriptionPlanRepository
                     },
                 },
             },
-            orderBy: { createdAt: 'desc' },
+            orderBy: {
+                price: 'asc',
+            },
         });
+
+        // console.log(rows)
 
         const plans: SubscriptionPlan[] = [];
 

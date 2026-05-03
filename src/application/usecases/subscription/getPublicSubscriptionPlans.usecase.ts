@@ -27,21 +27,27 @@ export class GetPublicSubscriptionPlansUsecase implements IGetPublicSubscription
 
         const userSubscription = userSubscriptionRes.getValue();
 
-        const allRes = await this._subscriptionPlanRepository.findAll({});
+        const allRes = await this._subscriptionPlanRepository.findAll({
+            isActive: true,
+        });
         if (allRes.isFailure) {
             return Result.fail(allRes.getError());
         }
 
         const output: IPublicSubscriptionPlaDto[] = [];
 
+        let rank = 0;
         for (const plan of allRes.getValue()) {
             output.push(
                 PublicUsersubcriptionPlanMapper.toPublicSubscriptionPlanDto(
                     plan,
                     userSubscription?.getSubscriptionPlanId() === plan.getId(),
+                    rank++,
                 ),
             );
         }
+
+        console.log(output);
 
         return Result.ok(output);
     }
