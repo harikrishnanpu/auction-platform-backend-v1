@@ -4,8 +4,7 @@ import { Result } from '@domain/shared/result';
 
 export interface IUserSubscriptionRepository {
     findAllWithUserAndPlan(): Promise<Result<ISubscribedUserDto[]>>;
-    save(subscription: UserSubscription): Promise<Result<void>>;
-    update(subscription: UserSubscription): Promise<Result<void>>;
+    save(subscription: UserSubscription): Promise<Result<UserSubscription>>;
     getByUserId(userId: string): Promise<Result<UserSubscription | null>>;
     findByRazorpaySubscriptionId(
         razorpaySubscriptionId: string,

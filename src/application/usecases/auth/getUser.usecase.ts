@@ -1,5 +1,4 @@
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
-import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { IGetUserUsecase } from '@application/interfaces/usecases/auth/IGetUserUsecase';
 import { TYPES } from '@di/types.di';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
@@ -7,6 +6,7 @@ import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
 export class GetUserUseCase implements IGetUserUsecase {
@@ -28,43 +28,37 @@ export class GetUserUseCase implements IGetUserUsecase {
 
         const user = userResult.getValue();
 
-        const subRes = await this._userSubscriptionRepository.getByUserId(
-            user.getId(),
-        );
-        if (subRes.isFailure) return Result.fail(subRes.getError());
-        const subscription = subRes.getValue();
-        let planName: string | null = null;
-        if (subscription) {
-            const planRes = await this._subscriptionPlanRepository.findById(
-                subscription.getSubscriptionPlanId(),
-            );
-            if (planRes.isFailure) return Result.fail(planRes.getError());
-            planName = planRes.getValue()?.getName() ?? null;
+        const currentUserSubscriptionEntity =
+            await this._userSubscriptionRepository.getByUserId(user.getId());
+        if (currentUserSubscriptionEntity.isFailure) {
+            return Result.fail(currentUserSubscriptionEntity.getError());
         }
 
-        return Result.ok({
-            id: user.getId(),
-            name: user.getName(),
-            email: user.getEmail().getValue(),
-            phone: user.getPhone()?.getValue() ?? '',
-            address: user.getAddress() ?? '',
-            avatar_url: user.getAvatarUrl() ?? '',
-            isProfileCompleted: user.isProfileCompleted(),
-            isVerified: user.getIsVerified(),
-            status: user.getStatus(),
-            authProvider: user.getAuthProvider().getType(),
-            roles: user
-                .getRoles()
-                .map((role) => role.getValue() as UserRoleType),
-            subscription:
-                subscription && planName
-                    ? {
-                          planId: subscription.getSubscriptionPlanId(),
-                          planName,
-                          status: subscription.getStatus(),
-                          endDate: subscription.getEndDate().toISOString(),
-                      }
-                    : null,
-        });
+        const currUserSubcptionEntity =
+            currentUserSubscriptionEntity.getValue();
+        if (!currUserSubcptionEntity) {
+            const result = UserMapperProfile.toUserResponseDto(
+                user,
+                null,
+                null,
+            );
+            return Result.ok(result);
+        }
+
+        const subscription = await this._subscriptionPlanRepository.findById(
+            currUserSubcptionEntity.getSubscriptionPlanId(),
+        );
+        if (subscription.isFailure) {
+            return Result.fail(subscription.getError());
+        }
+        const subscriptionEntity = subscription.getValue();
+
+        const result = UserMapperProfile.toUserResponseDto(
+            user,
+            currUserSubcptionEntity,
+            subscriptionEntity,
+        );
+
+        return Result.ok(result);
     }
 }

@@ -3,21 +3,36 @@ import { TYPES } from '@di/types.di';
 import { UserSubscription } from '@domain/entities/subscription/user-subscription.entity';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
-import { UserSubscriptionMapper } from '@infrastructure/mappers/subscription/user-subscription.mapper';
 import {
     PrismaClient,
     UserSubscriptionStatus as PrismaUserSubscriptionStatus,
+    UserSubscription as PrismaUserSubscription,
 } from '@prisma/client';
 import { inject, injectable } from 'inversify';
+import { BaseRepository } from '../base/base.Repo';
+import { IDbMapper } from '@domain/mappers/IDbMapper';
 
 @injectable()
-export class PrismaUserSubscriptionRepository implements IUserSubscriptionRepository {
+export class PrismaUserSubscriptionRepository
+    extends BaseRepository<
+        UserSubscription,
+        PrismaUserSubscription,
+        { updatedAt?: Date },
+        IDbMapper<UserSubscription, PrismaUserSubscription>
+    >
+    implements IUserSubscriptionRepository
+{
     constructor(
         @inject(TYPES.PrismaClient)
         private readonly _prisma: PrismaClient,
         @inject(TYPES.UserSubscriptionMapper)
-        private readonly _mapper: UserSubscriptionMapper,
-    ) {}
+        private readonly _mapper: IDbMapper<
+            UserSubscription,
+            PrismaUserSubscription
+        >,
+    ) {
+        super(_prisma.userSubscription, _mapper);
+    }
 
     async findAllWithUserAndPlan(): Promise<Result<ISubscribedUserDto[]>> {
         const rows = await this._prisma.userSubscription.findMany({
@@ -46,58 +61,25 @@ export class PrismaUserSubscriptionRepository implements IUserSubscriptionReposi
         return Result.ok(items);
     }
 
-    async save(subscription: UserSubscription): Promise<Result<void>> {
-        const row = this._mapper.toPersistence(subscription);
-
-        await this._prisma.userSubscription.upsert({
-            where: { id: row.id },
-            update: row,
-            create: row,
-        });
-
-        return Result.ok(undefined);
-    }
-
-    async update(subscription: UserSubscription): Promise<Result<void>> {
-        const row = this._mapper.toPersistence(subscription);
-        await this._prisma.userSubscription.update({
-            where: { id: subscription.getId() },
-            data: {
-                subscriptionPlanId: row.subscriptionPlanId,
-                razorpaySubscriptionId: row.razorpaySubscriptionId,
-                status: row.status,
-                startDate: row.startDate,
-                endDate: row.endDate,
-                updatedAt: row.updatedAt,
-            },
-        });
-        return Result.ok(undefined);
-    }
-
     async getByUserId(
         userId: string,
     ): Promise<Result<UserSubscription | null>> {
-        const row = await this._prisma.userSubscription.findFirst({
+        const raw = await this._prisma.userSubscription.findFirst({
             where: {
                 userId,
                 status: PrismaUserSubscriptionStatus.ACTIVE,
                 endDate: {
                     gt: new Date(),
                 },
-                subscriptionPlan: {
-                    is: {
-                        isActive: true,
-                    },
-                },
             },
             orderBy: { endDate: 'desc' },
         });
 
-        if (!row) {
+        if (!raw) {
             return Result.ok(null);
         }
 
-        const mapped = this._mapper.toDomain(row);
+        const mapped = this._mapper.toDomain(raw);
         if (mapped.isFailure) return Result.fail(mapped.getError());
         return Result.ok(mapped.getValue());
     }
@@ -108,6 +90,7 @@ export class PrismaUserSubscriptionRepository implements IUserSubscriptionReposi
         const row = await this._prisma.userSubscription.findFirst({
             where: { razorpaySubscriptionId },
         });
+
         if (!row) return Result.ok(null);
         const mapped = this._mapper.toDomain(row);
         if (mapped.isFailure) return Result.fail(mapped.getError());
@@ -120,7 +103,9 @@ export class PrismaUserSubscriptionRepository implements IUserSubscriptionReposi
                 userId,
                 status: PrismaUserSubscriptionStatus.ACTIVE,
             },
-            data: { status: PrismaUserSubscriptionStatus.EXPIRED },
+            data: {
+                status: PrismaUserSubscriptionStatus.EXPIRED,
+            },
         });
         return Result.ok(undefined);
     }

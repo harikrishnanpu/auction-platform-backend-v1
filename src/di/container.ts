@@ -32,6 +32,8 @@ import { dbMappersContainer } from './modules/mappers.container';
 import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 import { fraudContainer } from './modules/fraud.container';
 import { FraudController } from '@presentation/http/controllers/fraud/fraud.controller';
+import { webhookContainer } from './modules/webhook.container';
+import { WebhookController } from '@presentation/http/controllers/webhook/webhook.controller';
 
 const container = new Container();
 
@@ -47,6 +49,7 @@ container.load(walletContainer);
 container.load(paymentsContainer);
 container.load(dbMappersContainer);
 container.load(fraudContainer);
+container.load(webhookContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
@@ -57,6 +60,9 @@ container
     .bind<PaymentsController>(TYPES.PaymentsController)
     .to(PaymentsController);
 container.bind<FraudController>(TYPES.FraudController).to(FraudController);
+container
+    .bind<WebhookController>(TYPES.WebhookController)
+    .to(WebhookController);
 
 // --move for test only
 

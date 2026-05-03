@@ -174,6 +174,7 @@ export const TYPES = {
     ),
     IConfirmWalletTopupUsecase: Symbol.for('IConfirmWalletTopupUsecase'),
     WalletController: Symbol.for('WalletController'),
+    WebhookController: Symbol.for('WebhookController'),
     IPaymentRepository: Symbol.for('IPaymentRepository'),
     IAuctionPaymentAmountSplitStrategy: Symbol.for(
         'IAuctionPaymentAmountSplitStrategy',
@@ -281,4 +282,7 @@ export const TYPES = {
         'IUpdateSubscriptionPlanUsecase',
     ),
     ISubscriptionService: Symbol.for('ISubscriptionService'),
+    IRazorpaySubscriptionWebhookHandlerUsecase: Symbol.for(
+        'IRazorpayWebhookhandlerUsecase',
+    ),
 };

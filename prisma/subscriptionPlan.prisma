@@ -49,5 +49,4 @@ model Features {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   subscriptionPlanFeatures SubscriptionPlanFeature[]
-  @@unique([feature])
 }

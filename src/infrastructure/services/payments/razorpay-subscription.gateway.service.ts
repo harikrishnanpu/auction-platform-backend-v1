@@ -7,15 +7,19 @@ import {
 } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
 import { Result } from '@domain/shared/result';
 import Razorpay from 'razorpay';
+import crypto, { BinaryLike } from 'crypto';
+import { IsubcriptionWebhookEventHandleInputDto } from '@application/interfaces/usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
 
 export class RazorpaySubscriptionGatewayService implements IRazorpaySubscriptionGatewayService {
     private readonly _razorpay: Razorpay;
+    private readonly _webhookSecret: string;
 
     constructor() {
         const keyId = process.env.RAZORPAY_KEY_ID ?? '';
         const keySecret = process.env.RAZORPAY_KEY_SECRET ?? '';
+        this._webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? '';
 
-        if (!keyId || !keySecret) {
+        if (!keyId || !keySecret || !this._webhookSecret) {
             throw new Error('Razorpay keys are not configured');
         }
 
@@ -25,10 +29,19 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
         });
     }
 
-    async ensureCustomer(
+    async getRazorpayCustomer(
         input: EnsureRazorpayCustomerInput,
     ): Promise<Result<{ customerId: string }>> {
         try {
+            if (input.razorpayCustomerId) {
+                const customer = await this._razorpay.customers.fetch(
+                    input.razorpayCustomerId,
+                );
+                if (customer) {
+                    return Result.ok({ customerId: customer.id });
+                }
+            }
+
             const customer = await this._razorpay.customers.create({
                 name: input.name,
                 email: input.email,
@@ -36,10 +49,11 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
                 fail_existing: 0,
                 notes: { userId: input.userId },
             });
+
             return Result.ok({ customerId: customer.id });
         } catch (err) {
             console.log(err);
-            return Result.fail('Razorpay customer error');
+            return Result.fail('razpya customer error');
         }
     }
 
@@ -99,6 +113,64 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
         } catch (err) {
             console.log(err);
             return Result.fail('Razorpay subscription create error');
+        }
+    }
+
+    async verifySubscriptionWebhookEvent(
+        input: BinaryLike,
+        signature: string,
+        eventId: string,
+    ): Promise<Result<IsubcriptionWebhookEventHandleInputDto>> {
+        try {
+            if (!eventId || !signature) {
+                return Result.fail('Event id or signature is missing');
+            }
+
+            const rawBody = input; // Buffer
+
+            const expectedSignature = crypto
+                .createHmac('sha256', this._webhookSecret)
+                .update(rawBody)
+                .digest('hex');
+
+            if (expectedSignature !== signature) {
+                console.log('EXPECTED:', expectedSignature);
+                console.log('RECEIVED:', signature);
+                return Result.fail('Invalid signature');
+            }
+
+            const event = JSON.parse(rawBody.toString());
+
+            console.log('what is this: ', event);
+
+            const { validateWebhookSignature } =
+                await import('razorpay/dist/utils/razorpay-utils');
+
+            const isValid = validateWebhookSignature(
+                rawBody as unknown as string,
+                signature,
+                this._webhookSecret,
+            );
+
+            if (!isValid) {
+                return Result.fail(
+                    'Invalid subscription webhook event signature',
+                );
+            }
+
+            return Result.ok({
+                event: event.event,
+                subscriptionId: event.payload.subscription.entity.id,
+                headers: {
+                    'x-razorpay-event-id': eventId,
+                    'x-razorpay-signature': signature,
+                },
+            });
+        } catch (err) {
+            console.log(err);
+            return Result.fail(
+                'Razorpay subscription webhook event verify error',
+            );
         }
     }
 

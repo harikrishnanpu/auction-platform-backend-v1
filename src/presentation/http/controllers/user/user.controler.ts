@@ -36,8 +36,7 @@ import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/use
 import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
 import { IGetUserHomeStatsUsecase } from '@application/interfaces/usecases/user/IGetUserHomeStatsUsecase';
 import { IGetPublicSubscriptionPlansUsecase } from '@application/interfaces/usecases/subscription/IGetPublicSubscriptionPlansUsecase';
-import { IStartUserSubscriptionCheckoutUsecase } from '@application/interfaces/usecases/subscription/IStartUserSubscriptionCheckoutUsecase';
-import { PublicSubscriptionPlanDto } from '@application/dtos/user/publicSubscriptionPlan.dto';
+import { ICheckoutUserSubscriptionUsecase } from '@application/interfaces/usecases/subscription/ICheckoutUserSubscription';
 import { StartSubscriptionCheckoutOutputDto } from '@application/dtos/user/startSubscriptionCheckout.dto';
 import { IGetUserHomeStatsOutputDto } from '@application/dtos/user/getUserHomeStats.dto';
 import {
@@ -48,6 +47,7 @@ import {
     startSubscriptionCheckoutSchema,
     ZodStartSubscriptionCheckoutInputType,
 } from '@presentation/validators/schemas/user/startSubscriptionCheckout.schema';
+import { IPublicSubscriptionPlaDto } from '@application/dtos/user/publicSubscriptionPlan.dto';
 
 @injectable()
 export class UserController {
@@ -73,7 +73,7 @@ export class UserController {
         @inject(TYPES.IGetPublicSubscriptionPlansUsecase)
         private readonly _getPublicSubscriptionPlansUsecase: IGetPublicSubscriptionPlansUsecase,
         @inject(TYPES.IStartUserSubscriptionCheckoutUsecase)
-        private readonly _startUserSubscriptionCheckoutUsecase: IStartUserSubscriptionCheckoutUsecase,
+        private readonly _startUserSubscriptionCheckoutUsecase: ICheckoutUserSubscriptionUsecase,
     ) {}
 
     /**
@@ -434,7 +434,9 @@ export class UserController {
             }
 
             const result =
-                await this._getPublicSubscriptionPlansUsecase.execute();
+                await this._getPublicSubscriptionPlansUsecase.execute(
+                    req.user.id,
+                );
             if (result.isFailure) {
                 throw new AppError(
                     result.getError(),
@@ -442,7 +444,7 @@ export class UserController {
                 );
             }
 
-            ResponseHelper.success<PublicSubscriptionPlanDto[]>(
+            ResponseHelper.success<IPublicSubscriptionPlaDto[]>(
                 res,
                 result.getValue(),
                 USER_PROFILE_CONSTANTS.MESSAGES
@@ -468,10 +470,10 @@ export class UserController {
                 );
 
             const result =
-                await this._startUserSubscriptionCheckoutUsecase.execute(
-                    req.user.id,
-                    body.subscriptionPlanId,
-                );
+                await this._startUserSubscriptionCheckoutUsecase.execute({
+                    userId: req.user.id,
+                    subscriptionPlanId: body.subscriptionPlanId,
+                });
 
             if (result.isFailure) {
                 throw new AppError(

@@ -17,8 +17,8 @@ import { GetUserHomeStatsUsecase } from '@application/usecases/user/getUserHomeS
 import { GetUserNotificationsUsecase } from '@application/usecases/notification/getUserNotifications.usecase';
 import { IGetPublicSubscriptionPlansUsecase } from '@application/interfaces/usecases/subscription/IGetPublicSubscriptionPlansUsecase';
 import { GetPublicSubscriptionPlansUsecase } from '@application/usecases/subscription/getPublicSubscriptionPlans.usecase';
-import { IStartUserSubscriptionCheckoutUsecase } from '@application/interfaces/usecases/subscription/IStartUserSubscriptionCheckoutUsecase';
-import { StartUserSubscriptionCheckoutUsecase } from '@application/usecases/subscription/startUserSubscriptionCheckout.usecase';
+import { ICheckoutUserSubscriptionUsecase } from '@application/interfaces/usecases/subscription/ICheckoutUserSubscription';
+import { checkoutUserSubscriptionUsecase } from '@application/usecases/subscription/checkoutUserSubscription.usecase';
 import { S3Client } from '@aws-sdk/client-s3';
 import { TYPES } from '@di/types.di';
 import { s3Client } from '@infrastructure/services/storage/s3.client';
@@ -54,7 +54,7 @@ export const userContainer = new ContainerModule(({ bind }) => {
     bind<IGetPublicSubscriptionPlansUsecase>(
         TYPES.IGetPublicSubscriptionPlansUsecase,
     ).to(GetPublicSubscriptionPlansUsecase);
-    bind<IStartUserSubscriptionCheckoutUsecase>(
+    bind<ICheckoutUserSubscriptionUsecase>(
         TYPES.IStartUserSubscriptionCheckoutUsecase,
-    ).to(StartUserSubscriptionCheckoutUsecase);
+    ).to(checkoutUserSubscriptionUsecase);
 });

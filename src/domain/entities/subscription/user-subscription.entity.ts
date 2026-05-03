@@ -13,9 +13,9 @@ export class UserSubscription {
         private readonly userId: string,
         private readonly subscriptionPlanId: string,
         private readonly razorpaySubscriptionId: string | null,
-        private readonly status: UserSubscriptionStatus,
+        private status: UserSubscriptionStatus,
         private readonly startDate: Date,
-        private readonly endDate: Date,
+        private endDate: Date,
         private readonly createdAt: Date,
         private readonly updatedAt: Date,
     ) {}
@@ -41,12 +41,6 @@ export class UserSubscription {
         createdAt: Date;
         updatedAt: Date;
     }): Result<UserSubscription> {
-        if (endDate.getTime() < startDate.getTime()) {
-            return Result.fail(
-                'Subscription end date cannot be before start date',
-            );
-        }
-
         return Result.ok(
             new UserSubscription(
                 id,
@@ -60,6 +54,14 @@ export class UserSubscription {
                 updatedAt,
             ),
         );
+    }
+
+    public setStatus(status: UserSubscriptionStatus): void {
+        this.status = status;
+    }
+
+    public setEndDate(endDate: Date): void {
+        this.endDate = endDate;
     }
 
     public getId(): string {

@@ -4,6 +4,7 @@ import { IEmailService } from '@application/interfaces/services/IEmailService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IOtpService } from '@application/interfaces/services/IOtpService';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
+import { ISubscriptionService } from '@application/interfaces/services/ISubscriptionService';
 import { IRegisterUseCase } from '@application/interfaces/usecases/auth/IRegisterUsecase';
 import { RegisterUserMapper } from '@application/mappers/auth/register.mapper';
 import {
@@ -41,6 +42,8 @@ export class RegisterUseCase implements IRegisterUseCase {
         private _emailService: IEmailService,
         @inject(TYPES.IOtpRepository)
         private _otpRepository: IOtpRepository,
+        @inject(TYPES.ISubscriptionService)
+        private _subscriptionService: ISubscriptionService,
     ) {
         this.userRepository = userRepo;
     }
@@ -98,8 +101,6 @@ export class RegisterUseCase implements IRegisterUseCase {
                 return Result.fail(userEntity.getError());
             }
 
-            await this.userRepository.save(userEntity.getValue());
-
             const otp = this._otpService.generateOtp();
             console.log('otp is', otp);
 
@@ -117,6 +118,16 @@ export class RegisterUseCase implements IRegisterUseCase {
                 return Result.fail(otpEntity.getError());
             }
 
+            const newSubPlan =
+                await this._subscriptionService.assignDefaultSubscriptionToUser(
+                    userId,
+                );
+
+            if (newSubPlan.isFailure) {
+                return Result.fail(newSubPlan.getError());
+            }
+
+            await this.userRepository.save(userEntity.getValue());
             await this._otpRepository.create(otpEntity.getValue());
             await this._emailService.sendOtpEmail(
                 emailVo.getValue(),

@@ -1,5 +1,4 @@
 import { GoogleUserDto } from '@application/dtos/auth/googleUser.dto';
-import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
@@ -19,6 +18,7 @@ import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
 import { inject, injectable } from 'inversify';
+import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
 export class GoogleAuthUsecase implements IGoogleAuthUsecase {
@@ -62,46 +62,6 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
                 );
             }
 
-            const subRes = await this._userSubscriptionRepository.getByUserId(
-                user.getId(),
-            );
-            if (subRes.isFailure) {
-                return Result.fail(subRes.getError());
-            }
-            const row = subRes.getValue();
-            let planName: string | null = null;
-            if (row) {
-                const planRes = await this._subscriptionPlanRepository.findById(
-                    row.getSubscriptionPlanId(),
-                );
-                if (planRes.isFailure) return Result.fail(planRes.getError());
-                planName = planRes.getValue()?.getName() ?? null;
-            }
-            const userDto: userResponseDto = {
-                id: user.getId(),
-                name: user.getName(),
-                email: user.getEmail().getValue(),
-                phone: user.getPhone()?.getValue() ?? '',
-                address: user.getAddress() ?? '',
-                avatar_url: user.getAvatarUrl() ?? '',
-                isProfileCompleted: user.isProfileCompleted(),
-                isVerified: user.getIsVerified(),
-                status: user.getStatus(),
-                authProvider: user.getAuthProvider().getType(),
-                roles: user
-                    .getRoles()
-                    .map((role) => role.getValue() as UserRoleType),
-                subscription:
-                    row && planName
-                        ? {
-                              planId: row.getSubscriptionPlanId(),
-                              planName,
-                              status: row.getStatus(),
-                              endDate: row.getEndDate().toISOString(),
-                          }
-                        : null,
-            };
-
             const accessToken = this._tokenGenerator.generateAccessToken(
                 user.getId(),
             );
@@ -109,8 +69,54 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
                 user.getId(),
             );
 
+            const assignSub =
+                await this._subscriptionService.assignDefaultSubscriptionToUser(
+                    user.getId(),
+                );
+            if (assignSub.isFailure) {
+                return Result.fail(assignSub.getError());
+            }
+
+            const currentUserSubscriptionEntity =
+                await this._userSubscriptionRepository.getByUserId(
+                    user.getId(),
+                );
+            if (currentUserSubscriptionEntity.isFailure) {
+                return Result.fail(currentUserSubscriptionEntity.getError());
+            }
+
+            const currUserSubcptionEntity =
+                currentUserSubscriptionEntity.getValue();
+            if (!currUserSubcptionEntity) {
+                const result = UserMapperProfile.toUserResponseDto(
+                    user,
+                    null,
+                    null,
+                );
+                return Result.ok({
+                    user: result,
+                    accessToken,
+                    refreshToken,
+                });
+            }
+
+            const subscription =
+                await this._subscriptionPlanRepository.findById(
+                    currUserSubcptionEntity.getSubscriptionPlanId(),
+                );
+            if (subscription.isFailure) {
+                return Result.fail(subscription.getError());
+            }
+            const subscriptionEntity = subscription.getValue();
+
+            const result = UserMapperProfile.toUserResponseDto(
+                user,
+                currUserSubcptionEntity,
+                subscriptionEntity,
+            );
+
             return Result.ok({
-                user: userDto,
+                user: result,
                 accessToken,
                 refreshToken,
             });
@@ -145,11 +151,13 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
             await this._subscriptionService.assignDefaultSubscriptionToUser(
                 userId,
             );
+
         if (assignSub.isFailure) {
-            console.error(
-                'Assign default subscription failed',
+            console.log(
+                'assign default subscription failed',
                 assignSub.getError(),
             );
+            return Result.fail(assignSub.getError());
         }
 
         const accessToken = this._tokenGenerator.generateAccessToken(
@@ -160,48 +168,47 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
         );
 
         const createdUser = newUserEntity.getValue();
-        const subRes = await this._userSubscriptionRepository.getByUserId(
-            createdUser.getId(),
-        );
-        if (subRes.isFailure) {
-            return Result.fail(subRes.getError());
-        }
-        const row = subRes.getValue();
-        let planName: string | null = null;
-        if (row) {
-            const planRes = await this._subscriptionPlanRepository.findById(
-                row.getSubscriptionPlanId(),
+
+        const currentUserSubscriptionEntity =
+            await this._userSubscriptionRepository.getByUserId(
+                createdUser.getId(),
             );
-            if (planRes.isFailure) return Result.fail(planRes.getError());
-            planName = planRes.getValue()?.getName() ?? null;
+        if (currentUserSubscriptionEntity.isFailure) {
+            return Result.fail(currentUserSubscriptionEntity.getError());
         }
-        const userDto: userResponseDto = {
-            id: createdUser.getId(),
-            name: createdUser.getName(),
-            email: createdUser.getEmail().getValue(),
-            phone: createdUser.getPhone()?.getValue() ?? '',
-            address: createdUser.getAddress() ?? '',
-            avatar_url: createdUser.getAvatarUrl() ?? '',
-            isProfileCompleted: createdUser.isProfileCompleted(),
-            isVerified: createdUser.getIsVerified(),
-            status: createdUser.getStatus(),
-            authProvider: createdUser.getAuthProvider().getType(),
-            roles: createdUser
-                .getRoles()
-                .map((role) => role.getValue() as UserRoleType),
-            subscription:
-                row && planName
-                    ? {
-                          planId: row.getSubscriptionPlanId(),
-                          planName,
-                          status: row.getStatus(),
-                          endDate: row.getEndDate().toISOString(),
-                      }
-                    : null,
-        };
+
+        const currUserSubcptionEntity =
+            currentUserSubscriptionEntity.getValue();
+
+        if (!currUserSubcptionEntity) {
+            const result = UserMapperProfile.toUserResponseDto(
+                createdUser,
+                null,
+                null,
+            );
+            return Result.ok({
+                user: result,
+                accessToken,
+                refreshToken,
+            });
+        }
+
+        const subscription = await this._subscriptionPlanRepository.findById(
+            currUserSubcptionEntity.getSubscriptionPlanId(),
+        );
+        if (subscription.isFailure) {
+            return Result.fail(subscription.getError());
+        }
+        const subscriptionEntity = subscription.getValue();
+
+        const result = UserMapperProfile.toUserResponseDto(
+            createdUser,
+            currUserSubcptionEntity,
+            subscriptionEntity,
+        );
 
         return Result.ok({
-            user: userDto,
+            user: result,
             accessToken,
             refreshToken,
         });

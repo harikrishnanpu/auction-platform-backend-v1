@@ -1,7 +1,9 @@
-import { PublicSubscriptionPlanDto } from '@application/dtos/user/publicSubscriptionPlan.dto';
+import { IPublicSubscriptionPlaDto } from '@application/dtos/user/publicSubscriptionPlan.dto';
 import { IGetPublicSubscriptionPlansUsecase } from '@application/interfaces/usecases/subscription/IGetPublicSubscriptionPlansUsecase';
+import { PublicUsersubcriptionPlanMapper } from '@application/mappers/subscription/publicUsersubcriptionPlan.mapper';
 import { TYPES } from '@di/types.di';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -10,22 +12,37 @@ export class GetPublicSubscriptionPlansUsecase implements IGetPublicSubscription
     constructor(
         @inject(TYPES.ISubscriptionPlanRepository)
         private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
+        @inject(TYPES.IUserSubscriptionRepository)
+        private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
     ) {}
 
-    async execute(): Promise<Result<PublicSubscriptionPlanDto[]>> {
+    async execute(
+        userId: string,
+    ): Promise<Result<IPublicSubscriptionPlaDto[]>> {
+        const userSubscriptionRes =
+            await this._userSubscriptionRepository.getByUserId(userId);
+        if (userSubscriptionRes.isFailure) {
+            return Result.fail(userSubscriptionRes.getError());
+        }
+
+        const userSubscription = userSubscriptionRes.getValue();
+
         const allRes = await this._subscriptionPlanRepository.findAll({});
         if (allRes.isFailure) {
             return Result.fail(allRes.getError());
         }
 
-        const plans = allRes.getValue().map((p) => ({
-            id: p.getId(),
-            name: p.getName(),
-            description: p.getDescription(),
-            price: p.getPrice(),
-            durationDays: p.getDurationDays(),
-        }));
+        const output: IPublicSubscriptionPlaDto[] = [];
 
-        return Result.ok(plans);
+        for (const plan of allRes.getValue()) {
+            output.push(
+                PublicUsersubcriptionPlanMapper.toPublicSubscriptionPlanDto(
+                    plan,
+                    userSubscription?.getSubscriptionPlanId() === plan.getId(),
+                ),
+            );
+        }
+
+        return Result.ok(output);
     }
 }
