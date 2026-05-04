@@ -242,4 +242,7 @@ export const TYPES = {
     FraudController: Symbol.for('FraudController'),
     FraudReportMapper: Symbol.for('FraudReportMapper'),
     UserSuspensionMapper: Symbol.for('UserSuspensionMapper'),
+    IChatAgentService: Symbol.for('IChatAgentService'),
+    ISendChatAgentMessageUsecase: Symbol.for('ISendChatAgentMessageUsecase'),
+    IToolFactory: Symbol.for('IToolFactory'),
 };

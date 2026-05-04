@@ -108,14 +108,16 @@ export class AuctionHandler {
         const result = roomResult.getValue();
         const chatMessages = chatResult.getValue();
 
+        const isProducer =
+            result.auction.status === AuctionStatus.ACTIVE &&
+            (user.roles.includes(UserRoleType.ADMIN) ||
+                user.roles.includes(UserRoleType.SELLER));
+
         this.socket.emit(SocketEvents.JOINED, {
             ...result,
             chatMessages,
             isLiveAuction: result.auction.auctionType === AuctionType.LIVE,
-            isProducer:
-                result.auction.status === AuctionStatus.ACTIVE &&
-                (user.roles.includes(UserRoleType.ADMIN) ||
-                    user.roles.includes(UserRoleType.SELLER)),
+            isProducer,
         });
 
         return { success: true, data: { auctionId } };

@@ -15,6 +15,8 @@ export enum SocketEvents {
     FALLBACK_STATS_UPDATED = 'auction:fallbackStatsUpdated',
     PARTICIPANTS_UPDATED = 'auction:participantsUpdated',
     ERROR = 'auction:error',
+    ASK_AGENT = 'auction:askAgent',
+    AGENT_RESPONSE = 'auction:agentResponse',
 
     FAIL_AUCTION = 'auction:failAuction',
     SEND_FALLBACK_PUBLIC_NOTIFICATION = 'auction:sendFallbackPublicNotification',

@@ -32,6 +32,7 @@ import { dbMappersContainer } from './modules/mappers.container';
 import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 import { fraudContainer } from './modules/fraud.container';
 import { FraudController } from '@presentation/http/controllers/fraud/fraud.controller';
+import { agentContainer } from './modules/agent.container';
 
 const container = new Container();
 
@@ -47,6 +48,7 @@ container.load(walletContainer);
 container.load(paymentsContainer);
 container.load(dbMappersContainer);
 container.load(fraudContainer);
+container.load(agentContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
