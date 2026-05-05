@@ -210,13 +210,14 @@ export class AuctionMapperProrfile {
         return {
             userId: data.userId,
             status: 'ALL',
-            auctionType: 'ALL',
-            categoryId: 'ALL',
+            auctionType: data.auctionType as AuctionType | 'ALL',
+            categoryId: data.categoryId,
             page: data.page,
             limit: data.limit,
             sort: data.sort,
             order: data.order,
             search: data.search,
+            scope: data.scope,
         };
     }
 

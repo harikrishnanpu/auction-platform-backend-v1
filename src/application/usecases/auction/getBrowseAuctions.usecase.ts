@@ -21,8 +21,16 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
     ): Promise<Result<IGetBrowseAuctionsOutputDto>> {
         const dto = AuctionMapperProrfile.toGetBrowseAuctionsDto(data);
 
-        const { page, limit, auctionType, categoryId, sort, order, search } =
-            dto;
+        const {
+            page,
+            limit,
+            auctionType,
+            categoryId,
+            sort,
+            order,
+            search,
+            scope,
+        } = dto;
 
         const safePage = Number(page) > 0 ? page : 1;
         const safeLimit = Number(limit) > 0 ? limit : 10;
@@ -36,6 +44,7 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
             sort: sort,
             order: order,
             search: search,
+            scope: scope ?? 'default',
         });
 
         if (auctionsRes.isFailure) return Result.fail(auctionsRes.getError());
