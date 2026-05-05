@@ -33,6 +33,7 @@ export class OllamaChatAgentService implements IChatAgentService {
         const baseUrl = process.env.OLLAMA_BASE_URL;
         const model = process.env.OLLAMA_MODEL;
         const temperature = Number(process.env.OLLAMA_TEMPERATURE);
+        const cappedNumPredict = Number(process.env.OLLAMA_PREDICT_CAP);
 
         if (!apiKey || !baseUrl || !model) {
             throw new Error(
@@ -44,6 +45,7 @@ export class OllamaChatAgentService implements IChatAgentService {
             baseUrl,
             model,
             temperature: Number.isFinite(temperature) ? temperature : 0.7,
+            numPredict: cappedNumPredict,
             headers: {
                 Authorization: `Bearer ${apiKey}`,
             },

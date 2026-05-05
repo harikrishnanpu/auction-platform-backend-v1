@@ -1,3 +1,8 @@
+export const AUCTION_VALIDATION_LIMITS = {
+    MIN_START_PRICE: 500,
+    MAX_MAX_EXTENSION_COUNT: 10,
+} as const;
+
 export const AUCTION_MESSAGES = {
     AUCTION_NOT_ACTIVE: 'Auction is not active',
     AUCTION_NOT_STARTED: 'Auction is not started',

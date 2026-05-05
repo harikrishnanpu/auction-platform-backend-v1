@@ -245,4 +245,6 @@ export const TYPES = {
     IChatAgentService: Symbol.for('IChatAgentService'),
     ISendChatAgentMessageUsecase: Symbol.for('ISendChatAgentMessageUsecase'),
     IToolFactory: Symbol.for('IToolFactory'),
+    IKnowledgeVectorStore: Symbol.for('IKnowledgeVectorStore'),
+    IKnowledgeVectorDb: Symbol.for('IKnowledgeVectorDb'),
 };
