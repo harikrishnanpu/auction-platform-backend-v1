@@ -1,0 +1,19 @@
+model AutoBidConfig {
+  id              String      @id @default(uuid())
+  userId          String
+  auctionId       String
+  maxBidAmount    Float
+  biddingStrategy BidStrategy @default(SLOW)
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  auction         Auction     @relation(fields: [auctionId], references: [id])
+  user            User        @relation(fields: [userId], references: [id])
+  @@unique([userId, auctionId])
+}
+
+enum BidStrategy {
+  SLOW
+  FASTER
+  SNIPER
+}

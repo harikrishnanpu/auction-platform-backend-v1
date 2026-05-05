@@ -22,6 +22,7 @@ import { SubscriptionPlanMapper } from '@infrastructure/mappers/subscription/sub
 import { UserSubscriptionMapper } from '@infrastructure/mappers/subscription/user-subscription.mapper';
 import { ContainerModule } from 'inversify';
 import { SubscriptionFeaturesMapper } from '@infrastructure/mappers/subscription/subscriptionFeatures.mapper';
+import { AutoBidConfigMapper } from '@infrastructure/mappers/auction/autoBidConfig.mapper';
 
 export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<AuctionCategoryMapper>(TYPES.AuctionCategoryMapper).to(
@@ -68,5 +69,8 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
 
     bind<SubscriptionFeaturesMapper>(TYPES.SubscriptionFeaturesMapper).to(
         SubscriptionFeaturesMapper,
+    );
+    bind<AutoBidConfigMapper>(TYPES.AutoBidConfigMapper).to(
+        AutoBidConfigMapper,
     );
 });

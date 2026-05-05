@@ -26,6 +26,11 @@ export enum SocketEvents {
     DECLINE_PAYMENT_FOR_PUBLIC_FALLBACK_AUCTION = 'auction:declinePaymentForPublicFallbackAuction',
 
     ADD_AUCTION_PARTICIPANT = 'auction:addAuctionParticipant',
+    SET_AUTO_BID = 'auction:setAutoBid',
+    DISABLE_AUTO_BID = 'auction:disableAutoBid',
+    AUTO_BID_CONFIG_CREATED = 'auction:autoBidConfigCreated',
+    AUTO_BID_CONFIG_EDITED = 'auction:autoBidConfigEdited',
+    AUTO_BID_CONFIG_UPDATED = 'auction:autoBidConfigUpdated',
 
     LIVE_AUCTION_GET_CAPABILITIES = 'auction:liveAuctionGetCapabilities',
     LIVE_AUCTION_CREATE_TRANSPORT = 'auction:liveAuctionCreateTransport',

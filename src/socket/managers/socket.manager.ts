@@ -180,6 +180,18 @@ export class SocketManager {
                 );
             });
 
+            socket.on(SocketEvents.SET_AUTO_BID, (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleSetAutoBid(payload),
+                );
+            });
+
+            socket.on(SocketEvents.DISABLE_AUTO_BID, (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleDisableAutoBid(payload),
+                );
+            });
+
             socket.on(
                 SocketEvents.LIVE_AUCTION_GET_CAPABILITIES,
                 (payload, cl) => {

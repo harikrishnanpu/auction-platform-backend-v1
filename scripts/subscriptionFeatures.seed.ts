@@ -32,4 +32,4 @@ export const seedSubscriptionFeatures = async () => {
 
 // console.log(await prisma.features.findMany());
 
-// seedSubscriptionFeatures();
+seedSubscriptionFeatures();

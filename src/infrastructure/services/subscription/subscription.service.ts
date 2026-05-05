@@ -47,7 +47,7 @@ export class SubscriptionService implements ISubscriptionService {
 
         // chnage -----
         if (!defaultSubscriptionPlan) {
-            return Result.fail('Default subscription plan not found');
+            return Result.ok();
         }
 
         const usersubscriptionPlan = UserSubscription.create({

@@ -51,6 +51,7 @@ model Auction {
   category              AuctionCategory        @relation(fields: [categoryId], references: [id])
   winners               AuctionWinner[]
   publicFallbackAuction PublicFallbackAuction?
+  autoBidConfigs         AutoBidConfig[]
 }
 
 enum AuctionWinnerStatus {

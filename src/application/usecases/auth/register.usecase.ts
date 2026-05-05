@@ -118,6 +118,16 @@ export class RegisterUseCase implements IRegisterUseCase {
                 return Result.fail(otpEntity.getError());
             }
 
+            await this.userRepository.save(userEntity.getValue());
+            await this._otpRepository.create(otpEntity.getValue());
+
+            await this._emailService.sendOtpEmail(
+                emailVo.getValue(),
+                otp,
+                OtpPurpose.VERIFY_EMAIL,
+                EMAIL_TEMPLATES.VERIFY_EMAIL,
+            );
+
             const newSubPlan =
                 await this._subscriptionService.assignDefaultSubscriptionToUser(
                     userId,
@@ -126,15 +136,6 @@ export class RegisterUseCase implements IRegisterUseCase {
             if (newSubPlan.isFailure) {
                 return Result.fail(newSubPlan.getError());
             }
-
-            await this.userRepository.save(userEntity.getValue());
-            await this._otpRepository.create(otpEntity.getValue());
-            await this._emailService.sendOtpEmail(
-                emailVo.getValue(),
-                otp,
-                OtpPurpose.VERIFY_EMAIL,
-                EMAIL_TEMPLATES.VERIFY_EMAIL,
-            );
 
             return Result.ok<RegisterUserOutputDto>({
                 userId: userEntity.getValue().getId(),

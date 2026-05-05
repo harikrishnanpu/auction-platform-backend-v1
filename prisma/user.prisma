@@ -32,6 +32,7 @@ model User {
   fraudReportsReviewed             FraudReport[]          @relation("FraudReviewedByAdmin")
   suspensions                      UserSuspension[] @relation("SuspendedUser")
   subscriptions                    UserSubscription[]
+  autoBidConfigs                   AutoBidConfig[]
 }
 
 model UserRole {
