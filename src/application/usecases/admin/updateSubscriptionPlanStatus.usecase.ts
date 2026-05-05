@@ -1,10 +1,13 @@
 import { ISubscriptionPlanDto } from '@application/dtos/admin/subscription.dto';
-import { IUpdateSubscriptionPlanStatusUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
+import {
+    IUpdateSubscriptionPlanStatusUsecase,
+    IValidatedUpdateSubscriptionPlanStatusInput,
+} from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateSubscriptionPlanStatusInputType } from '@presentation/validators/schemas/admin/updateSubscriptionPlanStatus.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -15,7 +18,7 @@ export class UpdateSubscriptionPlanStatusUsecase implements IUpdateSubscriptionP
     ) {}
 
     async execute(
-        input: ZodUpdateSubscriptionPlanStatusInputType,
+        input: IValidatedUpdateSubscriptionPlanStatusInput,
     ): Promise<Result<ISubscriptionPlanDto>> {
         const planEntityResult =
             await this._subscriptionPlanRepository.findById(input.planId);

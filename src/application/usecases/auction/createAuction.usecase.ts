@@ -1,4 +1,8 @@
-import { ICreateAuctionUsecase } from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
+import {
+    ICreateAuctionUsecase,
+    IValidatedICreateAuctionInput,
+} from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
+
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { TYPES } from '@di/types.di';
 import {
@@ -13,7 +17,6 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
-import { ZodCreateAuctionInputType } from '@presentation/validators/schemas/auction/createAuction.schema';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -29,7 +32,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
     ) {}
 
     async execute(
-        data: ZodCreateAuctionInputType,
+        data: IValidatedICreateAuctionInput,
     ): Promise<Result<IAuctionDto>> {
         console.log('CREATE AUCTION INPUT: ', data);
 

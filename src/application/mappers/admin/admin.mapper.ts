@@ -22,7 +22,10 @@ import { IRejectSellerKycInput } from '@application/dtos/admin/rejectSellerKyc.d
 import { IUpdateAuctionCategoryInputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
 import { IViewKycInputDto } from '@application/dtos/admin/viewKyc.dto';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
-import { IGetAdminAuctionsInputDto } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
+import {
+    IGetAdminAuctionsInputDto,
+    IValidatedGetAdminAuctionsInput,
+} from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
 import { AuctionType } from '@domain/entities/auction/auction.entity';
 import {
     AuthProviderType,
@@ -33,7 +36,6 @@ import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/sch
 import { ZodBlockUserInputType } from '@presentation/validators/schemas/admin/blockUsers.schema';
 import { ZodChangeAuctionCategoryStatusInputType } from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
 import { ZodCreateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
-import { ZodCreateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/createSubscriptionPlan.schema';
 import { ZodGetAdminSellerInputType } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
 import { ZodGetAdminUserInputType } from '@presentation/validators/schemas/admin/getAdminUser.schema';
 import { ZodGetAllUsersInputType } from '@presentation/validators/schemas/admin/getAllUsers.schema';
@@ -43,10 +45,11 @@ import { ZodRejectSellerKycInputType } from '@presentation/validators/schemas/ad
 import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
 import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/viewKyc.schema';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { SystemConfig } from '@domain/entities/system-config/system-config.entity';
 import { Features } from '@domain/entities/subscription/features.entity';
-import { ZodUpdateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/updateSubscriptionPlan.schema';
+import { IValidatedUpdateSubscriptionPlanInput } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+import { IValidatedEditSystemConfigInput } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+import { IValidatedCreateSubscriptionPlanInput } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
 
 export class AdminMapperProfile {
     public static toGetAllUsersInputDto(
@@ -143,7 +146,7 @@ export class AdminMapperProfile {
     }
 
     public static toGetAdminAuctionsInputDto(
-        data: ZodGetBrowseAuctionsInputType,
+        data: IValidatedGetAdminAuctionsInput,
     ): IGetAdminAuctionsInputDto {
         return {
             auctionType: data.auctionType as AuctionType | 'ALL',
@@ -207,7 +210,7 @@ export class AdminMapperProfile {
     }
 
     public static toCreateSubscriptionPlanDto(
-        data: ZodCreateSubscriptionPlanInputType,
+        data: IValidatedCreateSubscriptionPlanInput,
     ): ICreateSubscriptionPlanRequestDto {
         return {
             name: data.name,
@@ -223,7 +226,7 @@ export class AdminMapperProfile {
     }
 
     public static toUpdateSubscriptionPlanDto(
-        data: ZodUpdateSubscriptionPlanInputType,
+        data: IValidatedUpdateSubscriptionPlanInput,
     ): IUpdateSubscriptionPlanInputDto {
         return {
             planId: data.planId,
@@ -276,7 +279,7 @@ export class AdminMapperProfile {
     }
 
     public static toEditSystemConfigInputDto(
-        data: ZodEditSystemConfigInputType,
+        data: IValidatedEditSystemConfigInput,
     ): ISystemConfigInputDto {
         return {
             key: data.key,

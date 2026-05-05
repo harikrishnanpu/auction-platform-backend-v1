@@ -1,9 +1,12 @@
 import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/rejectAuctionCategory.dto';
 import { Result } from '@domain/shared/result';
-import { ZodRejectAuctionCategoryInputType } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
+export interface IValidatedRejectAuctionCategoryrequestInput {
+    categoryId: string;
+    reason: string;
+}
 
 export interface IRejectAuctionCategoryrequestUsecase {
     execute(
-        data: ZodRejectAuctionCategoryInputType,
+        data: IValidatedRejectAuctionCategoryrequestInput,
     ): Promise<Result<IRejectAuctionCategoryrequestOutputDto>>;
 }

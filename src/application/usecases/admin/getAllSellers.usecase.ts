@@ -3,14 +3,17 @@ import {
     ISellerResponseDto,
 } from '@application/dtos/admin/getSellers.dto';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
-import { IGetAllSellersUsecase } from '@application/interfaces/usecases/admin/IGetAllSellersUsecase';
+import {
+    IGetAllSellersUsecase,
+    IValidatedGetAllSellersInput,
+} from '@application/interfaces/usecases/admin/IGetAllSellersUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { KycFor, KycStatus } from '@domain/entities/kyc/kyc.entity';
 import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
-import { ZodGetAllSellersInputType } from '@presentation/validators/schemas/admin/getSellers.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -23,7 +26,7 @@ export class GetAllSellersUseCase implements IGetAllSellersUsecase {
     ) {}
 
     async execute(
-        data: ZodGetAllSellersInputType,
+        data: IValidatedGetAllSellersInput,
     ): Promise<Result<IGetAllSellersOutput>> {
         try {
             const dto = AdminMapperProfile.toGetAllSellersInputDto(data);

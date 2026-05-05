@@ -1,9 +1,13 @@
 import { CompleteProfileOutput } from '@application/dtos/auth/completeProfile.dto';
 import { Result } from '@domain/shared/result';
-import { ZodCompleteProfileInputType } from '@presentation/validators/schemas/auth/completeProfile.schema';
+export interface IValidatedCompleteProfileInput {
+    userId: string;
+    phone: string;
+    address: string;
+}
 
 export interface ICompleteProfileUsecase {
     execute(
-        data: ZodCompleteProfileInputType,
+        data: IValidatedCompleteProfileInput,
     ): Promise<Result<CompleteProfileOutput>>;
 }

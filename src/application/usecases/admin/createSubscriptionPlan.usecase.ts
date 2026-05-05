@@ -1,6 +1,10 @@
 import { ISubscriptionPlanDto } from '@application/dtos/admin/subscription.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
-import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
+import {
+    ICreateSubscriptionPlanUsecase,
+    IValidatedCreateSubscriptionPlanInput,
+} from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { SubscriptionPlan } from '@domain/entities/subscription/subscription-plan.entity';
@@ -8,7 +12,6 @@ import { SubscriptionFeatureValueType } from '@domain/entities/subscription/feat
 import { IRazorpaySubscriptionGatewayService } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { Result } from '@domain/shared/result';
-import { ZodCreateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/createSubscriptionPlan.schema';
 import { inject, injectable } from 'inversify';
 import { ISubscriptionFeaturesRepository } from '@domain/repositories/ISubscriptionFetauresRepository';
 import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscriptionPlanFetaure.entity';
@@ -27,7 +30,7 @@ export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUse
     ) {}
 
     async execute(
-        input: ZodCreateSubscriptionPlanInputType,
+        input: IValidatedCreateSubscriptionPlanInput,
     ): Promise<Result<ISubscriptionPlanDto>> {
         const dto = AdminMapperProfile.toCreateSubscriptionPlanDto(input);
         const planId = this._idGeneratingService.generateId();

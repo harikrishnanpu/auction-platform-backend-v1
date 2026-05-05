@@ -1,7 +1,11 @@
 import { IUpdateKycOutput } from '@application/dtos/kyc/update-kyc.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IStorageService } from '@application/interfaces/services/IStorageService';
-import { IUpdateKycUsecase } from '@application/interfaces/usecases/kyc/IUpdateKyc';
+import type {
+    IUpdateKycUsecase,
+    IValidatedUpdateKycInput,
+} from '@application/interfaces/usecases/kyc/IUpdateKyc';
+
 import { KycMapperProfile } from '@application/mappers/kyc/kyc.mapper';
 import { TYPES } from '@di/types.di';
 import {
@@ -14,7 +18,6 @@ import { Kyc, KycStatus } from '@domain/entities/kyc/kyc.entity';
 import { IKycDocumentRepository } from '@domain/repositories/IKycDocumentRepository';
 import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateKycInputType } from '@presentation/validators/schemas/kyc/updateKyc.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -31,7 +34,7 @@ export class UpdateKycUseCase implements IUpdateKycUsecase {
     ) {}
 
     async execute(
-        data: ZodUpdateKycInputType,
+        data: IValidatedUpdateKycInput,
     ): Promise<Result<IUpdateKycOutput>> {
         try {
             const dto = KycMapperProfile.toUpdateKycInput(data);

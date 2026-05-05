@@ -34,7 +34,11 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
 
     async execute(input: string): Promise<Result<void>> {
         try {
-            const dto = SendEmailVerificationCodeMapper.toDto({ email: input });
+            const dto = SendEmailVerificationCodeMapper.toDto({
+                email: input,
+                purpose: OtpPurpose.VERIFY_EMAIL,
+                channel: OtpChannel.EMAIL,
+            });
             const { email } = dto;
 
             const emailVo = Email.create(email);

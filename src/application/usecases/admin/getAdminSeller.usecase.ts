@@ -4,14 +4,17 @@ import {
     IKycDocumentDto,
 } from '@application/dtos/admin/getAdminSeller.dto';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
-import { IGetAdminSellerUsecase } from '@application/interfaces/usecases/admin/IGetAdminSellerUsecase';
+import {
+    IGetAdminSellerUsecase,
+    IValidatedGetAdminSellerInput,
+} from '@application/interfaces/usecases/admin/IGetAdminSellerUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { KycFor } from '@domain/entities/kyc/kyc.entity';
 import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
-import { ZodGetAdminSellerInputType } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -24,7 +27,7 @@ export class GetAdminSellerUseCase implements IGetAdminSellerUsecase {
     ) {}
 
     async execute(
-        data: ZodGetAdminSellerInputType,
+        data: IValidatedGetAdminSellerInput,
     ): Promise<Result<IGetAdminSellerOutput>> {
         try {
             const dto = AdminMapperProfile.toGetAdminSellerInputDto(data);

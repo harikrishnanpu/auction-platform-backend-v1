@@ -1,7 +1,11 @@
 import { EditProfileOutput } from '@application/dtos/user/editProfile.dto';
 import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
-import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
+import type {
+    IEditProfileUsecase,
+    IValidatedEditProfileInput,
+} from '@application/interfaces/usecases/user/IEditProfileUsecase';
+
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { TYPES } from '@di/types.di';
 import { OtpPurpose } from '@domain/entities/otp/otp.entity';
@@ -13,7 +17,6 @@ import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
-import { ZodEditProfileInputType } from '@presentation/validators/schemas/user/editProfile.schema';
 
 @injectable()
 export class EditProfileUseCase implements IEditProfileUsecase {
@@ -29,7 +32,7 @@ export class EditProfileUseCase implements IEditProfileUsecase {
     ) {}
 
     async execute(
-        data: ZodEditProfileInputType,
+        data: IValidatedEditProfileInput,
     ): Promise<Result<EditProfileOutput>> {
         try {
             const dto = UserMapperProfile.toEditProfileInput(data);

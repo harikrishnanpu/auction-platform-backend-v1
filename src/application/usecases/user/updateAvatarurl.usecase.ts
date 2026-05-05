@@ -2,14 +2,17 @@ import { UpdateAvatarUrlResponseDto } from '@application/dtos/user/updateAvatar.
 import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { GenerateDownloadUrlData } from '@application/interfaces/services/IStorageService';
-import { IUpdateAvatarUrlUsecase } from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
+import {
+    IUpdateAvatarUrlUsecase,
+    IValidatedUpdateAvatarUrlInput,
+} from '@application/interfaces/usecases/user/IUpdateAvatarUrl';
+
 import { TYPES } from '@di/types.di';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { ZodUpdateAvatarUrlInputType } from '@presentation/validators/schemas/user/update-avatar-url.schema';
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
@@ -24,7 +27,7 @@ export class UpdateAvatarUrlUseCase implements IUpdateAvatarUrlUsecase {
     ) {}
 
     async execute(
-        data: ZodUpdateAvatarUrlInputType,
+        data: IValidatedUpdateAvatarUrlInput,
     ): Promise<Result<UpdateAvatarUrlResponseDto>> {
         try {
             const dto = UserMapperProfile.toUpdateAvatarUrlInput(data);

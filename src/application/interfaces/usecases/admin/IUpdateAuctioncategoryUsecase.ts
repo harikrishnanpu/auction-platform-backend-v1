@@ -1,9 +1,13 @@
 import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+export interface IValidatedUpdateAuctionCategoryInput {
+    categoryId: string;
+    name: string;
+    parentId?: string;
+}
 
 export interface IUpdateAuctionCategoryUsecase {
     execute(
-        data: ZodUpdateAuctionCategoryInputType,
+        data: IValidatedUpdateAuctionCategoryInput,
     ): Promise<Result<IUpdateAuctionCategoryOutputDto>>;
 }

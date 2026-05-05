@@ -1,11 +1,14 @@
 import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/rejectAuctionCategory.dto';
-import { IRejectAuctionCategoryrequestUsecase } from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
+import {
+    IRejectAuctionCategoryrequestUsecase,
+    IValidatedRejectAuctionCategoryrequestInput,
+} from '@application/interfaces/usecases/admin/IRejectAuctionCategoryrequestusecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
-import { ZodRejectAuctionCategoryInputType } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 import { inject } from 'inversify';
 
 export class RejectAuctionCategoryUsecase implements IRejectAuctionCategoryrequestUsecase {
@@ -15,7 +18,7 @@ export class RejectAuctionCategoryUsecase implements IRejectAuctionCategoryreque
     ) {}
 
     async execute(
-        data: ZodRejectAuctionCategoryInputType,
+        data: IValidatedRejectAuctionCategoryrequestInput,
     ): Promise<Result<IRejectAuctionCategoryrequestOutputDto>> {
         const dto = AdminMapperProfile.toRejectAuctionCategoryInputDto(data);
         const { categoryId, reason } = dto;

@@ -29,17 +29,17 @@ import {
     IAuctionCategoryDto,
     IAuctionDto,
 } from '@application/dtos/auction/auction.dto';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { IGetAuctionByIdInputDto } from '@application/dtos/auction/getAuctionById.dto';
 import { ZodGenerateAuctionUploadUrlInputType } from '@presentation/validators/schemas/auction/generateAuctionUploadUrl.schema';
 import { IGenerateAuctionUploadUrlInput } from '@application/dtos/auction/generate-auction-upload-url.dto';
-import { ZodUpdateAuctionInputType } from '@presentation/validators/schemas/auction/updateAuction.schema';
 import { IUpdateAuctionInput } from '@application/dtos/auction/update-auction.dto';
 import { ZodPublishAuctionParamsInputType } from '@presentation/validators/schemas/auction/publishAuctionParams.schema';
 import { IPublishAuctionInput } from '@application/dtos/auction/publish-auction.dto';
 import { IEndAuctionInput } from '@application/dtos/auction/end-auction.dto';
 import { IGetUserParticipatedAuctionsInputDto } from '@application/dtos/auction/get-user-participated-auctions.dto';
 import { ZodGetUserParticipatedAuctionsInputType } from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
+import { IValidatedGetBrowseAuctionsInput } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { IValidatedUpdateAuctionInput } from '@application/interfaces/usecases/auction/IUpdateAuctionUsecase';
 
 export class AuctionMapperProrfile {
     public static toCreateAuctionDto(
@@ -205,7 +205,7 @@ export class AuctionMapperProrfile {
     }
 
     public static toGetBrowseAuctionsDto(
-        data: ZodGetBrowseAuctionsInputType,
+        data: IValidatedGetBrowseAuctionsInput,
     ): IGetAllAuctionsInputDto {
         return {
             userId: data.userId,
@@ -243,7 +243,7 @@ export class AuctionMapperProrfile {
     }
 
     public static toUpdateAuctionInputDto(
-        data: ZodUpdateAuctionInputType,
+        data: IValidatedUpdateAuctionInput,
     ): IUpdateAuctionInput {
         return {
             auctionId: data.auctionId,

@@ -1,7 +1,11 @@
 import { CompleteProfileOutput } from '@application/dtos/auth/completeProfile.dto';
 import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
-import { ICompleteProfileUsecase } from '@application/interfaces/usecases/auth/ICompleteProfileUsecase';
+import {
+    ICompleteProfileUsecase,
+    IValidatedCompleteProfileInput,
+} from '@application/interfaces/usecases/auth/ICompleteProfileUsecase';
+
 import { TYPES } from '@di/types.di';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
@@ -9,7 +13,6 @@ import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscript
 import { Result } from '@domain/shared/result';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
-import { ZodCompleteProfileInputType } from '@presentation/validators/schemas/auth/completeProfile.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -24,7 +27,7 @@ export class CompleteProfileUsecase implements ICompleteProfileUsecase {
     ) {}
 
     async execute(
-        data: ZodCompleteProfileInputType,
+        data: IValidatedCompleteProfileInput,
     ): Promise<Result<CompleteProfileOutput>> {
         const dto = AuthMapperProfile.toCompleteProfileInput(data);
 

@@ -2,9 +2,9 @@ import { IGetKycStatusInput } from '@application/dtos/kyc/get-kyc-status.usecase
 import { ISubmitKycInput } from '@application/dtos/kyc/submit-kyc.dto';
 import { IUpdateKycInput } from '@application/dtos/kyc/update-kyc.dto';
 import { UploadKycGetUrlInput } from '@application/dtos/kyc/upload-kyc.dto';
-import { ZodGetKycStatusInputType } from '@presentation/validators/schemas/kyc/getKycStatus.schema';
-import { ZodSubmitKycInputType } from '@presentation/validators/schemas/kyc/submitKyc.schema';
-import { ZodUpdateKycInputType } from '@presentation/validators/schemas/kyc/updateKyc.schema';
+import { IValidatedGetKycStatusInput } from '@application/interfaces/usecases/kyc/IGetKycStatusUsecase';
+import { IValidatedSubmitKycInput } from '@application/interfaces/usecases/kyc/ISubmitKycUsecase';
+import { IValidatedUpdateKycInput } from '@application/interfaces/usecases/kyc/IUpdateKyc';
 import { ZodUploadKycUrlInputType } from '@presentation/validators/schemas/kyc/uploadKyc.schema';
 
 export class KycMapperProfile {
@@ -20,7 +20,7 @@ export class KycMapperProfile {
     }
 
     public static toGetKycStatusInput(
-        data: ZodGetKycStatusInputType,
+        data: IValidatedGetKycStatusInput,
     ): IGetKycStatusInput {
         return {
             userId: data.userId,
@@ -29,7 +29,7 @@ export class KycMapperProfile {
     }
 
     public static toUpdateKycInput(
-        data: ZodUpdateKycInputType,
+        data: IValidatedUpdateKycInput,
     ): IUpdateKycInput {
         return {
             userId: data.userId,
@@ -41,7 +41,7 @@ export class KycMapperProfile {
     }
 
     public static toSubmitKycInputDto(
-        data: ZodSubmitKycInputType,
+        data: IValidatedSubmitKycInput,
     ): ISubmitKycInput {
         return {
             userId: data.userId,

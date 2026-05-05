@@ -1,7 +1,11 @@
 import { ISubscriptionPlanDto } from '@application/dtos/admin/subscription.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IRazorpaySubscriptionGatewayService } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
-import { IUpdateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+import {
+    IUpdateSubscriptionPlanUsecase,
+    IValidatedUpdateSubscriptionPlanInput,
+} from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { SubscriptionFeatureValueType } from '@domain/entities/subscription/features.entity';
@@ -9,7 +13,6 @@ import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscript
 import { ISubscriptionFeaturesRepository } from '@domain/repositories/ISubscriptionFetauresRepository';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/updateSubscriptionPlan.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -26,7 +29,7 @@ export class UpdateSubscriptionPlanUsecase implements IUpdateSubscriptionPlanUse
     ) {}
 
     async execute(
-        input: ZodUpdateSubscriptionPlanInputType,
+        input: IValidatedUpdateSubscriptionPlanInput,
     ): Promise<Result<ISubscriptionPlanDto>> {
         const dto = AdminMapperProfile.toUpdateSubscriptionPlanDto(input);
 

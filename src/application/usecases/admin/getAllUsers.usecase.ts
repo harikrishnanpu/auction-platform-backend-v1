@@ -1,12 +1,15 @@
 import { IGetAllUsersOutput } from '@application/dtos/admin/getAllusers.dto';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
-import { IGetAllUsersUsecase } from '@application/interfaces/usecases/admin/IGetAllUsersUsecase';
+import type {
+    IGetAllUsersUsecase,
+    IValidatedGetAllUsersInput,
+} from '@application/interfaces/usecases/admin/IGetAllUsersUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { IFindAllUsersInput } from '@domain/types/userRepo.types';
-import { ZodGetAllUsersInputType } from '@presentation/validators/schemas/admin/getAllUsers.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -17,7 +20,7 @@ export class GetAllUsersUseCase implements IGetAllUsersUsecase {
     ) {}
 
     async execute(
-        data: ZodGetAllUsersInputType,
+        data: IValidatedGetAllUsersInput,
     ): Promise<Result<IGetAllUsersOutput>> {
         try {
             const dto = AdminMapperProfile.toGetAllUsersInputDto(data);

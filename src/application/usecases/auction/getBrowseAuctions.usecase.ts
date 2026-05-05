@@ -1,12 +1,12 @@
 import type {
     IGetBrowseAuctionsOutputDto,
+    IValidatedGetBrowseAuctionsInput,
     IGetBrowseAuctionsUsecase,
 } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -17,7 +17,7 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
     ) {}
 
     async execute(
-        data: ZodGetBrowseAuctionsInputType,
+        data: IValidatedGetBrowseAuctionsInput,
     ): Promise<Result<IGetBrowseAuctionsOutputDto>> {
         const dto = AuctionMapperProrfile.toGetBrowseAuctionsDto(data);
 

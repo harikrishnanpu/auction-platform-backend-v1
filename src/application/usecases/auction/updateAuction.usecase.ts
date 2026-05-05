@@ -1,6 +1,10 @@
 import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import { IUpdateAuctionOutput } from '@application/dtos/auction/update-auction.dto';
-import { IUpdateAuctionUsecase } from '@application/interfaces/usecases/auction/IUpdateAuctionUsecase';
+import {
+    IUpdateAuctionUsecase,
+    IValidatedUpdateAuctionInput,
+} from '@application/interfaces/usecases/auction/IUpdateAuctionUsecase';
+
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
@@ -16,7 +20,6 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
-import { ZodUpdateAuctionInputType } from '@presentation/validators/schemas/auction/updateAuction.schema';
 
 @injectable()
 export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
@@ -30,7 +33,7 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
     ) {}
 
     async execute(
-        input: ZodUpdateAuctionInputType,
+        input: IValidatedUpdateAuctionInput,
     ): Promise<Result<IUpdateAuctionOutput>> {
         console.log('UPDATE AUCTION INPUT: ', input);
 
@@ -45,7 +48,7 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
 
         const auction = existing.getValue();
 
-        if (auction.getSellerId() !== input.userId) {
+        if (auction.getSellerId() !== dto.userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_UPDATE);
         }
 
@@ -54,7 +57,7 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
         }
 
         const categoryResult = await this._auctionCategoryRepository.findById(
-            input.category,
+            dto.category,
         );
         if (categoryResult.isFailure)
             return Result.fail(categoryResult.getError());
@@ -62,8 +65,8 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
         if (!category) return Result.fail('Auction category not found');
 
         const assets =
-            input.assets && input.assets.length > 0
-                ? input.assets.map((a, idx) =>
+            dto.assets && dto.assets.length > 0
+                ? dto.assets.map((a, idx) =>
                       AuctionAsset.create({
                           id: this._idGeneratingService.generateId(),
                           auctionId: auction.getId(),

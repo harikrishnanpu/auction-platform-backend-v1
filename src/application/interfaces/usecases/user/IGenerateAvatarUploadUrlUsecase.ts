@@ -1,9 +1,14 @@
 import { AvatarUploadUrlResponseDto } from '@application/dtos/user/avatarUploadUrl.dto';
 import { Result } from '@domain/shared/result';
-import { ZodGenerateUploadUrlInputType } from '@presentation/validators/schemas/user/generate-upload-url.schema';
+export interface IValidatedGenerateAvatarUploadUrlInput {
+    userId: string;
+    contentType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+    fileName: string;
+    fileSize: number;
+}
 
 export interface IGenerateAvatarUploadUrlUsecase {
     execute(
-        data: ZodGenerateUploadUrlInputType,
+        data: IValidatedGenerateAvatarUploadUrlInput,
     ): Promise<Result<AvatarUploadUrlResponseDto>>;
 }

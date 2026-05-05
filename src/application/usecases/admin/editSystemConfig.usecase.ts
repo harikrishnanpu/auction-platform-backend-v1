@@ -1,5 +1,9 @@
 import { ISystemConfigDto } from '@application/dtos/admin/systemConfig.dto';
-import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+import {
+    IEditSystemConfigUsecase,
+    IValidatedEditSystemConfigInput,
+} from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import {
@@ -8,7 +12,6 @@ import {
 } from '@domain/entities/system-config/system-config.entity';
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { Result } from '@domain/shared/result';
-import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -19,7 +22,7 @@ export class EditSystemConfigUsecase implements IEditSystemConfigUsecase {
     ) {}
 
     async execute(
-        input: ZodEditSystemConfigInputType,
+        input: IValidatedEditSystemConfigInput,
     ): Promise<Result<ISystemConfigDto>> {
         const dto = AdminMapperProfile.toEditSystemConfigInputDto(input);
 

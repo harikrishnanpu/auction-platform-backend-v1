@@ -5,7 +5,11 @@ import { IIdGeneratingService } from '@application/interfaces/services/IIdGenera
 import { IOtpService } from '@application/interfaces/services/IOtpService';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
 import { ISubscriptionService } from '@application/interfaces/services/ISubscriptionService';
-import { IRegisterUseCase } from '@application/interfaces/usecases/auth/IRegisterUsecase';
+import type {
+    IRegisterUseCase,
+    IValidatedRegisterInput,
+} from '@application/interfaces/usecases/auth/IRegisterUsecase';
+
 import { RegisterUserMapper } from '@application/mappers/auth/register.mapper';
 import {
     Otp,
@@ -21,7 +25,6 @@ import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
-import { ZodRegisterInputType } from '@presentation/validators/schemas/auth/register.schema';
 import { TYPES } from 'di/types.di';
 import { inject, injectable } from 'inversify';
 
@@ -49,7 +52,7 @@ export class RegisterUseCase implements IRegisterUseCase {
     }
 
     async execute(
-        input: ZodRegisterInputType,
+        input: IValidatedRegisterInput,
     ): Promise<Result<RegisterUserOutputDto>> {
         try {
             const dto = RegisterUserMapper.toDto(input);

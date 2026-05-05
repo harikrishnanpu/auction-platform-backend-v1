@@ -1,11 +1,14 @@
 import { IViewKycOutputDto } from '@application/dtos/admin/viewKyc.dto';
 import { IStorageService } from '@application/interfaces/services/IStorageService';
-import { IViewKycUsecase } from '@application/interfaces/usecases/admin/IViewKycUsecase';
+import type {
+    IViewKycUsecase,
+    IValidatedViewKycInput,
+} from '@application/interfaces/usecases/admin/IViewKycUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { IKycDocumentRepository } from '@domain/repositories/IKycDocumentRepository';
 import { Result } from '@domain/shared/result';
-import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/viewKyc.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -18,7 +21,7 @@ export class ViewKycUsecase implements IViewKycUsecase {
     ) {}
 
     async execute(
-        data: ZodViewKycInputType,
+        data: IValidatedViewKycInput,
     ): Promise<Result<IViewKycOutputDto>> {
         const dto = AdminMapperProfile.toViewKycInputDto(data);
         const { documentId } = dto;

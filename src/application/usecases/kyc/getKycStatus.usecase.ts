@@ -1,7 +1,11 @@
 import { IGetKycStatusOutput } from '@application/dtos/kyc/get-kyc-status.usecase';
 import { IKycResponseDto } from '@application/dtos/kyc/kyc.response.dto';
 import { IStorageService } from '@application/interfaces/services/IStorageService';
-import { IGetKycStatusUsecase } from '@application/interfaces/usecases/kyc/IGetKycStatusUsecase';
+import {
+    IGetKycStatusUsecase,
+    IValidatedGetKycStatusInput,
+} from '@application/interfaces/usecases/kyc/IGetKycStatusUsecase';
+
 import { TYPES } from '@di/types.di';
 import {
     DocumentSide,
@@ -13,7 +17,6 @@ import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { ZodGetKycStatusInputType } from '@presentation/validators/schemas/kyc/getKycStatus.schema';
 import { KycMapperProfile } from '@application/mappers/kyc/kyc.mapper';
 
 @injectable()
@@ -28,7 +31,7 @@ export class GetKycStatusUseCase implements IGetKycStatusUsecase {
     ) {}
 
     async execute(
-        data: ZodGetKycStatusInputType,
+        data: IValidatedGetKycStatusInput,
     ): Promise<Result<IGetKycStatusOutput>> {
         const dto = KycMapperProfile.toGetKycStatusInput(data);
 

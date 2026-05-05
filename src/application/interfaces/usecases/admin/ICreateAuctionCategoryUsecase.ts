@@ -1,9 +1,13 @@
 import { ICreateAuctionCategoryOutputDto } from '@application/dtos/admin/createAuctionCategory.dto';
 import { Result } from '@domain/shared/result';
-import { ZodCreateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
+export interface IValidatedCreateAuctionCategoryInput {
+    name: string;
+    parentId?: string;
+    userId: string;
+}
 
 export interface ICreateAuctionCategoryUsecase {
     execute(
-        data: ZodCreateAuctionCategoryInputType,
+        data: IValidatedCreateAuctionCategoryInput,
     ): Promise<Result<ICreateAuctionCategoryOutputDto>>;
 }

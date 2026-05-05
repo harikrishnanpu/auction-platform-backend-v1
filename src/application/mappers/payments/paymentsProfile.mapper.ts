@@ -3,13 +3,13 @@ import {
     IUserPaymentDto,
     IVerifyPaymentInputDto,
 } from '@application/dtos/payments/payment.dto';
+import { IValidatedGetUserPaymentsInput } from '@application/interfaces/usecases/payments/IGetUserPaymentsUsecase';
 import { Payments } from '@domain/entities/payments/payments.entity';
-import { ZodGetUsersPaymentsInputType } from '@presentation/validators/schemas/payments/getUsersPayments.schema';
 import { ZodVerifyPaymentInputType } from '@presentation/validators/schemas/payments/verifyPayment.schema';
 
 export class PaymentsMapperProfile {
     public static toGetUserPaymentsInput(
-        data: ZodGetUsersPaymentsInputType,
+        data: IValidatedGetUserPaymentsInput,
     ): IGetUserPaymentsInputDto {
         return {
             userId: data.userId,

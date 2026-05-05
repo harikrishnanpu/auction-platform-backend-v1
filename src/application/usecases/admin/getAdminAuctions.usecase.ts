@@ -1,6 +1,7 @@
 import type {
     IGetAdminAuctionsOutputDto,
     IGetAdminAuctionsUsecase,
+    IValidatedGetAdminAuctionsInput,
 } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
@@ -9,7 +10,6 @@ import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 
 @injectable()
 export class GetAdminAuctionsUsecase implements IGetAdminAuctionsUsecase {
@@ -19,7 +19,7 @@ export class GetAdminAuctionsUsecase implements IGetAdminAuctionsUsecase {
     ) {}
 
     async execute(
-        input: ZodGetBrowseAuctionsInputType,
+        input: IValidatedGetAdminAuctionsInput,
     ): Promise<Result<IGetAdminAuctionsOutputDto>> {
         const dto = AdminMapperProfile.toGetAdminAuctionsInputDto(input);
 

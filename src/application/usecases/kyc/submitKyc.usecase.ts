@@ -1,10 +1,13 @@
 import { ISubmitKycOutput } from '@application/dtos/kyc/submit-kyc.dto';
-import { ISubmitKycUsecase } from '@application/interfaces/usecases/kyc/ISubmitKycUsecase';
+import type {
+    ISubmitKycUsecase,
+    IValidatedSubmitKycInput,
+} from '@application/interfaces/usecases/kyc/ISubmitKycUsecase';
+
 import { TYPES } from '@di/types.di';
 import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { ZodSubmitKycInputType } from '@presentation/validators/schemas/kyc/submitKyc.schema';
 import { KycMapperProfile } from '@application/mappers/kyc/kyc.mapper';
 
 @injectable()
@@ -15,7 +18,7 @@ export class SubmitKycUsecase implements ISubmitKycUsecase {
     ) {}
 
     async execute(
-        data: ZodSubmitKycInputType,
+        data: IValidatedSubmitKycInput,
     ): Promise<Result<ISubmitKycOutput>> {
         try {
             const dto = KycMapperProfile.toSubmitKycInputDto(data);

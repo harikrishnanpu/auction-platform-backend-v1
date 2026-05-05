@@ -1,11 +1,14 @@
 import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
-import { IUpdateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
+import {
+    IUpdateAuctionCategoryUsecase,
+    IValidatedUpdateAuctionCategoryInput,
+} from '@application/interfaces/usecases/admin/IUpdateAuctioncategoryUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -16,7 +19,7 @@ export class UpdateAuctionCategoryUsecase implements IUpdateAuctionCategoryUseca
     ) {}
 
     async execute(
-        data: ZodUpdateAuctionCategoryInputType,
+        data: IValidatedUpdateAuctionCategoryInput,
     ): Promise<Result<IUpdateAuctionCategoryOutputDto>> {
         const dto = AdminMapperProfile.toUpdateAuctionCategoryInputDto(data);
         const { categoryId, name, parentId } = dto;

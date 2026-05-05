@@ -1,9 +1,15 @@
 import { ISystemConfigDto } from '@application/dtos/admin/systemConfig.dto';
+import { SystemConfigKey } from '@domain/entities/system-config/system-config.entity';
 import { Result } from '@domain/shared/result';
-import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
+
+export interface IValidatedEditSystemConfigInput {
+    key: SystemConfigKey;
+    description: string;
+    value: string;
+}
 
 export interface IEditSystemConfigUsecase {
     execute(
-        input: ZodEditSystemConfigInputType,
+        input: IValidatedEditSystemConfigInput,
     ): Promise<Result<ISystemConfigDto>>;
 }

@@ -1,10 +1,13 @@
 import { IGetUserPaymentsOutputDto } from '@application/dtos/payments/payment.dto';
-import { IGetUserPaymentsUsecase } from '@application/interfaces/usecases/payments/IGetUserPaymentsUsecase';
+import {
+    IGetUserPaymentsUsecase,
+    IValidatedGetUserPaymentsInput,
+} from '@application/interfaces/usecases/payments/IGetUserPaymentsUsecase';
+
 import { PaymentsMapperProfile } from '@application/mappers/payments/paymentsProfile.mapper';
 import { TYPES } from '@di/types.di';
 import { IPaymentRepository } from '@domain/repositories/IPaymentRepository';
 import { Result } from '@domain/shared/result';
-import { ZodGetUsersPaymentsInputType } from '@presentation/validators/schemas/payments/getUsersPayments.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -15,7 +18,7 @@ export class GetUserPaymentsUsecase implements IGetUserPaymentsUsecase {
     ) {}
 
     async execute(
-        input: ZodGetUsersPaymentsInputType,
+        input: IValidatedGetUserPaymentsInput,
     ): Promise<Result<IGetUserPaymentsOutputDto>> {
         const dto = PaymentsMapperProfile.toGetUserPaymentsInput(input);
 

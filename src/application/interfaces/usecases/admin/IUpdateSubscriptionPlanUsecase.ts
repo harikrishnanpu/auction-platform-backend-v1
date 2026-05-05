@@ -1,9 +1,21 @@
 import { ISubscriptionPlanDto } from '@application/dtos/admin/subscription.dto';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateSubscriptionPlanInputType } from '@presentation/validators/schemas/admin/updateSubscriptionPlan.schema';
+export interface IValidatedUpdateSubscriptionPlanInput {
+    planId: string;
+    name: string;
+    description: string;
+    price: number;
+    durationDays: number;
+    isDefault: boolean;
+    isActive: boolean;
+    features: {
+        featureId: string;
+        value: string;
+    }[];
+}
 
 export interface IUpdateSubscriptionPlanUsecase {
     execute(
-        input: ZodUpdateSubscriptionPlanInputType,
+        input: IValidatedUpdateSubscriptionPlanInput,
     ): Promise<Result<ISubscriptionPlanDto>>;
 }
