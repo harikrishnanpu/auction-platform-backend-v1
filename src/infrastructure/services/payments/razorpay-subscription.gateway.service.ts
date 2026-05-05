@@ -9,6 +9,7 @@ import { Result } from '@domain/shared/result';
 import Razorpay from 'razorpay';
 import crypto, { BinaryLike } from 'crypto';
 import { IsubcriptionWebhookEventHandleInputDto } from '@application/interfaces/usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
+import { v4 as uuidv4 } from 'uuid';
 
 export class RazorpaySubscriptionGatewayService implements IRazorpaySubscriptionGatewayService {
     private readonly _razorpay: Razorpay;
@@ -44,15 +45,17 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
                 }
             }
 
-            const customer = await this._razorpay.customers.create({
-                name: input.name,
-                email: `${input.email}@example.com`,
-                contact: `+91${input.phone}`,
-                fail_existing: 0,
-                notes: { userId: input.userId },
-            });
+            // const customer = await this._razorpay.customers.create({
+            //     name: input.name,
+            //     email: `${input.email}@example.com`,
+            //     contact: `+91${input.phone}`,
+            //     fail_existing: 0,
+            //     notes: { userId: input.userId },
+            // });
 
-            return Result.ok({ customerId: customer.id });
+            const uuid = uuidv4();
+
+            return Result.ok({ customerId: uuid });
         } catch (err) {
             console.log(err);
             return Result.fail('razpya customer error');

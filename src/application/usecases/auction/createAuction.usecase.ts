@@ -1,7 +1,4 @@
-import {
-    ICreateAuctionUsecase,
-    IValidatedICreateAuctionInput,
-} from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
+import { ICreateAuctionUsecase } from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
 
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { TYPES } from '@di/types.di';
@@ -17,6 +14,7 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
+import { ICreateAuctionInputDto } from '@application/dtos/auction/create-auction.dto';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -31,9 +29,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         private readonly _auctionCreatePolicyFactory: AuctionCreatePolicyFactory,
     ) {}
 
-    async execute(
-        data: IValidatedICreateAuctionInput,
-    ): Promise<Result<IAuctionDto>> {
+    async execute(data: ICreateAuctionInputDto): Promise<Result<IAuctionDto>> {
         console.log('CREATE AUCTION INPUT: ', data);
 
         const dto = AuctionMapperProrfile.toCreateAuctionDto(data);

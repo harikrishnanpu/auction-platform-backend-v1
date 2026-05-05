@@ -5,7 +5,6 @@ import {
 } from '@application/dtos/admin/request-auction-category.dto';
 import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
 import { Auction, AuctionType } from '@domain/entities/auction/auction.entity';
-import { ZodCreateAuctionInputType } from '@presentation/validators/schemas/auction/createAuction.schema';
 import { ZodRequestAuctionCategoryInputType } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import {
     IApproveAuctionCategoryInputDto,
@@ -43,7 +42,7 @@ import { IValidatedUpdateAuctionInput } from '@application/interfaces/usecases/a
 
 export class AuctionMapperProrfile {
     public static toCreateAuctionDto(
-        data: ZodCreateAuctionInputType,
+        data: ICreateAuctionInputDto,
     ): ICreateAuctionInputDto {
         return {
             userId: data.userId,
