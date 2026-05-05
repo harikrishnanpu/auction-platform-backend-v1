@@ -33,6 +33,8 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
         input: EnsureRazorpayCustomerInput,
     ): Promise<Result<{ customerId: string }>> {
         try {
+            console.log('input =---', input);
+
             if (input.razorpayCustomerId) {
                 const customer = await this._razorpay.customers.fetch(
                     input.razorpayCustomerId,
@@ -44,8 +46,8 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
 
             const customer = await this._razorpay.customers.create({
                 name: input.name,
-                email: input.email,
-                contact: input.phone,
+                email: `${input.email}@example.com`,
+                contact: `+91${input.phone}`,
                 fail_existing: 0,
                 notes: { userId: input.userId },
             });

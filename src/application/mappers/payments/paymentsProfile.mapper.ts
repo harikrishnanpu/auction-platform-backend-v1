@@ -25,6 +25,7 @@ export class PaymentsMapperProfile {
             amount: data.getAmount(),
             currency: data.getCurrency(),
             status: data.getStatus(),
+            paymentFor: data.getForPayment(),
             referenceId: data.getReferenceId(),
             phase: data.getPhase(),
             dueAt: data.getDueAt(),

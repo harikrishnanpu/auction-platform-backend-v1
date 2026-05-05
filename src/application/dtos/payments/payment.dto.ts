@@ -1,4 +1,5 @@
 import {
+    PaymentFor,
     PaymentPhase,
     PaymentStatus,
 } from '@domain/entities/payments/payments.entity';
@@ -15,6 +16,7 @@ export interface IUserPaymentDto {
     amount: number;
     currency: string;
     status: PaymentStatus;
+    paymentFor: PaymentFor;
     referenceId: string;
     phase: PaymentPhase;
     dueAt: Date;
