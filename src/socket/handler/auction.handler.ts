@@ -812,7 +812,7 @@ export class AuctionHandler {
         if (
             !room.router.canConsume({
                 producerId: parsed.data.producerId,
-                rtpCapabilities: parsed.data.rtpCapabilities as never,
+                rtpCapabilities: parsed.data.rtpCapabilities,
             })
         ) {
             return { success: false, error: 'Cannot consume this producer' };
@@ -820,7 +820,7 @@ export class AuctionHandler {
 
         const consumer = await user.transport.consume({
             producerId: parsed.data.producerId,
-            rtpCapabilities: parsed.data.rtpCapabilities as never,
+            rtpCapabilities: parsed.data.rtpCapabilities,
             paused: true,
         });
 

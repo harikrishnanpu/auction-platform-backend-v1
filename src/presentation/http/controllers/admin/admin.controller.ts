@@ -92,6 +92,37 @@ import { IApproveAuctionCategoryOutputDto } from '@application/dtos/admin/approv
 import { IRejectAuctionCategoryrequestOutputDto } from '@application/dtos/admin/rejectAuctionCategory.dto';
 import { GetAllAuctionCategoryDto } from '@application/dtos/auction/getAllAuction.dto';
 import { IUpdateAuctionCategoryOutputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
+import { IGetSystemConfigsUsecase } from '@application/interfaces/usecases/admin/IGetSystemConfigsUsecase';
+import { IEditSystemConfigUsecase } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+import {
+    editSystemConfigSchema,
+    ZodEditSystemConfigInputType,
+} from '@presentation/validators/schemas/admin/editSystemConfig.schema';
+import {
+    createSubscriptionPlanSchema,
+    ZodCreateSubscriptionPlanInputType,
+} from '@presentation/validators/schemas/admin/createSubscriptionPlan.schema';
+import { ICreateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
+import { IGetSubscriptionPlansUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionPlansUsecase';
+import { IGetSubscribedUsersUsecase } from '@application/interfaces/usecases/admin/IGetSubscribedUsersUsecase';
+import { IGetSubscriptionFeaturesUsecase } from '@application/interfaces/usecases/admin/IGetSubscriptionFeatureUsecase';
+import { IUpdateSubscriptionPlanStatusUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanStatusUsecase';
+import {
+    IGetSubscribedUsersOutputDto,
+    IGetSubscriptionFeaturesOutputDto,
+    IGetSubscriptionPlansOutputDto,
+    ISubscriptionPlanDto,
+} from '@application/dtos/admin/subscription.dto';
+import {
+    updateSubscriptionPlanStatusSchema,
+    ZodUpdateSubscriptionPlanStatusInputType,
+} from '@presentation/validators/schemas/admin/updateSubscriptionPlanStatus.schema';
+import {
+    updateSubscriptionPlanSchema,
+    ZodUpdateSubscriptionPlanInputType,
+} from '@presentation/validators/schemas/admin/updateSubscriptionPlan.schema';
+import { IUpdateSubscriptionPlanUsecase } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+import { IGetSystemConfigsOutputDto } from '@application/dtos/admin/systemConfig.dto';
 
 @injectable()
 export class AdminController {
@@ -130,6 +161,22 @@ export class AdminController {
         private readonly _viewKycUsecase: IViewKycUsecase,
         @inject(TYPES.IRejectAuctionCategoryUsecase)
         private readonly _rejectAuctionCategoryUsecase: IRejectAuctionCategoryrequestUsecase,
+        @inject(TYPES.IGetSystemConfigsUsecase)
+        private readonly _getSystemConfigsUsecase: IGetSystemConfigsUsecase,
+        @inject(TYPES.IEditSystemConfigUsecase)
+        private readonly _editSystemConfigUsecase: IEditSystemConfigUsecase,
+        @inject(TYPES.ICreateSubscriptionPlanUsecase)
+        private readonly _createSubscriptionPlanUsecase: ICreateSubscriptionPlanUsecase,
+        @inject(TYPES.IGetSubscriptionPlansUsecase)
+        private readonly _getSubscriptionPlansUsecase: IGetSubscriptionPlansUsecase,
+        @inject(TYPES.IGetSubscribedUsersUsecase)
+        private readonly _getSubscribedUsersUsecase: IGetSubscribedUsersUsecase,
+        @inject(TYPES.IGetSubscriptionFeaturesUsecase)
+        private readonly _getSubscriptionFeaturesUsecase: IGetSubscriptionFeaturesUsecase,
+        @inject(TYPES.IUpdateSubscriptionPlanStatusUsecase)
+        private readonly _updateSubscriptionPlanStatusUsecase: IUpdateSubscriptionPlanStatusUsecase,
+        @inject(TYPES.IUpdateSubscriptionPlanUsecase)
+        private readonly _updateSubscriptionPlanUsecase: IUpdateSubscriptionPlanUsecase,
     ) {}
 
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
@@ -622,4 +669,205 @@ export class AdminController {
 
         result.getValue().stream.pipe(res);
     });
+
+    getSystemConfigs = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSystemConfigsUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSystemConfigsOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SYSTEM_CONFIGS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    updateSystemConfig = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodEditSystemConfigInputType>(
+                    editSystemConfigSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._editSystemConfigUsecase.execute(validationResult);
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.EDIT_SYSTEM_CONFIG_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    createSubscriptionPlan = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            console.log(req.body);
+
+            const validationResult =
+                ValidationHelper.validate<ZodCreateSubscriptionPlanInputType>(
+                    createSubscriptionPlanSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._createSubscriptionPlanUsecase.execute(
+                    validationResult,
+                );
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISubscriptionPlanDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.CREATE_SUBSCRIPTION_PLAN_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSubscriptionPlans = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSubscriptionPlansUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSubscriptionPlansOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_PLANS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    updateSubscriptionPlanStatus = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodUpdateSubscriptionPlanStatusInputType>(
+                    updateSubscriptionPlanStatusSchema,
+                    {
+                        planId: req.params.id as string,
+                        isDefault: req.body.isDefault,
+                        isActive: req.body.isActive,
+                    },
+                );
+
+            const result =
+                await this._updateSubscriptionPlanStatusUsecase.execute(
+                    validationResult,
+                );
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISubscriptionPlanDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES
+                    .UPDATE_SUBSCRIPTION_PLAN_STATUS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSubscribedUsers = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSubscribedUsersUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSubscribedUsersOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIBED_USERS_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSubscriptionFeatures = expressAsyncHandler(
+        async (_req: Request, res: Response) => {
+            const result = await this._getSubscriptionFeaturesUsecase.execute();
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetSubscriptionFeaturesOutputDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.GET_SUBSCRIPTION_FEATURES_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    updateSubscriptionPlan = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            const validationResult =
+                ValidationHelper.validate<ZodUpdateSubscriptionPlanInputType>(
+                    updateSubscriptionPlanSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._updateSubscriptionPlanUsecase.execute(
+                    validationResult,
+                );
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    ADMIN_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISubscriptionPlanDto>(
+                res,
+                result.getValue(),
+                ADMIN_CONSTANTS.MESSAGES.UPDATE_SUBSCRIPTION_PLAN_SUCCESSFULLY,
+                ADMIN_CONSTANTS.CODES.OK,
+            );
+        },
+    );
 }

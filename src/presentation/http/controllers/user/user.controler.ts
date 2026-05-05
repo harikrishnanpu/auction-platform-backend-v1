@@ -35,11 +35,19 @@ import { IGetUserNotificationsUsecase } from '@application/interfaces/usecases/n
 import { IGetUserParticipatedAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
 import { IGetUserHomeStatsUsecase } from '@application/interfaces/usecases/user/IGetUserHomeStatsUsecase';
+import { IGetPublicSubscriptionPlansUsecase } from '@application/interfaces/usecases/subscription/IGetPublicSubscriptionPlansUsecase';
+import { ICheckoutUserSubscriptionUsecase } from '@application/interfaces/usecases/subscription/ICheckoutUserSubscription';
+import { StartSubscriptionCheckoutOutputDto } from '@application/dtos/user/startSubscriptionCheckout.dto';
 import { IGetUserHomeStatsOutputDto } from '@application/dtos/user/getUserHomeStats.dto';
 import {
     ZodGetUserParticipatedAuctionsInputType,
     ZodGetUserParticipatedAuctionsSchema,
 } from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
+import {
+    startSubscriptionCheckoutSchema,
+    ZodStartSubscriptionCheckoutInputType,
+} from '@presentation/validators/schemas/user/startSubscriptionCheckout.schema';
+import { IPublicSubscriptionPlaDto } from '@application/dtos/user/publicSubscriptionPlan.dto';
 
 @injectable()
 export class UserController {
@@ -62,6 +70,10 @@ export class UserController {
         private readonly _getOrCreateWalletUsecase: IGetOrCreateWalletUsecase,
         @inject(TYPES.IGetUserHomeStatsUsecase)
         private readonly _getUserHomeStatsUsecase: IGetUserHomeStatsUsecase,
+        @inject(TYPES.IGetPublicSubscriptionPlansUsecase)
+        private readonly _getPublicSubscriptionPlansUsecase: IGetPublicSubscriptionPlansUsecase,
+        @inject(TYPES.IStartUserSubscriptionCheckoutUsecase)
+        private readonly _startUserSubscriptionCheckoutUsecase: ICheckoutUserSubscriptionUsecase,
     ) {}
 
     /**
@@ -411,6 +423,74 @@ export class UserController {
             USER_PROFILE_CONSTANTS.CODES.OK,
         );
     });
+
+    getSubscriptionPlans = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const result =
+                await this._getPublicSubscriptionPlansUsecase.execute(
+                    req.user.id,
+                );
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IPublicSubscriptionPlaDto[]>(
+                res,
+                result.getValue(),
+                USER_PROFILE_CONSTANTS.MESSAGES
+                    .GET_SUBSCRIPTION_PLANS_SUCCESSFULLY,
+                USER_PROFILE_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    startSubscriptionCheckout = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    USER_PROFILE_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const body =
+                ValidationHelper.validate<ZodStartSubscriptionCheckoutInputType>(
+                    startSubscriptionCheckoutSchema,
+                    req.body,
+                );
+
+            const result =
+                await this._startUserSubscriptionCheckoutUsecase.execute({
+                    userId: req.user.id,
+                    subscriptionPlanId: body.subscriptionPlanId,
+                });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    USER_PROFILE_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<StartSubscriptionCheckoutOutputDto>(
+                res,
+                result.getValue(),
+                USER_PROFILE_CONSTANTS.MESSAGES
+                    .START_SUBSCRIPTION_CHECKOUT_SUCCESSFULLY,
+                USER_PROFILE_CONSTANTS.CODES.OK,
+            );
+        },
+    );
 
     getWallet = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {

@@ -133,6 +133,62 @@ export class AdminRoutes {
             this._adminController.viewKyc,
         );
 
+        this._router.get(
+            '/system-configs',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.getSystemConfigs,
+        );
+
+        this._router.put(
+            '/system-configs',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.updateSystemConfig,
+        );
+
+        this._router.post(
+            '/subscriptions/plans',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.createSubscriptionPlan,
+        );
+
+        this._router.get(
+            '/subscriptions/plans',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.getSubscriptionPlans,
+        );
+
+        this._router.patch(
+            '/subscriptions/plans/:id',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.updateSubscriptionPlanStatus,
+        );
+
+        this._router.get(
+            '/subscriptions/features',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.getSubscriptionFeatures,
+        );
+
+        this._router.get(
+            '/subscriptions/users',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.getSubscribedUsers,
+        );
+
+        this._router.put(
+            '/subscriptions/plans/:id',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.ADMIN]),
+            this._adminController.updateSubscriptionPlan,
+        );
+
         return this._router;
     }
 }

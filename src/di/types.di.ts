@@ -4,6 +4,7 @@ export const TYPES = {
     IEmailService: Symbol.for('IEmailService'),
     IPasswordService: Symbol.for('IPasswordService'),
     IIdGeneratingService: Symbol.for('IIdGeneratingService'),
+    ISystemConfigService: Symbol.for('ISystemConfigService'),
     IPaymentGatewayService: Symbol.for('IPaymentGatewayService'),
     IOtpService: Symbol.for('IOtpService'),
     IRegisterUseCase: Symbol.for('IRegisterUseCase'),
@@ -108,6 +109,33 @@ export const TYPES = {
     ),
     IGetAdminAuctionsUsecase: Symbol.for('IGetAdminAuctionsUsecase'),
     IUpdateAuctionCategoryUsecase: Symbol.for('IUpdateAuctionCategoryUsecase'),
+    IGetSystemConfigsUsecase: Symbol.for('IGetSystemConfigsUsecase'),
+    IGetSystemConfigKeysUsecase: Symbol.for('IGetSystemConfigKeysUsecase'),
+    ICreateSystemConfigUsecase: Symbol.for('ICreateSystemConfigUsecase'),
+    IEditSystemConfigUsecase: Symbol.for('IEditSystemConfigUsecase'),
+    ISystemConfigRepository: Symbol.for('ISystemConfigRepository'),
+    ICreateSubscriptionPlanUsecase: Symbol.for(
+        'ICreateSubscriptionPlanUsecase',
+    ),
+    IUpdateSubscriptionPlanStatusUsecase: Symbol.for(
+        'IUpdateSubscriptionPlanStatusUsecase',
+    ),
+    IGetSubscriptionPlansUsecase: Symbol.for('IGetSubscriptionPlansUsecase'),
+    IGetSubscribedUsersUsecase: Symbol.for('IGetSubscribedUsersUsecase'),
+    IGetSubscriptionFeaturesUsecase: Symbol.for(
+        'IGetSubscriptionFeaturesUsecase',
+    ),
+    ISubscriptionPlanRepository: Symbol.for('ISubscriptionPlanRepository'),
+    IUserSubscriptionRepository: Symbol.for('IUserSubscriptionRepository'),
+    IRazorpaySubscriptionGatewayService: Symbol.for(
+        'IRazorpaySubscriptionGatewayService',
+    ),
+    IGetPublicSubscriptionPlansUsecase: Symbol.for(
+        'IGetPublicSubscriptionPlansUsecase',
+    ),
+    IStartUserSubscriptionCheckoutUsecase: Symbol.for(
+        'IStartUserSubscriptionCheckoutUsecase',
+    ),
     IViewKycUsecase: Symbol.for('IViewKycUsecase'),
     IGetAllSellerAuctionCategoryRequestUsecase: Symbol.for(
         'IGetAllSellerAuctionCategoryRequestUsecase',
@@ -146,6 +174,7 @@ export const TYPES = {
     ),
     IConfirmWalletTopupUsecase: Symbol.for('IConfirmWalletTopupUsecase'),
     WalletController: Symbol.for('WalletController'),
+    WebhookController: Symbol.for('WebhookController'),
     IPaymentRepository: Symbol.for('IPaymentRepository'),
     IAuctionPaymentAmountSplitStrategy: Symbol.for(
         'IAuctionPaymentAmountSplitStrategy',
@@ -227,6 +256,9 @@ export const TYPES = {
     WalletMapper: Symbol.for('WalletMapper'),
     UserMapper: Symbol.for('UserMapper'),
     WalletTransactionMapper: Symbol.for('WalletTransactionMapper'),
+    SystemConfigMapper: Symbol.for('SystemConfigMapper'),
+    SubscriptionPlanMapper: Symbol.for('SubscriptionPlanMapper'),
+    UserSubscriptionMapper: Symbol.for('UserSubscriptionMapper'),
     LiveAuctionCreatePolicy: Symbol.for('LiveAuctionCreatePolicy'),
     IFraudReportRepository: Symbol.for('IFraudReportRepository'),
     IUserSuspensionRepository: Symbol.for('IUserSuspensionRepository'),
@@ -247,4 +279,15 @@ export const TYPES = {
     IToolFactory: Symbol.for('IToolFactory'),
     IKnowledgeVectorStore: Symbol.for('IKnowledgeVectorStore'),
     IKnowledgeVectorDb: Symbol.for('IKnowledgeVectorDb'),
+    ISubscriptionFeaturesRepository: Symbol.for(
+        'ISubscriptionFeaturesRepository',
+    ),
+    SubscriptionFeaturesMapper: Symbol.for('SubscriptionFeaturesMapper'),
+    IUpdateSubscriptionPlanUsecase: Symbol.for(
+        'IUpdateSubscriptionPlanUsecase',
+    ),
+    ISubscriptionService: Symbol.for('ISubscriptionService'),
+    IRazorpaySubscriptionWebhookHandlerUsecase: Symbol.for(
+        'IRazorpayWebhookhandlerUsecase',
+    ),
 };

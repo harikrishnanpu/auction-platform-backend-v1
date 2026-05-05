@@ -15,6 +15,10 @@ export const USER_PROFILE_MESSAGES = {
     GET_MY_AUCTIONS_SUCCESSFULLY: 'Get my auctions successfully',
     GET_WALLET_SUCCESSFULLY: 'Get wallet successfully',
     GET_HOME_STATS_SUCCESSFULLY: 'Get home stats successfully',
+    GET_SUBSCRIPTION_PLANS_SUCCESSFULLY:
+        'Subscription plans fetched successfully',
+    START_SUBSCRIPTION_CHECKOUT_SUCCESSFULLY:
+        'Subscription checkout started successfully',
 };
 
 export const USER_PROFILE_CONSTANTS = {

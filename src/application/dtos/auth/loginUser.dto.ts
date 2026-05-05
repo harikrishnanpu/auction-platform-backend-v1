@@ -1,35 +1,15 @@
-import {
-  AuthProviderType,
-  UserStatus,
-} from '@domain/entities/user/user.entity';
+import { userResponseDto } from '@application/dtos/user/userResponse.dto';
+
+export type { userResponseDto };
+export { UserRoleType } from './userRole.dto';
 
 export interface LoginUserInput {
-  email: string;
-  password: string;
-}
-
-export enum UserRoleType {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  SELLER = 'SELLER',
-}
-
-export interface userResponseDto {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  avatar_url: string;
-  isProfileCompleted: boolean;
-  isVerified: boolean;
-  status: UserStatus;
-  authProvider: AuthProviderType;
-  roles: UserRoleType[];
+    email: string;
+    password: string;
 }
 
 export interface LoginUserOutput {
-  user: userResponseDto;
-  accessToken: string;
-  refreshToken: string;
+    user: userResponseDto;
+    accessToken: string;
+    refreshToken: string;
 }
