@@ -9,7 +9,12 @@ import { Result } from '@domain/shared/result';
 import Razorpay from 'razorpay';
 import crypto, { BinaryLike } from 'crypto';
 import { IsubcriptionWebhookEventHandleInputDto } from '@application/interfaces/usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
-import { v4 as uuidv4 } from 'uuid';
+
+// type RazorpayCustomer = {
+//     id: string;
+//     name?: string;
+//     email?: string;
+//   };
 
 export class RazorpaySubscriptionGatewayService implements IRazorpaySubscriptionGatewayService {
     private readonly _razorpay: Razorpay;
@@ -36,29 +41,63 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
         try {
             console.log('input =---', input);
 
-            if (input.razorpayCustomerId) {
-                const customer = await this._razorpay.customers.fetch(
-                    input.razorpayCustomerId,
-                );
-                if (customer) {
-                    return Result.ok({ customerId: customer.id });
+            if (
+                input.razorpayCustomerId &&
+                input.razorpayCustomerId.trim() !== ''
+            ) {
+                try {
+                    const customer = await this._razorpay.customers.fetch(
+                        input.razorpayCustomerId,
+                    );
+
+                    console.log('existing customer -- customer =---', customer);
+
+                    if (customer?.id) {
+                        return Result.ok({ customerId: customer.id });
+                    }
+                } catch (err) {
+                    console.log(
+                        'Invalid razorpay customer id, creating new one',
+                        err,
+                    );
+                    return Result.fail(
+                        'Invalid razorpay customer id, creating new one',
+                    );
                 }
             }
 
-            // const customer = await this._razorpay.customers.create({
-            //     name: input.name,
-            //     email: `${input.email}@example.com`,
-            //     contact: `+91${input.phone}`,
-            //     fail_existing: 0,
-            //     notes: { userId: input.userId },
-            // });
+            //   const existingCustomers = await this._razorpay.customers.all({
+            //     count: 100,
+            //   })
 
-            const uuid = uuidv4();
+            //   console.log('existingCustomers =---', existingCustomers);
 
-            return Result.ok({ customerId: uuid });
+            //   const existing = existingCustomers.items.find((c: RazorpayCustomer) => {
+            //     return (
+            //       c.email === input.email
+            //     );
+            //   });
+
+            //   if (existing) {
+            //     return Result.ok({ customerId: existing.id });
+            //   }
+
+            const customer = await this._razorpay.customers.create({
+                name: input.name,
+                email: input.email,
+                contact: `+91${input.phone}`,
+                fail_existing: 0,
+                notes: {
+                    userId: input.userId,
+                },
+            });
+
+            console.log('new customer -- customer =---', customer);
+
+            return Result.ok({ customerId: customer.id });
         } catch (err) {
             console.log(err);
-            return Result.fail('razpya customer error');
+            return Result.fail('razorpay customer error');
         }
     }
 
@@ -99,6 +138,8 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
         input: CreateRazorpaySubscriptionInput,
     ): Promise<Result<CreateRazorpaySubscriptionOutput>> {
         try {
+            console.log('input =---', input);
+
             const sub = await this._razorpay.subscriptions.create({
                 plan_id: input.razorpayPlanId,
                 customer_notify: 1,
@@ -110,6 +151,8 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
                     appSubscriptionPlanId: input.appSubscriptionPlanId,
                 },
             });
+
+            console.log('sub =---', sub);
 
             return Result.ok({
                 razorpaySubscriptionId: sub.id,

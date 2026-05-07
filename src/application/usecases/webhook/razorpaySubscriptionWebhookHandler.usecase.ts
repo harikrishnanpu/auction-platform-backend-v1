@@ -79,8 +79,9 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
 
             const razorpaySubscriptionId = razorpayEvent.subscriptionId;
 
-            if (!razorpayEvent.event.trim())
+            if (!razorpayEvent.event.trim()) {
                 return Result.fail('Razorpay webhook event is missing');
+            }
 
             if (!razorpaySubscriptionId) {
                 return Result.fail(
@@ -97,32 +98,48 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                 return Result.fail(userSubscriptionRes.getError());
             }
 
-            const existingUserSubscriptionEntity =
+            if (
+                userSubscriptionRes.getValue()?.getStatus() ===
+                UserSubscriptionStatus.ACTIVE
+            ) {
+                return Result.fail('User is already subscribed to this plan');
+            }
+
+            const existingUserSubscriptionPendingEntity =
                 userSubscriptionRes.getValue();
-            if (!existingUserSubscriptionEntity) return Result.ok(undefined);
+
+            if (!existingUserSubscriptionPendingEntity) {
+                return Result.fail('User subscription not found');
+            }
 
             const newDomainStatus = this.mapEventToDomainStatus(
                 razorpayEvent.event,
             );
 
-            if (!newDomainStatus) return Result.ok(undefined);
+            if (!newDomainStatus) {
+                return Result.fail('Invalid event name');
+            }
 
             const subscriptionPlanEntityRes =
                 await this._subscriptionPlanRepository.findById(
-                    existingUserSubscriptionEntity.getSubscriptionPlanId(),
+                    existingUserSubscriptionPendingEntity.getSubscriptionPlanId(),
                 );
-            if (subscriptionPlanEntityRes.isFailure)
+
+            if (subscriptionPlanEntityRes.isFailure) {
                 return Result.fail(subscriptionPlanEntityRes.getError());
+            }
+
             const subscriptionPlanEntity = subscriptionPlanEntityRes.getValue();
-            if (!subscriptionPlanEntity)
+            if (!subscriptionPlanEntity) {
                 return Result.fail('Subscription plan not found');
+            }
 
             const now = new Date();
 
             if (newDomainStatus === UserSubscriptionStatus.ACTIVE) {
                 const activeSubscriptionRes =
                     await this._userSubscriptionRepository.getByUserId(
-                        existingUserSubscriptionEntity.getUserId(),
+                        existingUserSubscriptionPendingEntity.getUserId(),
                     );
                 if (activeSubscriptionRes.isFailure) {
                     return Result.fail(activeSubscriptionRes.getError());
@@ -134,7 +151,7 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                 if (
                     existingActiveSubscription &&
                     existingActiveSubscription.getId() !==
-                        existingUserSubscriptionEntity.getId()
+                        existingUserSubscriptionPendingEntity.getId()
                 ) {
                     const existingActivePlanRes =
                         await this._subscriptionPlanRepository.findById(
@@ -167,7 +184,7 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                     if (refundAmount > 0) {
                         const walletRes =
                             await this._getOrCreateWalletUsecase.execute({
-                                userId: existingUserSubscriptionEntity.getUserId(),
+                                userId: existingUserSubscriptionPendingEntity.getUserId(),
                             });
                         if (walletRes.isFailure) {
                             return Result.fail(walletRes.getError());
@@ -175,7 +192,7 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
 
                         const creditRes =
                             await this._creditWalletUsecase.execute({
-                                userId: existingUserSubscriptionEntity.getUserId(),
+                                userId: existingUserSubscriptionPendingEntity.getUserId(),
                                 amount: refundAmount,
                             });
                         if (creditRes.isFailure) {
@@ -186,6 +203,7 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                     existingActiveSubscription.setStatus(
                         UserSubscriptionStatus.EXPIRED,
                     );
+
                     existingActiveSubscription.setEndDate(now);
 
                     const expireOldRes =
@@ -199,24 +217,25 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
             }
 
             if (
-                existingUserSubscriptionEntity.getStatus() === newDomainStatus
+                existingUserSubscriptionPendingEntity.getStatus() ===
+                newDomainStatus
             ) {
                 return Result.ok(undefined);
             }
 
-            existingUserSubscriptionEntity.setStatus(newDomainStatus);
+            existingUserSubscriptionPendingEntity.setStatus(newDomainStatus);
             if (newDomainStatus === UserSubscriptionStatus.ACTIVE) {
                 const newEndDate = new Date(now);
                 newEndDate.setDate(
                     now.getDate() + subscriptionPlanEntity.getDurationDays(),
                 );
-                existingUserSubscriptionEntity.setEndDate(newEndDate);
+                existingUserSubscriptionPendingEntity.setEndDate(newEndDate);
             } else if (newDomainStatus === UserSubscriptionStatus.EXPIRED) {
-                existingUserSubscriptionEntity.setEndDate(now);
+                existingUserSubscriptionPendingEntity.setEndDate(now);
             }
 
             const saveRes = await this._userSubscriptionRepository.save(
-                existingUserSubscriptionEntity,
+                existingUserSubscriptionPendingEntity,
             );
 
             if (saveRes.isFailure) return Result.fail(saveRes.getError());

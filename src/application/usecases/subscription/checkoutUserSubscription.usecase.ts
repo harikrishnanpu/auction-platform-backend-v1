@@ -67,6 +67,11 @@ export class checkoutUserSubscriptionUsecase implements ICheckoutUserSubscriptio
                 currentUserSubscription.getStatus() ===
                     UserSubscriptionStatus.PENDING
             ) {
+                console.log(
+                    'currentUserSubscription =---',
+                    currentUserSubscription,
+                );
+
                 return Result.ok({
                     userSubscriptionId: currentUserSubscription.getId(),
                     razorpaySubscriptionId:

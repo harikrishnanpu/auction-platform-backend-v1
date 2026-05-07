@@ -95,6 +95,9 @@ export class PrismaUserSubscriptionRepository
     ): Promise<Result<UserSubscription | null>> {
         const row = await this._prisma.userSubscription.findFirst({
             where: { razorpaySubscriptionId },
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
 
         if (!row) return Result.ok(null);
