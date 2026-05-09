@@ -153,4 +153,24 @@ export class PrismaSubscriptionPlanRepository
         if (count > 0) return Result.ok(true);
         return Result.ok(false);
     }
+
+    async findByName(name: string): Promise<Result<SubscriptionPlan | null>> {
+        console.log('name =---', name);
+
+        const row = await this._prisma.subscriptionPlan.findFirst({
+            where: {
+                name: {
+                    equals: name,
+                    mode: 'insensitive',
+                },
+            },
+        });
+
+        if (!row) return Result.ok(null);
+
+        const mapped = this._mapper.toDomain(row);
+        if (mapped.isFailure) return Result.fail(mapped.getError());
+
+        return Result.ok(mapped.getValue());
+    }
 }

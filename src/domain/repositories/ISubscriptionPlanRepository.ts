@@ -11,4 +11,5 @@ export interface ISubscriptionPlanRepository {
     findById(id: string): Promise<Result<SubscriptionPlan | null>>;
     findActiveDefault(): Promise<Result<SubscriptionPlan | null>>;
     isSubscribedUsersExist(planId: string): Promise<Result<boolean>>;
+    findByName(name: string): Promise<Result<SubscriptionPlan | null>>;
 }

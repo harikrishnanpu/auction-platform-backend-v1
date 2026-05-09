@@ -5,6 +5,7 @@ export enum UserSubscriptionStatus {
     ACTIVE = 'ACTIVE',
     EXPIRED = 'EXPIRED',
     CANCELLED = 'CANCELLED',
+    PAYMENT_FAILED = 'PAYMENT_FAILED',
 }
 
 export class UserSubscription {
@@ -14,7 +15,7 @@ export class UserSubscription {
         private readonly subscriptionPlanId: string,
         private readonly razorpaySubscriptionId: string | null,
         private status: UserSubscriptionStatus,
-        private readonly startDate: Date,
+        private startDate: Date,
         private endDate: Date,
         private readonly createdAt: Date,
         private readonly updatedAt: Date,
@@ -58,6 +59,10 @@ export class UserSubscription {
 
     public setStatus(status: UserSubscriptionStatus): void {
         this.status = status;
+    }
+
+    public setStartDate(startDate: Date): void {
+        this.startDate = startDate;
     }
 
     public setEndDate(endDate: Date): void {

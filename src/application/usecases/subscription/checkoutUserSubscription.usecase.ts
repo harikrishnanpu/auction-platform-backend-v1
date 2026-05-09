@@ -132,14 +132,17 @@ export class checkoutUserSubscriptionUsecase implements ICheckoutUserSubscriptio
         }
 
         const razorPayCustomer = customerRes.getValue();
+        console.log('razorPayCustomer =---', razorPayCustomer);
 
         user.setRazorpayCustomerId(razorPayCustomer.customerId);
+
+        const newUserSubscriptionId = this._idGeneratingService.generateId();
 
         const razorpaySubscriptionRes =
             await this._razorpaySubscriptionGateway.createSubscription({
                 razorpayPlanId: newSubscriptionPlanEntity.getRazorpayPlanId()!,
                 customerId: razorPayCustomer.customerId,
-                userSubscriptionId: newSubscriptionPlanEntity.getId(),
+                userSubscriptionId: newUserSubscriptionId,
                 userId,
                 appSubscriptionPlanId: newSubscriptionPlanEntity.getId(),
                 durationDays: newSubscriptionPlanEntity.getDurationDays(),
@@ -152,7 +155,7 @@ export class checkoutUserSubscriptionUsecase implements ICheckoutUserSubscriptio
         const currRazorpaySubscription = razorpaySubscriptionRes.getValue();
 
         const newUserSubscriptionEntity = UserSubscription.create({
-            id: this._idGeneratingService.generateId(),
+            id: newUserSubscriptionId,
             userId: userId,
             subscriptionPlanId: newSubscriptionPlanEntity.getId(),
             razorpaySubscriptionId:

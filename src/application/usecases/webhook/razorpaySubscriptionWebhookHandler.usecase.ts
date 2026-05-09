@@ -1,9 +1,17 @@
+import {
+    USER_SUBSCRIPTION_INFINITE_END,
+    USER_SUBSCRIPTION_PLAN_UPGRADATION_REFUND_MAX_TIME,
+} from '@application/constants/subscription/subscription.constants';
+import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IRazorpaySubscriptionGatewayService } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
+import { IWalletService } from '@application/interfaces/services/IWalletService';
 import { ICreditWalletUsecase } from '@application/interfaces/usecases/wallet/ICreditWalletUsecase';
-import { IGetOrCreateWalletUsecase } from '@application/interfaces/usecases/wallet/IGetOrCreateWalletUsecase';
 import { IRazorpaySubscriptionWebhookHandlerUsecase } from '@application/interfaces/usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
 import { TYPES } from '@di/types.di';
-import { UserSubscriptionStatus } from '@domain/entities/subscription/user-subscription.entity';
+import {
+    UserSubscription,
+    UserSubscriptionStatus,
+} from '@domain/entities/subscription/user-subscription.entity';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
@@ -30,10 +38,12 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
         private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
         @inject(TYPES.IRazorpaySubscriptionGatewayService)
         private readonly _razorpayGatewayService: IRazorpaySubscriptionGatewayService,
-        @inject(TYPES.IGetOrCreateWalletUsecase)
-        private readonly _getOrCreateWalletUsecase: IGetOrCreateWalletUsecase,
         @inject(TYPES.ICreditWalletUsecase)
         private readonly _creditWalletUsecase: ICreditWalletUsecase,
+        @inject(TYPES.IWalletService)
+        private readonly _walletService: IWalletService,
+        @inject(TYPES.IIdGeneratingService)
+        private readonly _idGeneratingService: IIdGeneratingService,
     ) {}
 
     // webhook RRZPAYY =--- {
@@ -98,13 +108,6 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                 return Result.fail(userSubscriptionRes.getError());
             }
 
-            if (
-                userSubscriptionRes.getValue()?.getStatus() ===
-                UserSubscriptionStatus.ACTIVE
-            ) {
-                return Result.fail('User is already subscribed to this plan');
-            }
-
             const existingUserSubscriptionPendingEntity =
                 userSubscriptionRes.getValue();
 
@@ -118,6 +121,21 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
 
             if (!newDomainStatus) {
                 return Result.fail('Invalid event name');
+            }
+
+            const STATUSES_ALLOWED_TO_ACTIVE = [
+                UserSubscriptionStatus.PENDING,
+                UserSubscriptionStatus.PAYMENT_FAILED,
+                UserSubscriptionStatus.ACTIVE,
+            ];
+
+            if (
+                newDomainStatus === UserSubscriptionStatus.ACTIVE &&
+                !STATUSES_ALLOWED_TO_ACTIVE.includes(
+                    existingUserSubscriptionPendingEntity.getStatus(),
+                )
+            ) {
+                return Result.ok(undefined);
             }
 
             const subscriptionPlanEntityRes =
@@ -141,21 +159,22 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                     await this._userSubscriptionRepository.getByUserId(
                         existingUserSubscriptionPendingEntity.getUserId(),
                     );
+
                 if (activeSubscriptionRes.isFailure) {
                     return Result.fail(activeSubscriptionRes.getError());
                 }
 
-                const existingActiveSubscription =
+                const existingActiveUserSubscription =
                     activeSubscriptionRes.getValue();
 
                 if (
-                    existingActiveSubscription &&
-                    existingActiveSubscription.getId() !==
+                    existingActiveUserSubscription &&
+                    existingActiveUserSubscription.getId() !==
                         existingUserSubscriptionPendingEntity.getId()
                 ) {
                     const existingActivePlanRes =
                         await this._subscriptionPlanRepository.findById(
-                            existingActiveSubscription.getSubscriptionPlanId(),
+                            existingActiveUserSubscription.getSubscriptionPlanId(),
                         );
 
                     console.log(
@@ -175,17 +194,19 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                     }
 
                     const refundAmount = this.calculateRemainingPlanRefund(
-                        existingActiveSubscription.getStartDate(),
-                        existingActiveSubscription.getEndDate(),
+                        existingActiveUserSubscription.getStartDate(),
+                        existingActiveUserSubscription.getEndDate(),
                         existingActivePlan.getPrice(),
                         now,
                     );
 
                     if (refundAmount > 0) {
                         const walletRes =
-                            await this._getOrCreateWalletUsecase.execute({
-                                userId: existingUserSubscriptionPendingEntity.getUserId(),
-                            });
+                            await this._walletService.creditWallet(
+                                existingUserSubscriptionPendingEntity.getUserId(),
+                                refundAmount,
+                            );
+
                         if (walletRes.isFailure) {
                             return Result.fail(walletRes.getError());
                         }
@@ -195,43 +216,88 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                                 userId: existingUserSubscriptionPendingEntity.getUserId(),
                                 amount: refundAmount,
                             });
+
                         if (creditRes.isFailure) {
                             return Result.fail(creditRes.getError());
                         }
                     }
 
-                    existingActiveSubscription.setStatus(
+                    existingActiveUserSubscription.setStatus(
                         UserSubscriptionStatus.EXPIRED,
                     );
 
-                    existingActiveSubscription.setEndDate(now);
+                    existingActiveUserSubscription.setEndDate(now);
 
                     const expireOldRes =
                         await this._userSubscriptionRepository.save(
-                            existingActiveSubscription,
+                            existingActiveUserSubscription,
                         );
+
                     if (expireOldRes.isFailure) {
                         return Result.fail(expireOldRes.getError());
                     }
                 }
-            }
 
-            if (
-                existingUserSubscriptionPendingEntity.getStatus() ===
-                newDomainStatus
-            ) {
-                return Result.ok(undefined);
-            }
-
-            existingUserSubscriptionPendingEntity.setStatus(newDomainStatus);
-            if (newDomainStatus === UserSubscriptionStatus.ACTIVE) {
-                const newEndDate = new Date(now);
-                newEndDate.setDate(
-                    now.getDate() + subscriptionPlanEntity.getDurationDays(),
+                existingUserSubscriptionPendingEntity.setStatus(
+                    UserSubscriptionStatus.ACTIVE,
                 );
-                existingUserSubscriptionPendingEntity.setEndDate(newEndDate);
+                existingUserSubscriptionPendingEntity.setStartDate(now);
+                existingUserSubscriptionPendingEntity.setEndDate(
+                    new Date(
+                        now.getTime() +
+                            subscriptionPlanEntity.getDurationDays() *
+                                24 *
+                                60 *
+                                60 *
+                                1000,
+                    ),
+                );
             } else if (newDomainStatus === UserSubscriptionStatus.EXPIRED) {
+                existingUserSubscriptionPendingEntity.setStatus(
+                    UserSubscriptionStatus.EXPIRED,
+                );
                 existingUserSubscriptionPendingEntity.setEndDate(now);
+
+                const defaultPlanRes =
+                    await this._subscriptionPlanRepository.findActiveDefault();
+                if (defaultPlanRes.isFailure) {
+                    return Result.fail(defaultPlanRes.getError());
+                }
+
+                const defaultPlan = defaultPlanRes.getValue();
+                console.log('defaultPlan =---', defaultPlan);
+                if (!defaultPlan) {
+                    return Result.ok(undefined);
+                }
+
+                const defaultUserSubscriptionEntity = UserSubscription.create({
+                    id: this._idGeneratingService.generateId(),
+                    userId: existingUserSubscriptionPendingEntity.getUserId(),
+                    subscriptionPlanId: defaultPlan.getId(),
+                    status: UserSubscriptionStatus.ACTIVE,
+                    startDate: now,
+                    endDate: USER_SUBSCRIPTION_INFINITE_END,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+
+                if (defaultUserSubscriptionEntity.isFailure) {
+                    return Result.fail(
+                        defaultUserSubscriptionEntity.getError(),
+                    );
+                }
+
+                const saveDefaultUserSubscriptionRes =
+                    await this._userSubscriptionRepository.save(
+                        defaultUserSubscriptionEntity.getValue(),
+                    );
+                if (saveDefaultUserSubscriptionRes.isFailure) {
+                    return Result.fail(
+                        saveDefaultUserSubscriptionRes.getError(),
+                    );
+                }
+
+                // return Result.ok(undefined);
             }
 
             const saveRes = await this._userSubscriptionRepository.save(
@@ -239,6 +305,12 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
             );
 
             if (saveRes.isFailure) return Result.fail(saveRes.getError());
+
+            console.log(
+                'existingUserSubscriptionPendingEntity =---',
+                existingUserSubscriptionPendingEntity,
+            );
+
             return Result.ok();
         } catch (err) {
             console.log(err);
@@ -258,6 +330,9 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
         const totalMs = endDate.getTime() - startDate.getTime();
         const remainingMs = endDate.getTime() - now.getTime();
 
+        if (remainingMs <= USER_SUBSCRIPTION_PLAN_UPGRADATION_REFUND_MAX_TIME)
+            return 0;
+
         if (totalMs <= 0 || remainingMs <= 0) return 0;
 
         const proratedAmount = planPrice * (remainingMs / totalMs);
@@ -273,12 +348,16 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
             case 'subscription.charged':
             case 'subscription.resumed':
                 return UserSubscriptionStatus.ACTIVE;
+
             case 'subscription.pending':
                 return UserSubscriptionStatus.PENDING;
+
             case 'subscription.halted':
             case 'subscription.cancelled':
             case 'subscription.completed':
+            case 'subscription.paused':
                 return UserSubscriptionStatus.EXPIRED;
+
             default:
                 return null;
         }

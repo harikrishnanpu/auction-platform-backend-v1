@@ -5,6 +5,7 @@ enum UserSubscriptionStatus {
   ACTIVE
   EXPIRED
   CANCELLED
+  PAYMENT_FAILED
 }
 
 model UserSubscription {

@@ -35,6 +35,8 @@ import { FraudController } from '@presentation/http/controllers/fraud/fraud.cont
 import { agentContainer } from './modules/agent.container';
 import { webhookContainer } from './modules/webhook.container';
 import { WebhookController } from '@presentation/http/controllers/webhook/webhook.controller';
+import { IWalletService } from '@application/interfaces/services/IWalletService';
+import { WalletService } from '@infrastructure/services/wallet/wallet.service';
 
 const container = new Container();
 
@@ -92,5 +94,7 @@ container
 container
     .bind<AuthorizeMiddleware>(TYPES.AuthorizeMiddleware)
     .to(AuthorizeMiddleware);
+
+container.bind<IWalletService>(TYPES.IWalletService).to(WalletService);
 
 export { container };

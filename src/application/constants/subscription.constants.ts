@@ -1,3 +1,0 @@
-export const USER_SUBSCRIPTION_INFINITE_END = new Date(
-    '9999-12-31T23:59:59.999Z',
-);

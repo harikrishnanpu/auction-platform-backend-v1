@@ -297,4 +297,5 @@ export const TYPES = {
     IRazorpaySubscriptionWebhookHandlerUsecase: Symbol.for(
         'IRazorpayWebhookhandlerUsecase',
     ),
+    IWalletService: Symbol.for('IWalletService'),
 };

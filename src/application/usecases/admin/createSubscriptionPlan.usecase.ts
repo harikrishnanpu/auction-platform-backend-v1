@@ -47,6 +47,16 @@ export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUse
             }
         }
 
+        const hasExistingPlanResult =
+            await this._subscriptionPlanRepository.findByName(dto.name.trim());
+        if (hasExistingPlanResult.isFailure)
+            return Result.fail(hasExistingPlanResult.getError());
+        if (hasExistingPlanResult.getValue()) {
+            return Result.fail(
+                'Subscription plan with this name already exists',
+            );
+        }
+
         const features = await this._subscriptionPFeatureRepository.findByIds(
             dto.features.map((feature) => feature.featureId),
         );
