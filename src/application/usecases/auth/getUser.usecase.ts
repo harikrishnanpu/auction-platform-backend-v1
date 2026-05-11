@@ -29,7 +29,9 @@ export class GetUserUseCase implements IGetUserUsecase {
         const user = userResult.getValue();
 
         const currentUserSubscriptionEntity =
-            await this._userSubscriptionRepository.getByUserId(user.getId());
+            await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                user.getId(),
+            );
         if (currentUserSubscriptionEntity.isFailure) {
             return Result.fail(currentUserSubscriptionEntity.getError());
         }

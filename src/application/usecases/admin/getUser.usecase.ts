@@ -37,9 +37,10 @@ export class GetAdminUserUseCase implements IGetAdminUserUsecase {
 
             const user = userResult.getValue();
 
-            const subRes = await this._userSubscriptionRepository.getByUserId(
-                user.getId(),
-            );
+            const subRes =
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                    user.getId(),
+                );
             if (subRes.isFailure) return Result.fail(subRes.getError());
             const row = subRes.getValue();
             let planName: string | null = null;

@@ -159,7 +159,7 @@ export class AutoBidService implements IAutoBidService {
         const placedBids: IAutoBid[] = [];
 
         if (input.auction.getAuctionType() !== AuctionType.LONG) {
-            return Result.fail('Auction type is not long');
+            return Result.ok({ placedBids: [] });
         }
 
         const participantsResult = await this._participantRepo.findByAuctionId(

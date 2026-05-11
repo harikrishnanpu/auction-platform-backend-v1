@@ -91,4 +91,14 @@ export class PrismaBidRepo
 
         return Result.ok(bids);
     }
+
+    async countBidsByAuctionIdAndUserId(
+        auctionId: string,
+        userId: string,
+    ): Promise<Result<number>> {
+        const count = await this._prisma.bid.count({
+            where: { auctionId, userId },
+        });
+        return Result.ok(count);
+    }
 }

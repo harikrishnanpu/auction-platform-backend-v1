@@ -8,7 +8,8 @@ import {
 
 export interface IAuctionRepository {
     save(auction: Auction): Promise<Result<Auction>>;
-    findById(id: string): Promise<Result<Auction>>;
+    findById(id: string): Promise<Result<Auction | null>>;
+    findByAuctionNum(auctionNumber: string): Promise<Result<Auction | null>>;
     findBySellerId(sellerId: string): Promise<Result<Auction[]>>;
     findAll(filters: IFindAllAuctionsFilters): Promise<Result<Auction[]>>;
     findAllForUsers(
@@ -33,4 +34,6 @@ export interface IAuctionRepository {
     getUserDahsboardAuctionStats(
         userId: string,
     ): Promise<Result<IAuctionUserDashboardCounts>>;
+
+    countBySellerId(sellerId: string): Promise<Result<number>>;
 }

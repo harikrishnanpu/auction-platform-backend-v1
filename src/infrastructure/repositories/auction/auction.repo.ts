@@ -44,6 +44,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             where: { id: data.id },
             create: {
                 id: data.id,
+                auctionNumber: data.auctionNumber,
                 sellerId: data.sellerId,
                 auctionType: data.auctionType,
                 title: data.title,
@@ -112,7 +113,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         return this.mapper.toDomain(raw);
     }
 
-    async findById(id: string): Promise<Result<Auction>> {
+    async findById(id: string): Promise<Result<Auction | null>> {
         const raw = await this._prisma.auction.findUnique({
             where: { id },
             include: {
@@ -543,5 +544,25 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             console.log(error);
             return Result.fail('fail!! --dashbaord counts');
         }
+    }
+
+    async countBySellerId(sellerId: string): Promise<Result<number>> {
+        const count = await this._prisma.auction.count({
+            where: { sellerId },
+        });
+
+        return Result.ok(count);
+    }
+
+    async findByAuctionNum(
+        auctionNumber: string,
+    ): Promise<Result<Auction | null>> {
+        const raw = await this._prisma.auction.findUnique({
+            where: { auctionNumber },
+        });
+
+        if (!raw) return Result.ok(null);
+
+        return Result.ok(this.mapper.toDomain(raw).getValue());
     }
 }

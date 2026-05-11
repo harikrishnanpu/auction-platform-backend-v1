@@ -27,6 +27,7 @@ export enum AuctionType {
 export class Auction {
     constructor(
         private readonly id: string,
+        private readonly auctionNumber: string,
         private readonly sellerId: string,
         private readonly auctionType: AuctionType,
         private readonly title: string,
@@ -49,6 +50,7 @@ export class Auction {
 
     static create({
         id,
+        auctionNumber,
         sellerId,
         auctionType = AuctionType.LONG,
         title,
@@ -69,6 +71,7 @@ export class Auction {
         assets = [],
     }: {
         id: string;
+        auctionNumber: string;
         sellerId: string;
         auctionType?: AuctionType;
         title: string;
@@ -124,6 +127,7 @@ export class Auction {
         return Result.ok(
             new Auction(
                 id,
+                auctionNumber,
                 sellerId,
                 auctionType,
                 title,
@@ -260,5 +264,9 @@ export class Auction {
 
     getWinAmount(): number | null {
         return this.winAmount;
+    }
+
+    getAuctionNumber(): string {
+        return this.auctionNumber;
     }
 }

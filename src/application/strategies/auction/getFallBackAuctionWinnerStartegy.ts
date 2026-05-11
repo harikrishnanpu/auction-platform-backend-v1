@@ -96,7 +96,13 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
             });
         }
 
-        const auctionType = auctionResult.getValue().getAuctionType();
+        const auction = auctionResult.getValue();
+
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
+        const auctionType = auction.getAuctionType();
 
         if (auctionType === AuctionType.SEALED) {
             return this.resolveSealedWinner(eligibleBids, nextRank);

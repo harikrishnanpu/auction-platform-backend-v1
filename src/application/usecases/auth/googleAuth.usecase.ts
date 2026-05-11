@@ -78,7 +78,7 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
             }
 
             const currentUserSubscriptionEntity =
-                await this._userSubscriptionRepository.getByUserId(
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
                     user.getId(),
                 );
             if (currentUserSubscriptionEntity.isFailure) {
@@ -170,7 +170,7 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
         const createdUser = newUserEntity.getValue();
 
         const currentUserSubscriptionEntity =
-            await this._userSubscriptionRepository.getByUserId(
+            await this._userSubscriptionRepository.findCurrentActiveByUserId(
                 createdUser.getId(),
             );
         if (currentUserSubscriptionEntity.isFailure) {

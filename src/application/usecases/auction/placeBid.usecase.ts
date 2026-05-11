@@ -19,6 +19,7 @@ import { AuctionParticipantPaymentStatus } from '@domain/entities/auction/auctio
 import { ShouldExtendAuctionPolicy } from '@domain/policies/auction/should-extend-auction.policy';
 import { IAutoBidService } from '@application/interfaces/services/IAutoBidService';
 import { IAutoBidConfigRepository } from '@domain/repositories/IAutoBidConfigRepository';
+import { ISubscriptionConfigService } from '@application/interfaces/services/ISubscriptionConfigService';
 
 @injectable()
 export class PlaceBidUsecase implements IPlaceBidUsecase {
@@ -41,6 +42,8 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
         private readonly _autoBidService: IAutoBidService,
         @inject(TYPES.IAutoBidConfigRepository)
         private readonly _autoBidConfigRepo: IAutoBidConfigRepository,
+        @inject(TYPES.ISubscriptionConfigService)
+        private readonly _subscriptionConfigService: ISubscriptionConfigService,
     ) {}
 
     async execute(input: IPlaceBidInput): Promise<Result<IPlaceBidOutput>> {
@@ -51,6 +54,23 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
         try {
             console.log('lockKey', lockKey);
+
+            const canPlaceBidResult =
+                await this._subscriptionConfigService.canPlaceBid(
+                    input.userId,
+                    input.auctionId,
+                );
+            if (canPlaceBidResult.isFailure) {
+                return Result.fail(canPlaceBidResult.getError());
+            }
+
+            console.log('canPlaceBidResult', canPlaceBidResult.getValue());
+
+            if (!canPlaceBidResult.getValue()) {
+                return Result.fail(
+                    'You have reached the maximum number of bids you can place for this auction with your current plan',
+                );
+            }
 
             const locked = await this._bidLockService.lock(
                 lockKey,

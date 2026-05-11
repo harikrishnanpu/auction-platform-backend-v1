@@ -156,7 +156,7 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
 
             if (newDomainStatus === UserSubscriptionStatus.ACTIVE) {
                 const activeSubscriptionRes =
-                    await this._userSubscriptionRepository.getByUserId(
+                    await this._userSubscriptionRepository.findCurrentActiveByUserId(
                         existingUserSubscriptionPendingEntity.getUserId(),
                     );
 

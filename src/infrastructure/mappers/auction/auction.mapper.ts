@@ -60,6 +60,7 @@ export class AuctionMapper implements IDbMapper<
 
         return Auction.create({
             id: raw.id,
+            auctionNumber: raw.auctionNumber,
             sellerId: raw.sellerId,
             auctionType: (raw.auctionType as AuctionType) ?? AuctionType.LONG,
             title: raw.title,
@@ -84,6 +85,7 @@ export class AuctionMapper implements IDbMapper<
     toPersistence(auction: Auction) {
         return {
             id: auction.getId(),
+            auctionNumber: auction.getAuctionNumber(),
             sellerId: auction.getSellerId(),
             auctionType: auction.getAuctionType(),
             title: auction.getTitle(),

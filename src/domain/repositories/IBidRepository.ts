@@ -16,4 +16,8 @@ export interface IBidRepository {
     ): Promise<Result<Bid[]>>;
 
     findAllByAuctionId(auctionId: string): Promise<Result<Bid[]>>;
+    countBidsByAuctionIdAndUserId(
+        auctionId: string,
+        userId: string,
+    ): Promise<Result<number>>;
 }

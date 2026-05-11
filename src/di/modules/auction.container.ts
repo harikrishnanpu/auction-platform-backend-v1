@@ -93,6 +93,8 @@ import { IDisableAutoBidConfigUsecase } from '@application/interfaces/usecases/a
 import { DisableAutoBidConfigUsecase } from '@application/usecases/auction/disableAutoBidConfig.usecase';
 import { IGetUserAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IGetUserAutoBidConfigUsecase';
 import { GetUserAutoBidConfigUsecase } from '@application/usecases/auction/getUserAutoBidConfig.usecase';
+import { IAuctionNumberGeneratingService } from '@application/interfaces/services/IAuctionNumberGeneratingService';
+import { GenerateAuctionNumberService } from '@infrastructure/services/auction/generateAuctionNumber.service';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
@@ -254,4 +256,7 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<LiveAuctionCreatePolicy>(TYPES.LiveAuctionCreatePolicy).to(
         LiveAuctionCreatePolicy,
     );
+    bind<IAuctionNumberGeneratingService>(
+        TYPES.IAuctionNumberGeneratingService,
+    ).to(GenerateAuctionNumberService);
 });

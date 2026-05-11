@@ -37,9 +37,13 @@ import { webhookContainer } from './modules/webhook.container';
 import { WebhookController } from '@presentation/http/controllers/webhook/webhook.controller';
 import { IWalletService } from '@application/interfaces/services/IWalletService';
 import { WalletService } from '@infrastructure/services/wallet/wallet.service';
+import { subscriptionContainer } from './modules/subscription.container';
+import { ICacheService } from '@application/interfaces/services/ICacheService';
+import { CacheService } from '@infrastructure/services/cache/cache.service';
 
 const container = new Container();
 
+container.load(subscriptionContainer);
 container.load(loggerContainer);
 container.load(authContainer);
 container.load(userContainer);
@@ -96,5 +100,6 @@ container
     .to(AuthorizeMiddleware);
 
 container.bind<IWalletService>(TYPES.IWalletService).to(WalletService);
+container.bind<ICacheService>(TYPES.ICacheService).to(CacheService);
 
 export { container };

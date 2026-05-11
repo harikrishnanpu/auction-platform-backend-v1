@@ -20,7 +20,9 @@ export class GetPublicSubscriptionPlansUsecase implements IGetPublicSubscription
         userId: string,
     ): Promise<Result<IPublicSubscriptionPlaDto[]>> {
         const userSubscriptionRes =
-            await this._userSubscriptionRepository.getByUserId(userId);
+            await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                userId,
+            );
         if (userSubscriptionRes.isFailure) {
             return Result.fail(userSubscriptionRes.getError());
         }

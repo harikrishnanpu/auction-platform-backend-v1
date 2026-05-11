@@ -48,9 +48,10 @@ export class CompleteProfileUsecase implements ICompleteProfileUsecase {
         await this._userRepository.save(userEntity.getValue());
 
         const user = userEntity.getValue();
-        const subRes = await this._userSubscriptionRepository.getByUserId(
-            user.getId(),
-        );
+        const subRes =
+            await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                user.getId(),
+            );
         if (subRes.isFailure) return Result.fail(subRes.getError());
 
         const row = subRes.getValue();

@@ -27,7 +27,9 @@ export class SubscriptionService implements ISubscriptionService {
         console.log('subscription plan Assigned test 1');
 
         const existingUserSubscription =
-            await this._userSubscriptionRepository.getByUserId(userId);
+            await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                userId,
+            );
         if (existingUserSubscription.isFailure) {
             return Result.fail(existingUserSubscription.getError());
         }

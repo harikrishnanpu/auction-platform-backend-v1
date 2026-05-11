@@ -95,7 +95,7 @@ export class LoginUseCase implements ILoginUseCase {
                 this._tokenGeneratorService.generateRefreshToken(user.getId());
 
             const currentUserSubscriptionEntity =
-                await this._userSubscriptionRepository.getByUserId(
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
                     user.getId(),
                 );
             if (currentUserSubscriptionEntity.isFailure) {

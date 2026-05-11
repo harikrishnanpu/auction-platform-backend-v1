@@ -67,7 +67,7 @@ export class PrismaUserSubscriptionRepository
         return Result.ok(items);
     }
 
-    async getByUserId(
+    async findCurrentActiveByUserId(
         userId: string,
     ): Promise<Result<UserSubscription | null>> {
         const raw = await this._prisma.userSubscription.findFirst({

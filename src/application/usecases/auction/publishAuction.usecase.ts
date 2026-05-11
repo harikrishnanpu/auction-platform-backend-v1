@@ -36,6 +36,10 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
 
         const auction = existing.getValue();
 
+        if (!auction) {
+            return Result.fail('auction not found!');
+        }
+
         if (auction.getSellerId() !== userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_PUBLISH);
         }
@@ -51,6 +55,7 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
 
         const publishedResult = Auction.create({
             id: auction.getId(),
+            auctionNumber: auction.getAuctionNumber(),
             sellerId: auction.getSellerId(),
             auctionType: auction.getAuctionType(),
             title: auction.getTitle(),

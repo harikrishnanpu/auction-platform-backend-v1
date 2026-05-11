@@ -298,4 +298,9 @@ export const TYPES = {
         'IRazorpayWebhookhandlerUsecase',
     ),
     IWalletService: Symbol.for('IWalletService'),
+    ISubscriptionConfigService: Symbol.for('ISubscriptionConfigService'),
+    ICacheService: Symbol.for('ICacheService'),
+    IAuctionNumberGeneratingService: Symbol.for(
+        'IAuctionNumberGeneratingService',
+    ),
 };
