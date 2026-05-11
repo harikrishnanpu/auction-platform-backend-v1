@@ -1,9 +1,11 @@
 import { IApproveSellerKycOutput } from '@application/dtos/admin/approveSellerKyc.dto';
 import { Result } from '@domain/shared/result';
-import { ZodGetAdminSellerInputType } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
+export interface IValidatedApproveSellerKycInput {
+    id: string;
+}
 
 export interface IApproveSellerKycUsecase {
     execute(
-        data: ZodGetAdminSellerInputType,
+        data: IValidatedApproveSellerKycInput,
     ): Promise<Result<IApproveSellerKycOutput>>;
 }

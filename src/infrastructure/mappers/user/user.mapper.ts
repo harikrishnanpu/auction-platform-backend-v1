@@ -64,6 +64,7 @@ export class UserMapper implements IDbMapper<User, PrismaUserWithRoles> {
             isVerified: dbUser.isVerified,
             status: UserStatus[dbUser.status],
             userFraudLevel: dbUser.userFraudLevel,
+            razorpayCustomerId: dbUser.razorpayCustomerId,
         });
 
         return finalDomainUser;
@@ -94,6 +95,7 @@ export class UserMapper implements IDbMapper<User, PrismaUserWithRoles> {
             isVerified: user.getIsVerified(),
             roles: user.getRoles().map((r) => r.getValue()),
             userFraudLevel: user.getUserFraudLevel(),
+            razorpayCustomerId: user.getRazorpayCustomerId(),
         };
     }
 }

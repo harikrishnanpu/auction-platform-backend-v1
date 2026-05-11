@@ -1,7 +1,12 @@
 import { User } from '@domain/entities/user/user.entity';
 import { Result } from '@domain/shared/result';
-import { ZodChangeProfilePasswordInputType } from '@presentation/validators/schemas/user/change-profile-password.schema';
+export interface IValidatedChangeProfilePasswordInput {
+    userId: string;
+    otp: string;
+    oldPassword: string;
+    newPassword: string;
+}
 
 export interface IChangeProfilePasswordUsecase {
-    execute(data: ZodChangeProfilePasswordInputType): Promise<Result<User>>;
+    execute(data: IValidatedChangeProfilePasswordInput): Promise<Result<User>>;
 }

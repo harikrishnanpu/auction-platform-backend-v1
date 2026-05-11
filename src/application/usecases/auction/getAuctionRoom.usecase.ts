@@ -17,6 +17,7 @@ import {
     IAuctionRoomResultDto,
     IGetAuctionRoomInputDto,
 } from '@application/dtos/auction/getAuctionRoom.dto';
+import { IGetUserAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IGetUserAutoBidConfigUsecase';
 
 @injectable()
 export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
@@ -33,6 +34,8 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
         private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
         @inject(TYPES.IUserRepository)
         private readonly _userRepository: IUserRepository,
+        @inject(TYPES.IGetUserAutoBidConfigUsecase)
+        private readonly _getUserAutoBidConfigUsecase: IGetUserAutoBidConfigUsecase,
     ) {}
 
     async execute(
@@ -111,9 +114,23 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
         const result: IAuctionRoomResultDto = {
             auction: auctionDto,
             currentBid,
+            nextBidMin:
+                latestBid?.getAmount() != null
+                    ? (latestBid.getAmount() ?? 0) + auction.getMinIncrement()
+                    : auction.getStartPrice(),
             liveFeed,
             participants,
         };
+
+        const autoBidConfigResult =
+            await this._getUserAutoBidConfigUsecase.execute({
+                auctionId: input.auctionId,
+                userId: input.userId,
+            });
+        if (autoBidConfigResult.isFailure) {
+            return Result.fail(autoBidConfigResult.getError());
+        }
+        result.autoBidConfig = autoBidConfigResult.getValue();
 
         const status = auction.getStatus();
         const mode = input.mode;

@@ -23,6 +23,7 @@ enum AuctionAssetType {
 
 model Auction {
   id                    String                 @id @default(uuid())
+  auctionNumber         String                 @unique
   sellerId              String
   auctionType           AuctionType            @default(LONG)
   title                 String
@@ -51,6 +52,7 @@ model Auction {
   category              AuctionCategory        @relation(fields: [categoryId], references: [id])
   winners               AuctionWinner[]
   publicFallbackAuction PublicFallbackAuction?
+  autoBidConfigs         AutoBidConfig[]
 }
 
 enum AuctionWinnerStatus {

@@ -90,6 +90,20 @@ export class UserRoutes {
             this._userController.getWallet,
         );
 
+        this._router.get(
+            '/subscription-plans',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.getSubscriptionPlans,
+        );
+
+        this._router.post(
+            '/subscriptions/checkout',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._userController.startSubscriptionCheckout,
+        );
+
         return this._router;
     }
 }

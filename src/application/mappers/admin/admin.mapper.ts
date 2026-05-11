@@ -3,6 +3,16 @@ import { IApproveSellerKycInput } from '@application/dtos/admin/approveSellerKyc
 import { IBlockUserInput } from '@application/dtos/admin/blockuser.dto';
 import { IChangeAuctionCategoryStatusInputDto } from '@application/dtos/admin/changeAuctionCategoryStatus.dto';
 import { ICreateAuctionCategoryInputDto } from '@application/dtos/admin/createAuctionCategory.dto';
+import {
+    ICreateSubscriptionPlanRequestDto,
+    IGetSubscriptionFeaturesDto,
+    ISubscriptionPlanDto,
+    IUpdateSubscriptionPlanInputDto,
+} from '@application/dtos/admin/subscription.dto';
+import {
+    ISystemConfigDto,
+    ISystemConfigInputDto,
+} from '@application/dtos/admin/systemConfig.dto';
 import { IGetAdminSellerInput } from '@application/dtos/admin/getAdminSeller.dto';
 import { IGetAllUsersInput } from '@application/dtos/admin/getAllusers.dto';
 import { IGetAllSellersInput } from '@application/dtos/admin/getSellers.dto';
@@ -12,12 +22,16 @@ import { IRejectSellerKycInput } from '@application/dtos/admin/rejectSellerKyc.d
 import { IUpdateAuctionCategoryInputDto } from '@application/dtos/admin/updateAuctionCategory.dto';
 import { IViewKycInputDto } from '@application/dtos/admin/viewKyc.dto';
 import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
-import { IGetAdminAuctionsInputDto } from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
+import {
+    IGetAdminAuctionsInputDto,
+    IValidatedGetAdminAuctionsInput,
+} from '@application/interfaces/usecases/admin/IGetAdminAuctionsUsecase';
 import { AuctionType } from '@domain/entities/auction/auction.entity';
 import {
     AuthProviderType,
     UserStatus,
 } from '@domain/entities/user/user.entity';
+import { SubscriptionPlan } from '@domain/entities/subscription/subscription-plan.entity';
 import { ZodApproveAuctionCategoryInputType } from '@presentation/validators/schemas/admin/approveAuctionCategory.schema';
 import { ZodBlockUserInputType } from '@presentation/validators/schemas/admin/blockUsers.schema';
 import { ZodChangeAuctionCategoryStatusInputType } from '@presentation/validators/schemas/admin/changeAuctionStaus.schema';
@@ -29,8 +43,13 @@ import { ZodGetAllSellersInputType } from '@presentation/validators/schemas/admi
 import { ZodRejectAuctionCategoryInputType } from '@presentation/validators/schemas/admin/rejectAuctionCategory.schema';
 import { ZodRejectSellerKycInputType } from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
 import { ZodUpdateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/updateAuctionCategory.schema';
+import { ZodEditSystemConfigInputType } from '@presentation/validators/schemas/admin/editSystemConfig.schema';
 import { ZodViewKycInputType } from '@presentation/validators/schemas/admin/viewKyc.schema';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import { SystemConfig } from '@domain/entities/system-config/system-config.entity';
+import { Features } from '@domain/entities/subscription/features.entity';
+import { IValidatedUpdateSubscriptionPlanInput } from '@application/interfaces/usecases/admin/IUpdateSubscriptionPlanUsecase';
+import { IValidatedEditSystemConfigInput } from '@application/interfaces/usecases/admin/IEditSystemConfigUsecase';
+import { IValidatedCreateSubscriptionPlanInput } from '@application/interfaces/usecases/admin/ICreateSubscriptionPlanUsecase';
 
 export class AdminMapperProfile {
     public static toGetAllUsersInputDto(
@@ -127,7 +146,7 @@ export class AdminMapperProfile {
     }
 
     public static toGetAdminAuctionsInputDto(
-        data: ZodGetBrowseAuctionsInputType,
+        data: IValidatedGetAdminAuctionsInput,
     ): IGetAdminAuctionsInputDto {
         return {
             auctionType: data.auctionType as AuctionType | 'ALL',
@@ -165,6 +184,107 @@ export class AdminMapperProfile {
     ): IViewKycInputDto {
         return {
             documentId: data.documentId,
+        };
+    }
+
+    public static saveSystemConfigInputDto(
+        data: ZodEditSystemConfigInputType,
+    ): ISystemConfigInputDto {
+        return {
+            key: data.key,
+            value: data.value,
+            description: data.description,
+        };
+    }
+
+    public static toSystemConfigDto(config: SystemConfig): ISystemConfigDto {
+        return {
+            id: config.getId(),
+            key: config.getKey(),
+            value: config.getValue(),
+            valueType: config.getValueType(),
+            description: config.getDescription(),
+            createdAt: config.getCreatedAt(),
+            updatedAt: config.getUpdatedAt(),
+        };
+    }
+
+    public static toCreateSubscriptionPlanDto(
+        data: IValidatedCreateSubscriptionPlanInput,
+    ): ICreateSubscriptionPlanRequestDto {
+        return {
+            name: data.name,
+            description: data.description,
+            price: data.price,
+            durationDays: data.durationDays,
+            isDefault: data.isDefault,
+            features: data.features.map((feature) => ({
+                featureId: feature.featureId,
+                value: feature.value,
+            })),
+        };
+    }
+
+    public static toUpdateSubscriptionPlanDto(
+        data: IValidatedUpdateSubscriptionPlanInput,
+    ): IUpdateSubscriptionPlanInputDto {
+        return {
+            planId: data.planId,
+            name: data.name,
+            description: data.description,
+            durationDays: data.durationDays,
+            price: data.price,
+            isDefault: data.isDefault,
+            isActive: data.isActive,
+            features: data.features.map((feature) => ({
+                featureId: feature.featureId,
+                value: feature.value,
+            })),
+        };
+    }
+
+    public static toSubscriptionPlanDto(
+        plan: SubscriptionPlan,
+    ): ISubscriptionPlanDto {
+        return {
+            id: plan.getId(),
+            name: plan.getName(),
+            description: plan.getDescription(),
+            price: plan.getPrice(),
+            durationDays: plan.getDurationDays(),
+            isDefault: plan.getIsDefault(),
+            isActive: plan.getIsActive(),
+            razorpayPlanId: plan.getRazorpayPlanId(),
+            createdAt: plan.getCreatedAt(),
+            updatedAt: plan.getUpdatedAt(),
+            features: plan.getFeatures().map((feature) => ({
+                id: feature.getId(),
+                description: feature.getFeature().getDescription(),
+                value: feature.getValue(),
+                type: feature.getFeature().getType(),
+                featureKey: feature.getFeature().getFeatureKey(),
+            })),
+        };
+    }
+
+    public static toSubscriptionFeaturesDto(
+        features: Features[],
+    ): IGetSubscriptionFeaturesDto[] {
+        return features.map((feature) => ({
+            id: feature.getId(),
+            key: feature.getFeatureKey(),
+            valueType: feature.getType(),
+            description: feature.getDescription(),
+        }));
+    }
+
+    public static toEditSystemConfigInputDto(
+        data: IValidatedEditSystemConfigInput,
+    ): ISystemConfigInputDto {
+        return {
+            key: data.key,
+            value: data.value,
+            description: data.description,
         };
     }
 }

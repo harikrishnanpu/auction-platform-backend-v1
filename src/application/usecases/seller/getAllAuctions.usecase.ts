@@ -1,11 +1,14 @@
 import { IGetAllAuctionsOutputDto } from '@application/dtos/auction/getAllAuction.dto';
-import { IGetAllSellerAuctionsUsecase } from '@application/interfaces/usecases/seller/IGetallAuctionsUsecase';
+import {
+    IGetAllSellerAuctionsUsecase,
+    IValidatedGetAllSellerAuctionsInput,
+} from '@application/interfaces/usecases/seller/IGetallAuctionsUsecase';
+
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject } from 'inversify';
-import { ZodGetAllAuctionsInputType } from '@presentation/validators/schemas/seller/getAllAuctions.schema';
 import { SellerMapperProfile } from '@infrastructure/mappers/seller/seller.mapper';
 
 export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase {
@@ -15,7 +18,7 @@ export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase
     ) {}
 
     async execute(
-        input: ZodGetAllAuctionsInputType,
+        input: IValidatedGetAllSellerAuctionsInput,
     ): Promise<Result<IGetAllAuctionsOutputDto>> {
         const dto = SellerMapperProfile.toGetAllAuctionsInputDto(input);
 

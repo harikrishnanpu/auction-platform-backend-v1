@@ -1,18 +1,22 @@
-import {
-    userResponseDto,
-    UserRoleType,
-} from '@application/dtos/auth/loginUser.dto';
+import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { IGetUserUsecase } from '@application/interfaces/usecases/auth/IGetUserUsecase';
 import { TYPES } from '@di/types.di';
+import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
 export class GetUserUseCase implements IGetUserUsecase {
     constructor(
         @inject(TYPES.IUserRepository)
         private readonly _userRepository: IUserRepository,
+        @inject(TYPES.IUserSubscriptionRepository)
+        private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
+        @inject(TYPES.ISubscriptionPlanRepository)
+        private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
     ) {}
 
     async execute(userId: string): Promise<Result<userResponseDto>> {
@@ -24,22 +28,39 @@ export class GetUserUseCase implements IGetUserUsecase {
 
         const user = userResult.getValue();
 
-        const userResponseDto: userResponseDto = {
-            id: user.getId(),
-            name: user.getName(),
-            email: user.getEmail().getValue(),
-            phone: user.getPhone()?.getValue() ?? '',
-            address: user.getAddress() ?? '',
-            avatar_url: user.getAvatarUrl() ?? '',
-            isProfileCompleted: user.isProfileCompleted(),
-            isVerified: user.getIsVerified(),
-            status: user.getStatus(),
-            authProvider: user.getAuthProvider().getType(),
-            roles: user
-                .getRoles()
-                .map((role) => role.getValue() as UserRoleType),
-        };
+        const currentUserSubscriptionEntity =
+            await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                user.getId(),
+            );
+        if (currentUserSubscriptionEntity.isFailure) {
+            return Result.fail(currentUserSubscriptionEntity.getError());
+        }
 
-        return Result.ok(userResponseDto);
+        const currUserSubcptionEntity =
+            currentUserSubscriptionEntity.getValue();
+        if (!currUserSubcptionEntity) {
+            const result = UserMapperProfile.toUserResponseDto(
+                user,
+                null,
+                null,
+            );
+            return Result.ok(result);
+        }
+
+        const subscription = await this._subscriptionPlanRepository.findById(
+            currUserSubcptionEntity.getSubscriptionPlanId(),
+        );
+        if (subscription.isFailure) {
+            return Result.fail(subscription.getError());
+        }
+        const subscriptionEntity = subscription.getValue();
+
+        const result = UserMapperProfile.toUserResponseDto(
+            user,
+            currUserSubcptionEntity,
+            subscriptionEntity,
+        );
+
+        return Result.ok(result);
     }
 }

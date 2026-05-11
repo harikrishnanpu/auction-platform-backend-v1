@@ -13,10 +13,18 @@ export interface IFindAllAuctionsFilters {
     order: 'asc' | 'desc';
     search?: string;
     sellerId?: string;
+    scope?: 'default' | 'ending_soon';
 }
 
 export interface IAuctionStatsPublicCounts {
     liveCount: number;
     upcomingCount: number;
     endedCount: number;
+}
+
+export interface IAuctionUserDashboardCounts {
+    liveWinningCount: number;
+    liveLosingCount: number;
+    wonCount: number;
+    lostCount: number;
 }

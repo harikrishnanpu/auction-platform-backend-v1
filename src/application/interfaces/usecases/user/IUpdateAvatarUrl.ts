@@ -1,9 +1,12 @@
 import { UpdateAvatarUrlResponseDto } from '@application/dtos/user/updateAvatar.dto';
 import { Result } from '@domain/shared/result';
-import { ZodUpdateAvatarUrlInputType } from '@presentation/validators/schemas/user/update-avatar-url.schema';
+export interface IValidatedUpdateAvatarUrlInput {
+    userId: string;
+    fileKey: string;
+}
 
 export interface IUpdateAvatarUrlUsecase {
     execute(
-        data: ZodUpdateAvatarUrlInputType,
+        data: IValidatedUpdateAvatarUrlInput,
     ): Promise<Result<UpdateAvatarUrlResponseDto>>;
 }

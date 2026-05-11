@@ -1,5 +1,9 @@
 import { ICreateAuctionCategoryOutputDto } from '@application/dtos/admin/createAuctionCategory.dto';
-import { ICreateAuctionCategoryUsecase } from '@application/interfaces/usecases/admin/ICreateAuctionCategoryUsecase';
+import {
+    ICreateAuctionCategoryUsecase,
+    IValidatedCreateAuctionCategoryInput,
+} from '@application/interfaces/usecases/admin/ICreateAuctionCategoryUsecase';
+
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { Result } from '@domain/shared/result';
@@ -9,7 +13,6 @@ import { AuctionCategorySlug } from '@domain/value-objects/auction-category-slug
 import { AuctionCategoryStatus } from '@domain/entities/auction/auction-category.entity';
 import { ISlugGeneratorService } from '@application/interfaces/services/ISlugGeneratorService';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
-import { ZodCreateAuctionCategoryInputType } from '@presentation/validators/schemas/admin/createAuctionCategory.schema';
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 
 @injectable()
@@ -24,7 +27,7 @@ export class CreateAuctionCategoryUsecase implements ICreateAuctionCategoryUseca
     ) {}
 
     async execute(
-        data: ZodCreateAuctionCategoryInputType,
+        data: IValidatedCreateAuctionCategoryInput,
     ): Promise<Result<ICreateAuctionCategoryOutputDto>> {
         console.log('data CAT', data);
 

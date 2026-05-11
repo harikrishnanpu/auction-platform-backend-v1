@@ -26,6 +26,8 @@ import { CreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/
 import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePaymentOrderForPublicFallbackAuctionUsecase';
 import { VerifyPublicAuctionPaymentUsecase } from '@application/usecases/payments/verifyPublicAuctionPayment.usecase';
 import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
+import { IRazorpaySubscriptionGatewayService } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
+import { RazorpaySubscriptionGatewayService } from '@infrastructure/services/payments/razorpay-subscription.gateway.service';
 
 export const paymentsContainer = new ContainerModule(({ bind }) => {
     bind<IPaymentRepository>(TYPES.IPaymentRepository).to(
@@ -66,4 +68,7 @@ export const paymentsContainer = new ContainerModule(({ bind }) => {
     bind<IVerifyFallbackPublicAuctionPaymentUsecase>(
         TYPES.IVerifyFallbackPublicAuctionPaymentUsecase,
     ).to(VerifyPublicAuctionPaymentUsecase);
+    bind<IRazorpaySubscriptionGatewayService>(
+        TYPES.IRazorpaySubscriptionGatewayService,
+    ).to(RazorpaySubscriptionGatewayService);
 });

@@ -1,0 +1,52 @@
+
+enum SubscriptionPlanFeatureType {
+  BOOLEAN
+  NUMBER
+  STRING
+}
+
+enum SubscriptionPlanFeatureEnum {
+  AUCTION_CREATION
+  AUCTION_BIDDING
+  AI_AGENT
+}
+
+
+
+model SubscriptionPlan {
+  id String @id @default(uuid())
+  name String
+  description String
+  price Float
+  durationDays Int
+  isDefault Boolean @default(false)
+  isActive Boolean @default(true)
+  razorpayPlanId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userSubscriptions UserSubscription[]
+  features SubscriptionPlanFeature[]
+}
+
+
+model SubscriptionPlanFeature {
+  id String @id @default(uuid())
+  subscriptionPlanId String
+  featureId String
+  value String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  feature Features @relation(fields: [featureId], references: [id])
+  subSubscriptionPlan SubscriptionPlan @relation(fields: [subscriptionPlanId], references: [id])
+  @@unique([subscriptionPlanId, featureId])
+}
+
+model Features {
+  id String @id @default(uuid())
+  feature SubscriptionPlanFeatureEnum @unique
+  description String
+  type SubscriptionPlanFeatureType
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  subscriptionPlanFeatures SubscriptionPlanFeature[]
+}

@@ -16,8 +16,9 @@ import { IUserSuspensionRepository } from '@domain/repositories/IUserSuspensionR
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
-import { USER_SUSPENSION_CONSTANTS } from '@domain/constants/userSuspension.constants';
+import { SystemConfigKey } from '@domain/entities/system-config/system-config.entity';
 
 @injectable()
 export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
@@ -32,6 +33,8 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         private readonly _idGeneratingService: IIdGeneratingService,
         @inject(TYPES.IUserRepository)
         private readonly _userRepository: IUserRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(input: IReviewFraudReportInputDto): Promise<Result<null>> {
@@ -79,9 +82,16 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         if (saveTargetedUserResult.isFailure) {
             return Result.fail(saveTargetedUserResult.getError());
         }
+        const suspensionThresholdResult =
+            await this._systemConfigService.getConfigByKey(
+                SystemConfigKey.FRAUD_SUSPENSION_THRESHOLD,
+            );
+        if (suspensionThresholdResult.isFailure) {
+            return Result.fail(suspensionThresholdResult.getError());
+        }
         const shouldSuspend =
             targetedUser.getUserFraudLevel() >=
-            USER_SUSPENSION_CONSTANTS.SUSPENSION_THRESHOLD;
+            Number(suspensionThresholdResult.getValue().value);
 
         const notificationResult = Notification.create({
             id: this._idGeneratingService.generateId(),
@@ -115,13 +125,25 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         const type = hadPreviousSuspension
             ? SuspensionType.PERMANENT
             : SuspensionType.TEMPORARY;
+
         const startsAt = new Date();
+
+        const temporarySuspensionDurationResult =
+            await this._systemConfigService.getConfigByKey(
+                SystemConfigKey.FRAUD_TEMPORARY_SUSPENSION_DURATION_MS,
+            );
+
+        if (temporarySuspensionDurationResult.isFailure) {
+            return Result.fail(temporarySuspensionDurationResult.getError());
+        }
+
+        const temporarySuspensionDuration = Number(
+            temporarySuspensionDurationResult.getValue().value,
+        );
+
         const endsAt = hadPreviousSuspension
             ? null
-            : new Date(
-                  startsAt.getTime() +
-                      USER_SUSPENSION_CONSTANTS.TEMPORARY_SUSPENSION_DURATION,
-              );
+            : new Date(startsAt.getTime() + temporarySuspensionDuration);
 
         const suspensionResult = UserSuspension.create({
             id: this._idGeneratingService.generateId(),

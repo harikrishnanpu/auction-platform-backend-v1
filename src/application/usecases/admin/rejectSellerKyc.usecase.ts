@@ -1,11 +1,14 @@
 import { IRejectSellerKycOutput } from '@application/dtos/admin/rejectSellerKyc.dto';
-import { IRejectSellerKycUsecase } from '@application/interfaces/usecases/admin/IRejectSellerKycUsecase';
+import {
+    IRejectSellerKycUsecase,
+    IValidatedRejectSellerKycInput,
+} from '@application/interfaces/usecases/admin/IRejectSellerKycUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { KycFor } from '@domain/entities/kyc/kyc.entity';
 import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { Result } from '@domain/shared/result';
-import { ZodRejectSellerKycInputType } from '@presentation/validators/schemas/admin/rejectSellerKyc.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -16,7 +19,7 @@ export class RejectSellerKycUseCase implements IRejectSellerKycUsecase {
     ) {}
 
     async execute(
-        data: ZodRejectSellerKycInputType,
+        data: IValidatedRejectSellerKycInput,
     ): Promise<Result<IRejectSellerKycOutput>> {
         const dto = AdminMapperProfile.toRejectSellerKycInputDto(data);
         const { sellerId } = dto;

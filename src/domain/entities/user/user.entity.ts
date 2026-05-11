@@ -33,6 +33,7 @@ export class User {
         roles: UserRole[],
         status: UserStatus = UserStatus.ACTIVE,
         private userFraudLevel: number = 0,
+        private razorpayCustomerId: string | null,
         kyc?: Kyc,
     ) {
         this.roles = new Set(roles);
@@ -52,6 +53,7 @@ export class User {
         roles = [],
         status,
         userFraudLevel = 0,
+        razorpayCustomerId = null,
     }: {
         id: string;
         name: string;
@@ -64,6 +66,7 @@ export class User {
         roles: UserRole[];
         status: UserStatus;
         userFraudLevel?: number;
+        razorpayCustomerId?: string | null;
     }): Result<User> {
         if (!name.trim() || name.length < 3) {
             return Result.fail('name must be at least 3 characters long');
@@ -89,6 +92,7 @@ export class User {
             roles,
             status,
             userFraudLevel,
+            razorpayCustomerId,
         );
         return Result.ok(user);
     }
@@ -161,6 +165,10 @@ export class User {
         return this.avatar_url;
     }
 
+    public getRazorpayCustomerId(): string | null {
+        return this.razorpayCustomerId;
+    }
+
     public isProfileCompleted(): boolean {
         const phone = this.phone?.getValue();
         const address = this.address ?? '';
@@ -215,5 +223,9 @@ export class User {
 
     public getUserFraudLevel(): number {
         return this.userFraudLevel;
+    }
+
+    public setRazorpayCustomerId(razorpayCustomerId: string) {
+        this.razorpayCustomerId = razorpayCustomerId;
     }
 }

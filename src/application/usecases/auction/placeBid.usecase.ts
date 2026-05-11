@@ -17,6 +17,9 @@ import { BID_LOCK_TTL_SECONDS } from '@application/constants/auction/bid.constan
 import { PlaceBidPolicyService } from '@domain/policies/auction/place-bid-policy.service';
 import { AuctionParticipantPaymentStatus } from '@domain/entities/auction/auction-participant.entity';
 import { ShouldExtendAuctionPolicy } from '@domain/policies/auction/should-extend-auction.policy';
+import { IAutoBidService } from '@application/interfaces/services/IAutoBidService';
+import { IAutoBidConfigRepository } from '@domain/repositories/IAutoBidConfigRepository';
+import { ISubscriptionConfigService } from '@application/interfaces/services/ISubscriptionConfigService';
 
 @injectable()
 export class PlaceBidUsecase implements IPlaceBidUsecase {
@@ -35,6 +38,12 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
         private readonly _placeBidPolicyService: PlaceBidPolicyService,
         @inject(TYPES.PlaceBidStartegyFactory)
         private readonly _placeBidStartegyFactory: PlaceBidStartegyFactory,
+        @inject(TYPES.IAutoBidService)
+        private readonly _autoBidService: IAutoBidService,
+        @inject(TYPES.IAutoBidConfigRepository)
+        private readonly _autoBidConfigRepo: IAutoBidConfigRepository,
+        @inject(TYPES.ISubscriptionConfigService)
+        private readonly _subscriptionConfigService: ISubscriptionConfigService,
     ) {}
 
     async execute(input: IPlaceBidInput): Promise<Result<IPlaceBidOutput>> {
@@ -46,6 +55,23 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
         try {
             console.log('lockKey', lockKey);
 
+            const canPlaceBidResult =
+                await this._subscriptionConfigService.canPlaceBid(
+                    input.userId,
+                    input.auctionId,
+                );
+            if (canPlaceBidResult.isFailure) {
+                return Result.fail(canPlaceBidResult.getError());
+            }
+
+            console.log('canPlaceBidResult', canPlaceBidResult.getValue());
+
+            if (!canPlaceBidResult.getValue()) {
+                return Result.fail(
+                    'You have reached the maximum number of bids you can place for this auction with your current plan',
+                );
+            }
+
             const locked = await this._bidLockService.lock(
                 lockKey,
                 lockToken,
@@ -54,6 +80,21 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
             if (!locked) {
                 return Result.fail('Bid is being processed, try again');
+            }
+
+            const autoBidConfigResult =
+                await this._autoBidConfigRepo.findByUserAndAuction(
+                    input.userId,
+                    input.auctionId,
+                );
+            if (autoBidConfigResult.isFailure) {
+                return Result.fail(autoBidConfigResult.getError());
+            }
+
+            if (autoBidConfigResult.getValue()?.getIsActive()) {
+                return Result.fail(
+                    'Disable auto bid before placing a manual bid',
+                );
             }
 
             const auctionResult = await this._auctionRepo.findById(
@@ -186,6 +227,9 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                 createdAt: newBid.getCreatedAt().toISOString(),
                 endAt: auctionForOutput.getEndAt().toISOString(),
                 extensionCount: auctionForOutput.getExtensionCount(),
+                nextBidMin:
+                    (newBid.getAmount() ?? 0) +
+                    auctionForOutput.getMinIncrement(),
                 participants: participantsResult.getValue().map((p) => ({
                     id: p.getId(),
                     auctionId: p.getAuctionId(),
@@ -193,7 +237,45 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                     userName: p.getUserName(),
                     joinedAt: p.getJoinedAt().toISOString(),
                 })),
+                placedBids: [
+                    {
+                        id: newBid.getId(),
+                        auctionId: newBid.getAuctionId(),
+                        userId: newBid.getUserId(),
+                        amount: newBid.getAmount(),
+                        createdAt: newBid.getCreatedAt().toISOString(),
+                        endAt: auctionForOutput.getEndAt().toISOString(),
+                        extensionCount: auctionForOutput.getExtensionCount(),
+                    },
+                ],
             };
+
+            const autoBidResult =
+                await this._autoBidService.handleAuctionPlaceBid({
+                    auction: auctionForOutput,
+                    latestBidAmount: newBid.getAmount(),
+                    triggeringUserId: input.userId,
+                });
+
+            console.log('AUTO BID RESULT: ', autoBidResult);
+
+            if (autoBidResult.isFailure) {
+                return Result.fail(autoBidResult.getError());
+            }
+
+            const placedAutoBids = autoBidResult.getValue().placedBids;
+            if (placedAutoBids.length > 0) {
+                output.placedBids.push(...placedAutoBids);
+                const lastBid = placedAutoBids[placedAutoBids.length - 1];
+                output.finalBid = lastBid;
+                output.autoBidCount = placedAutoBids.length;
+                output.endAt = lastBid.endAt;
+                output.extensionCount = lastBid.extensionCount;
+                output.nextBidMin =
+                    lastBid.amount != null
+                        ? lastBid.amount + auctionForOutput.getMinIncrement()
+                        : auctionForOutput.getStartPrice();
+            }
 
             return Result.ok(output);
         } catch (error) {

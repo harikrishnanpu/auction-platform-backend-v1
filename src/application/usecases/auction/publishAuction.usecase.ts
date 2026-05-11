@@ -1,6 +1,10 @@
 import { AUCTION_MESSAGES } from '@application/constants/auction/auction.constants';
 import { IPublishAuctionOutput } from '@application/dtos/auction/publish-auction.dto';
-import { IPublishAuctionUsecase } from '@application/interfaces/usecases/auction/IPublishAuctionUsecase';
+import {
+    IPublishAuctionUsecase,
+    IValidatedPublishAuctionInput,
+} from '@application/interfaces/usecases/auction/IPublishAuctionUsecase';
+
 import { TYPES } from '@di/types.di';
 import {
     Auction,
@@ -9,7 +13,6 @@ import {
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { ZodPublishAuctionParamsInputType } from '@presentation/validators/schemas/auction/publishAuctionParams.schema';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 
 @injectable()
@@ -20,7 +23,7 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
     ) {}
 
     async execute(
-        input: ZodPublishAuctionParamsInputType,
+        input: IValidatedPublishAuctionInput,
     ): Promise<Result<IPublishAuctionOutput>> {
         const dto = AuctionMapperProrfile.toPublishAuctionInputDto(input);
         const { auctionId, userId } = dto;
@@ -32,6 +35,10 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
         }
 
         const auction = existing.getValue();
+
+        if (!auction) {
+            return Result.fail('auction not found!');
+        }
 
         if (auction.getSellerId() !== userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_PUBLISH);
@@ -48,6 +55,7 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
 
         const publishedResult = Auction.create({
             id: auction.getId(),
+            auctionNumber: auction.getAuctionNumber(),
             sellerId: auction.getSellerId(),
             auctionType: auction.getAuctionType(),
             title: auction.getTitle(),

@@ -1,3 +1,8 @@
+export const AUCTION_VALIDATION_LIMITS = {
+    MIN_START_PRICE: 500,
+    MAX_MAX_EXTENSION_COUNT: 10,
+} as const;
+
 export const AUCTION_MESSAGES = {
     AUCTION_NOT_ACTIVE: 'Auction is not active',
     AUCTION_NOT_STARTED: 'Auction is not started',
@@ -16,6 +21,7 @@ export const AUCTION_PAYMENT_AMOUNT_SPLIT_STRATEGY = {
 };
 
 export const AUCTION_PAYMENT_DUE_AT_STRATEGY = {
+    // AUCTION_PAYMENT_DUE_AT_STRATEGY.DEPOSIT_DAYS_MS
     DEPOSIT_DAYS_MS: 24 * 60 * 60 * 1000,
     BALANCE_MONTHS_MS: 30 * 24 * 60 * 60 * 1000,
 };

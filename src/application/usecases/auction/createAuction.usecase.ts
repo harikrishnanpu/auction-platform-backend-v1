@@ -1,4 +1,5 @@
 import { ICreateAuctionUsecase } from '@application/interfaces/usecases/auction/ICreateAuctionUsecase';
+
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { TYPES } from '@di/types.di';
 import {
@@ -13,7 +14,9 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
-import { ZodCreateAuctionInputType } from '@presentation/validators/schemas/auction/createAuction.schema';
+import { ICreateAuctionInputDto } from '@application/dtos/auction/create-auction.dto';
+import { ISubscriptionConfigService } from '@application/interfaces/services/ISubscriptionConfigService';
+import { IAuctionNumberGeneratingService } from '@application/interfaces/services/IAuctionNumberGeneratingService';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -26,11 +29,13 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         private readonly _auctionCategoryRepository: IAuctionCategoryRepository,
         @inject(TYPES.AuctionCreatePolicyFactory)
         private readonly _auctionCreatePolicyFactory: AuctionCreatePolicyFactory,
+        @inject(TYPES.ISubscriptionConfigService)
+        private readonly _subscriptionConfigService: ISubscriptionConfigService,
+        @inject(TYPES.IAuctionNumberGeneratingService)
+        private readonly _auctionNumberGeneratingService: IAuctionNumberGeneratingService,
     ) {}
 
-    async execute(
-        data: ZodCreateAuctionInputType,
-    ): Promise<Result<IAuctionDto>> {
+    async execute(data: ICreateAuctionInputDto): Promise<Result<IAuctionDto>> {
         console.log('CREATE AUCTION INPUT: ', data);
 
         const dto = AuctionMapperProrfile.toCreateAuctionDto(data);
@@ -42,6 +47,20 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         }
 
         const validatedAuctionInput = validatedInput.getValue();
+
+        const canCreateAuctionResult =
+            await this._subscriptionConfigService.canCreateAuction(
+                validatedAuctionInput.userId,
+            );
+        if (canCreateAuctionResult.isFailure) {
+            return Result.fail(canCreateAuctionResult.getError());
+        }
+
+        if (!canCreateAuctionResult.getValue()) {
+            return Result.fail(
+                'You have reached the maximum number of auctions you can create with your subscription plan',
+            );
+        }
 
         const categoryResult = await this._auctionCategoryRepository.findById(
             validatedAuctionInput.categoryId,
@@ -57,6 +76,8 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         }
 
         const auctionId = this._idGeneratingService.generateId();
+        const auctionNumber =
+            this._auctionNumberGeneratingService.generateAuctionNumber();
 
         const assets = validatedAuctionInput.assets.map((a, index) => {
             return AuctionAsset.create({
@@ -70,6 +91,7 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
 
         const auctionResult = Auction.create({
             id: auctionId,
+            auctionNumber: auctionNumber,
             sellerId: validatedAuctionInput.userId,
             auctionType: validatedAuctionInput.auctionType,
             title: validatedAuctionInput.title,

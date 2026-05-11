@@ -1,17 +1,22 @@
-import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
 import { EditProfileOutput } from '@application/dtos/user/editProfile.dto';
+import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
-import { IEditProfileUsecase } from '@application/interfaces/usecases/user/IEditProfileUsecase';
+import type {
+    IEditProfileUsecase,
+    IValidatedEditProfileInput,
+} from '@application/interfaces/usecases/user/IEditProfileUsecase';
+
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { TYPES } from '@di/types.di';
 import { OtpPurpose } from '@domain/entities/otp/otp.entity';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';
+import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { inject, injectable } from 'inversify';
-import { ZodEditProfileInputType } from '@presentation/validators/schemas/user/editProfile.schema';
 
 @injectable()
 export class EditProfileUseCase implements IEditProfileUsecase {
@@ -20,10 +25,14 @@ export class EditProfileUseCase implements IEditProfileUsecase {
         private readonly _userRepository: IUserRepository,
         @inject(TYPES.IOtpRepository)
         private readonly _otpRepository: IOtpRepository,
+        @inject(TYPES.IUserSubscriptionRepository)
+        private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
+        @inject(TYPES.ISubscriptionPlanRepository)
+        private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
     ) {}
 
     async execute(
-        data: ZodEditProfileInputType,
+        data: IValidatedEditProfileInput,
     ): Promise<Result<EditProfileOutput>> {
         try {
             const dto = UserMapperProfile.toEditProfileInput(data);
@@ -70,25 +79,48 @@ export class EditProfileUseCase implements IEditProfileUsecase {
 
             await this._userRepository.save(userEntity.getValue());
 
-            const userResponseDto: userResponseDto = {
-                id: userEntity.getValue().getId(),
-                name: userEntity.getValue().getName(),
-                email: userEntity.getValue().getEmail().getValue(),
-                phone: userEntity.getValue().getPhone()?.getValue() ?? '',
-                address: userEntity.getValue().getAddress() ?? '',
-                avatar_url: userEntity.getValue().getAvatarUrl() ?? '',
-                isProfileCompleted: userEntity.getValue().isProfileCompleted(),
-                isVerified: userEntity.getValue().getIsVerified(),
-                status: userEntity.getValue().getStatus(),
-                authProvider: userEntity.getValue().getAuthProvider().getType(),
-                roles: userEntity
-                    .getValue()
+            const user = userEntity.getValue();
+            const subRes =
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                    user.getId(),
+                );
+            if (subRes.isFailure) return Result.fail(subRes.getError());
+            const row = subRes.getValue();
+            let planName: string | null = null;
+            if (row) {
+                const planRes = await this._subscriptionPlanRepository.findById(
+                    row.getSubscriptionPlanId(),
+                );
+                if (planRes.isFailure) return Result.fail(planRes.getError());
+                planName = planRes.getValue()?.getName() ?? null;
+            }
+            const userDto: userResponseDto = {
+                id: user.getId(),
+                name: user.getName(),
+                email: user.getEmail().getValue(),
+                phone: user.getPhone()?.getValue() ?? '',
+                address: user.getAddress() ?? '',
+                avatar_url: user.getAvatarUrl() ?? '',
+                isProfileCompleted: user.isProfileCompleted(),
+                isVerified: user.getIsVerified(),
+                status: user.getStatus(),
+                authProvider: user.getAuthProvider().getType(),
+                roles: user
                     .getRoles()
                     .map((role) => role.getValue() as UserRoleType),
+                subscription:
+                    row && planName
+                        ? {
+                              planId: row.getSubscriptionPlanId(),
+                              planName,
+                              status: row.getStatus(),
+                              endDate: row.getEndDate().toISOString(),
+                          }
+                        : null,
             };
 
             return Result.ok({
-                user: userResponseDto,
+                user: userDto,
             });
         } catch (error) {
             console.log(error);

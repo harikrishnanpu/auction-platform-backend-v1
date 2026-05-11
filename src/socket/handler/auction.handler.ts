@@ -13,6 +13,8 @@ import type { Server, Socket } from 'socket.io';
 import type { SocketAckPayload } from '../helpers/socket.ack';
 import { SocketEvents } from '../constants/socket.events';
 import {
+    autoBidDisableSocketSchema,
+    autoBidSetSocketSchema,
     auctionControlSocketSchema,
     auctionJoinSocketSchema,
     parseSocketPayload,
@@ -27,13 +29,19 @@ import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfa
 import { verifyFallbackAuctionPaymentSchema } from 'socket/validators/verifyFallbackAuctionPayment.schema';
 import { IDeclinePublicFallbackAuctionUsecase } from '@application/interfaces/usecases/auction/IDeclinePublicFallbackAuctionUsecase';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
+import { IAuctionParticipantRepository } from '@domain/repositories/IAuctionParticipantRepository';
 import { IFallbackAuctionParticipantsRepo } from '@domain/repositories/IFallbackAuctionParticipantsRepo';
 import { PublicAuctionFallbackParticipantsStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
+import { ICreateAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/ICreateAutoBidConfigUsecase';
+import { IUpdateAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IUpdateAutoBidConfigUsecase';
+import { IDisableAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IDisableAutoBidConfigUsecase';
+import { IGetUserAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IGetUserAutoBidConfigUsecase';
 import {
     AuctionStatus,
     AuctionType,
 } from '@domain/entities/auction/auction.entity';
+import { AuctionParticipantPaymentStatus } from '@domain/entities/auction/auction-participant.entity';
 import { LiveAuctionRoomManager } from 'socket/managers/liveAuctionRoom.manager';
 import { MediaSoupeManager } from 'socket/managers/mediaSoupe.manager';
 import type { DtlsParameters } from 'mediasoup/node/lib/WebRtcTransportTypes';
@@ -108,14 +116,16 @@ export class AuctionHandler {
         const result = roomResult.getValue();
         const chatMessages = chatResult.getValue();
 
+        const isProducer =
+            result.auction.status === AuctionStatus.ACTIVE &&
+            (user.roles.includes(UserRoleType.ADMIN) ||
+                user.roles.includes(UserRoleType.SELLER));
+
         this.socket.emit(SocketEvents.JOINED, {
             ...result,
             chatMessages,
             isLiveAuction: result.auction.auctionType === AuctionType.LIVE,
-            isProducer:
-                result.auction.status === AuctionStatus.ACTIVE &&
-                (user.roles.includes(UserRoleType.ADMIN) ||
-                    user.roles.includes(UserRoleType.SELLER)),
+            isProducer,
         });
 
         return { success: true, data: { auctionId } };
@@ -150,22 +160,258 @@ export class AuctionHandler {
 
         const out = result.getValue();
         const roomId = `auction:${auctionId}`;
+        const bidsToEmit = out.placedBids.length
+            ? out.placedBids
+            : [
+                  {
+                      id: out.id,
+                      auctionId: out.auctionId,
+                      userId: out.userId,
+                      amount: out.amount,
+                      createdAt: out.createdAt,
+                      endAt: out.endAt,
+                      extensionCount: out.extensionCount,
+                  },
+              ];
 
-        this.io.to(roomId).emit(SocketEvents.BID_PLACED, {
-            id: out.id,
-            auctionId: out.auctionId,
-            userId: out.userId,
-            amount: out.amount,
-            createdAt: out.createdAt,
-        });
+        for (const bid of bidsToEmit) {
+            this.io.to(roomId).emit(SocketEvents.BID_PLACED, {
+                id: bid.id,
+                auctionId: out.auctionId,
+                userId: bid.userId,
+                amount: bid.amount,
+                createdAt: bid.createdAt,
+            });
+        }
 
         this.io.to(roomId).emit(SocketEvents.UPDATED, {
             auctionId: out.auctionId,
             endAt: out.endAt,
             extensionCount: out.extensionCount,
+            nextBidMin: out.nextBidMin,
         });
 
-        return { success: true, data: { bidId: out.id } };
+        this.io
+            .to(roomId)
+            .emit(SocketEvents.PARTICIPANTS_UPDATED, out.participants);
+
+        return {
+            success: true,
+            data: {
+                bidId: out.id,
+                placedBids: bidsToEmit,
+                participants: out.participants,
+                nextBidMin: out.nextBidMin,
+                endAt: out.endAt,
+                extensionCount: out.extensionCount,
+            },
+        };
+    }
+
+    async handleSetAutoBid(payload: unknown): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(autoBidSetSocketSchema, payload);
+        if (!parsed.ok) return { success: false, error: parsed.error };
+
+        const user = this.socket.data.user;
+        const denied = authorizeUser(user, [UserRoleType.USER]);
+        if (denied) return { success: false, error: denied.error };
+
+        const { auctionId, strategy, maxBidAmount } = parsed.data;
+
+        const auctionRepo = this.container.get<IAuctionRepository>(
+            TYPES.IAuctionRepository,
+        );
+        const participantRepo =
+            this.container.get<IAuctionParticipantRepository>(
+                TYPES.IAuctionParticipantRepository,
+            );
+        const createAutoBidConfigUsecase =
+            this.container.get<ICreateAutoBidConfigUsecase>(
+                TYPES.ICreateAutoBidConfigUsecase,
+            );
+        const updateAutoBidConfigUsecase =
+            this.container.get<IUpdateAutoBidConfigUsecase>(
+                TYPES.IUpdateAutoBidConfigUsecase,
+            );
+        const getUserAutoBidConfigUsecase =
+            this.container.get<IGetUserAutoBidConfigUsecase>(
+                TYPES.IGetUserAutoBidConfigUsecase,
+            );
+
+        const auctionResult = await auctionRepo.findById(auctionId);
+        if (auctionResult.isFailure) {
+            return { success: false, error: auctionResult.getError() };
+        }
+        const auction = auctionResult.getValue();
+        if (auction.getStatus() !== AuctionStatus.ACTIVE) {
+            return {
+                success: false,
+                error: 'Auto bid can be enabled only for active auctions',
+            };
+        }
+
+        const participantsResult =
+            await participantRepo.findByAuctionId(auctionId);
+        if (participantsResult.isFailure) {
+            return { success: false, error: participantsResult.getError() };
+        }
+
+        const currentUser = participantsResult
+            .getValue()
+            .find((p) => p.getUserId() === user.id);
+
+        if (
+            !currentUser ||
+            currentUser.getIntialAmount() !==
+                AuctionParticipantPaymentStatus.PAID
+        ) {
+            return {
+                success: false,
+                error: 'Join auction and lock participation amount first',
+            };
+        }
+
+        const existingAutoBidResult = await getUserAutoBidConfigUsecase.execute(
+            {
+                auctionId,
+                userId: user.id,
+            },
+        );
+        if (existingAutoBidResult.isFailure) {
+            return { success: false, error: existingAutoBidResult.getError() };
+        }
+
+        if (existingAutoBidResult.getValue()) {
+            return this.handleUpdateAutoBid({
+                auctionId,
+                userId: user.id,
+                strategy,
+                maxBidAmount,
+                updateAutoBidConfigUsecase,
+            });
+        }
+
+        return this.handleCreateAutoBid({
+            auctionId,
+            userId: user.id,
+            userName: user.name,
+            strategy,
+            maxBidAmount,
+            createAutoBidConfigUsecase,
+        });
+    }
+
+    private async handleCreateAutoBid(input: {
+        auctionId: string;
+        userId: string;
+        userName: string;
+        strategy: 'SLOW' | 'FASTER' | 'SNIPER';
+        maxBidAmount: number;
+        createAutoBidConfigUsecase: ICreateAutoBidConfigUsecase;
+    }): Promise<SocketAckPayload> {
+        const createResult = await input.createAutoBidConfigUsecase.execute({
+            auctionId: input.auctionId,
+            userId: input.userId,
+            userName: input.userName,
+            strategy: input.strategy,
+            maxBidAmount: input.maxBidAmount,
+        });
+        if (createResult.isFailure) {
+            return { success: false, error: createResult.getError() };
+        }
+
+        const config = createResult.getValue();
+        this.socket.emit(SocketEvents.AUTO_BID_CONFIG_CREATED, {
+            id: config.id,
+            strategy: config.strategy,
+            maxBidAmount: config.maxBidAmount,
+            isActive: config.isActive,
+        });
+
+        return {
+            success: true,
+            data: {
+                id: config.id,
+                strategy: config.strategy,
+                maxBidAmount: config.maxBidAmount,
+                isActive: config.isActive,
+            },
+        };
+    }
+
+    private async handleUpdateAutoBid(input: {
+        auctionId: string;
+        userId: string;
+        strategy: 'SLOW' | 'FASTER' | 'SNIPER';
+        maxBidAmount: number;
+        updateAutoBidConfigUsecase: IUpdateAutoBidConfigUsecase;
+    }): Promise<SocketAckPayload> {
+        const updateResult = await input.updateAutoBidConfigUsecase.execute({
+            auctionId: input.auctionId,
+            userId: input.userId,
+            strategy: input.strategy,
+            maxBidAmount: input.maxBidAmount,
+        });
+        if (updateResult.isFailure) {
+            return { success: false, error: updateResult.getError() };
+        }
+
+        const config = updateResult.getValue();
+        this.socket.emit(SocketEvents.AUTO_BID_CONFIG_EDITED, {
+            id: config.id,
+            strategy: config.strategy,
+            maxBidAmount: config.maxBidAmount,
+            isActive: config.isActive,
+        });
+
+        return {
+            success: true,
+            data: {
+                id: config.id,
+                strategy: config.strategy,
+                maxBidAmount: config.maxBidAmount,
+                isActive: config.isActive,
+            },
+        };
+    }
+
+    async handleDisableAutoBid(payload: unknown): Promise<SocketAckPayload> {
+        const parsed = parseSocketPayload(autoBidDisableSocketSchema, payload);
+        if (!parsed.ok) return { success: false, error: parsed.error };
+
+        const user = this.socket.data.user;
+        const denied = authorizeUser(user, [UserRoleType.USER]);
+        if (denied) return { success: false, error: denied.error };
+
+        const disableAutoBidConfigUsecase =
+            this.container.get<IDisableAutoBidConfigUsecase>(
+                TYPES.IDisableAutoBidConfigUsecase,
+            );
+        const disableResult = await disableAutoBidConfigUsecase.execute({
+            auctionId: parsed.data.auctionId,
+            userId: user.id,
+        });
+        if (disableResult.isFailure) {
+            return { success: false, error: disableResult.getError() };
+        }
+        const config = disableResult.getValue();
+
+        this.socket.emit(SocketEvents.AUTO_BID_CONFIG_UPDATED, {
+            id: config?.id ?? '',
+            strategy: config?.strategy ?? 'SLOW',
+            maxBidAmount: config?.maxBidAmount ?? 0,
+            isActive: false,
+        });
+
+        return {
+            success: true,
+            data: {
+                id: config?.id ?? '',
+                strategy: config?.strategy ?? 'SLOW',
+                maxBidAmount: config?.maxBidAmount ?? 0,
+                isActive: false,
+            },
+        };
     }
 
     async handleSendChat(payload: unknown): Promise<SocketAckPayload> {
@@ -810,7 +1056,7 @@ export class AuctionHandler {
         if (
             !room.router.canConsume({
                 producerId: parsed.data.producerId,
-                rtpCapabilities: parsed.data.rtpCapabilities as never,
+                rtpCapabilities: parsed.data.rtpCapabilities,
             })
         ) {
             return { success: false, error: 'Cannot consume this producer' };
@@ -818,7 +1064,7 @@ export class AuctionHandler {
 
         const consumer = await user.transport.consume({
             producerId: parsed.data.producerId,
-            rtpCapabilities: parsed.data.rtpCapabilities as never,
+            rtpCapabilities: parsed.data.rtpCapabilities,
             paused: true,
         });
 

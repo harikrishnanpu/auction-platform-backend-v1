@@ -20,5 +20,24 @@ export interface IPlaceBidOutput {
     createdAt: string;
     endAt: string;
     extensionCount: number;
+    nextBidMin: number | null;
     participants: IAuctionRoomParticipantDto[];
+    placedBids: Array<{
+        id: string;
+        auctionId: string;
+        userId: string;
+        amount: number | null;
+        createdAt: string;
+        endAt: string;
+        extensionCount: number;
+    }>;
+    finalBid?: {
+        id: string;
+        userId: string;
+        amount: number | null;
+        createdAt: string;
+        endAt: string;
+        extensionCount: number;
+    };
+    autoBidCount?: number;
 }

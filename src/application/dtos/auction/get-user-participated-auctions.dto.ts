@@ -4,6 +4,15 @@ import {
 } from '@domain/entities/auction/auction.entity';
 import { IAuctionDto } from './auction.dto';
 
+export interface IUserAuctionParticipationDto {
+    outcome: string;
+    label: string;
+}
+
+export interface IUserParticipatedAuctionDto extends IAuctionDto {
+    participation: IUserAuctionParticipationDto;
+}
+
 export interface IGetUserParticipatedAuctionsInputDto {
     userId: string;
     query: {
@@ -18,7 +27,7 @@ export interface IGetUserParticipatedAuctionsInputDto {
 }
 
 export interface IGetUserParticipatedAuctionsOutputDto {
-    auctions: IAuctionDto[];
+    auctions: IUserParticipatedAuctionDto[];
     total: number;
     page: number;
     limit: number;

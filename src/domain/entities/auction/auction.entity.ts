@@ -1,3 +1,4 @@
+import { AUCTION_VALIDATION_LIMITS } from '@domain/constants/auction.constants';
 import { Result } from '@domain/shared/result';
 import { AuctionAsset } from './auction-asset.entity';
 import {
@@ -26,6 +27,7 @@ export enum AuctionType {
 export class Auction {
     constructor(
         private readonly id: string,
+        private readonly auctionNumber: string,
         private readonly sellerId: string,
         private readonly auctionType: AuctionType,
         private readonly title: string,
@@ -48,6 +50,7 @@ export class Auction {
 
     static create({
         id,
+        auctionNumber,
         sellerId,
         auctionType = AuctionType.LONG,
         title,
@@ -68,6 +71,7 @@ export class Auction {
         assets = [],
     }: {
         id: string;
+        auctionNumber: string;
         sellerId: string;
         auctionType?: AuctionType;
         title: string;
@@ -91,12 +95,19 @@ export class Auction {
             return Result.fail('Auction category is not approved');
         }
 
-        if (startPrice < 500) {
-            return Result.fail('Start price must be greater than 500');
+        if (startPrice < AUCTION_VALIDATION_LIMITS.MIN_START_PRICE) {
+            return Result.fail(
+                `Start price must be greater than ${AUCTION_VALIDATION_LIMITS.MIN_START_PRICE}`,
+            );
         }
 
-        if (maxExtensionCount > 10) {
-            return Result.fail('Max extension count must be less than 10');
+        if (
+            maxExtensionCount >
+            AUCTION_VALIDATION_LIMITS.MAX_MAX_EXTENSION_COUNT
+        ) {
+            return Result.fail(
+                `Max extension count must be less than ${AUCTION_VALIDATION_LIMITS.MAX_MAX_EXTENSION_COUNT}`,
+            );
         }
 
         // if(extensionCount <= 0 || antiSnipSeconds <= 0 || bidCooldownSeconds <= 0) {
@@ -116,6 +127,7 @@ export class Auction {
         return Result.ok(
             new Auction(
                 id,
+                auctionNumber,
                 sellerId,
                 auctionType,
                 title,
@@ -252,5 +264,9 @@ export class Auction {
 
     getWinAmount(): number | null {
         return this.winAmount;
+    }
+
+    getAuctionNumber(): string {
+        return this.auctionNumber;
     }
 }

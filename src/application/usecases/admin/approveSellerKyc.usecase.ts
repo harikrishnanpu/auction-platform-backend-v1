@@ -1,5 +1,9 @@
 import { IApproveSellerKycOutput } from '@application/dtos/admin/approveSellerKyc.dto';
-import { IApproveSellerKycUsecase } from '@application/interfaces/usecases/admin/IApproveSellerKycUsecase';
+import {
+    IApproveSellerKycUsecase,
+    IValidatedApproveSellerKycInput,
+} from '@application/interfaces/usecases/admin/IApproveSellerKycUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { KycFor } from '@domain/entities/kyc/kyc.entity';
@@ -8,7 +12,6 @@ import { IKycRepository } from '@domain/repositories/IKycRespository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
-import { ZodGetAdminSellerInputType } from '@presentation/validators/schemas/admin/getAdminSeller.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -21,7 +24,7 @@ export class ApproveSellerKycUseCase implements IApproveSellerKycUsecase {
     ) {}
 
     async execute(
-        data: ZodGetAdminSellerInputType,
+        data: IValidatedApproveSellerKycInput,
     ): Promise<Result<IApproveSellerKycOutput>> {
         try {
             const dto = AdminMapperProfile.toApproveSellerKycInputDto(data);

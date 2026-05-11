@@ -1,11 +1,14 @@
 import { IGenerateAuctionUploadUrlOutput } from '@application/dtos/auction/generate-auction-upload-url.dto';
-import { IGenerateAuctionUploadUrlUsecase } from '@application/interfaces/usecases/auction/IGenerateAuctionUploadUrlUsecase';
+import {
+    IGenerateAuctionUploadUrlUsecase,
+    IValidatedGenerateAuctionUploadUrlInput,
+} from '@application/interfaces/usecases/auction/IGenerateAuctionUploadUrlUsecase';
+
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IStorageService } from '@application/interfaces/services/IStorageService';
 import { TYPES } from '@di/types.di';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { ZodGenerateAuctionUploadUrlInputType } from '@presentation/validators/schemas/auction/generateAuctionUploadUrl.schema';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 
 @injectable()
@@ -18,7 +21,7 @@ export class GenerateAuctionUploadUrlUsecase implements IGenerateAuctionUploadUr
     ) {}
 
     async execute(
-        input: ZodGenerateAuctionUploadUrlInputType,
+        input: IValidatedGenerateAuctionUploadUrlInput,
     ): Promise<Result<IGenerateAuctionUploadUrlOutput>> {
         const dto = AuctionMapperProrfile.toGenerateAuctionUploadUrlDto(input);
 

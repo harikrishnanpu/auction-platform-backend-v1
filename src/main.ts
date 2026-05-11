@@ -28,6 +28,7 @@ import { WalletRouterFactory } from '@presentation/http/factories/wallet.router.
 import { PaymentsRouterFactory } from '@presentation/http/factories/payments.router.factory';
 import { FallbackPublicNotificationWorker } from '@infrastructure/workers/fallbackPublicNotification.worker';
 import { FraudRouterFactory } from '@presentation/http/factories/fraud.router.factory';
+import { WebhookRouterFactory } from '@presentation/http/factories/webhook.router.factory';
 
 export const app = express();
 
@@ -40,9 +41,13 @@ app.use(
     }),
 );
 
+app.use(
+    '/api/v1/webhooks',
+    express.raw({ type: 'application/json' }),
+    WebhookRouterFactory.webhookRouter(container),
+);
 app.use(express.json());
 app.use(logMiddleware(logger));
-
 app.use(cookieParser());
 app.use(passport.initialize());
 

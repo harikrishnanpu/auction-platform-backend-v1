@@ -1,5 +1,9 @@
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
-import { IChangeProfilePasswordUsecase } from '@application/interfaces/usecases/user/IChangeProfilePassword';
+import type {
+    IChangeProfilePasswordUsecase,
+    IValidatedChangeProfilePasswordInput,
+} from '@application/interfaces/usecases/user/IChangeProfilePassword';
+
 import { TYPES } from '@di/types.di';
 import { OtpPurpose, OtpStatus } from '@domain/entities/otp/otp.entity';
 import { User } from '@domain/entities/user/user.entity';
@@ -8,7 +12,6 @@ import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { inject, injectable } from 'inversify';
-import { ZodChangeProfilePasswordInputType } from '@presentation/validators/schemas/user/change-profile-password.schema';
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
@@ -23,7 +26,7 @@ export class ChangeProfilePasswordUseCase implements IChangeProfilePasswordUseca
     ) {}
 
     async execute(
-        data: ZodChangeProfilePasswordInputType,
+        data: IValidatedChangeProfilePasswordInput,
     ): Promise<Result<User>> {
         console.log('INSIDE CHANGE PROFILE PASSWORD', data);
 

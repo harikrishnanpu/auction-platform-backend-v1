@@ -17,7 +17,12 @@ import { UserSuspensionMapper } from '@infrastructure/mappers/fraud/user-suspens
 import { UserMapper } from '@infrastructure/mappers/user/user.mapper';
 import { WalletMapper } from '@infrastructure/mappers/wallet/wallet.mapper';
 import { WalletTransactionMapper } from '@infrastructure/mappers/wallet/wallet.transactions.mapper';
+import { SystemConfigMapper } from '@infrastructure/mappers/system-config/system-config.mapper';
+import { SubscriptionPlanMapper } from '@infrastructure/mappers/subscription/subscription-plan.mapper';
+import { UserSubscriptionMapper } from '@infrastructure/mappers/subscription/user-subscription.mapper';
 import { ContainerModule } from 'inversify';
+import { SubscriptionFeaturesMapper } from '@infrastructure/mappers/subscription/subscriptionFeatures.mapper';
+import { AutoBidConfigMapper } from '@infrastructure/mappers/auction/autoBidConfig.mapper';
 
 export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<AuctionCategoryMapper>(TYPES.AuctionCategoryMapper).to(
@@ -46,6 +51,13 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<OtpMapper>(TYPES.OtpMapper).to(OtpMapper);
     bind<PaymentsMapper>(TYPES.PaymentsMapper).to(PaymentsMapper);
     bind<UserMapper>(TYPES.UserMapper).to(UserMapper);
+    bind<SystemConfigMapper>(TYPES.SystemConfigMapper).to(SystemConfigMapper);
+    bind<SubscriptionPlanMapper>(TYPES.SubscriptionPlanMapper).to(
+        SubscriptionPlanMapper,
+    );
+    bind<UserSubscriptionMapper>(TYPES.UserSubscriptionMapper).to(
+        UserSubscriptionMapper,
+    );
     bind<WalletMapper>(TYPES.WalletMapper).to(WalletMapper);
     bind<WalletTransactionMapper>(TYPES.WalletTransactionMapper).to(
         WalletTransactionMapper,
@@ -53,5 +65,12 @@ export const dbMappersContainer = new ContainerModule(({ bind }) => {
     bind<FraudReportMapper>(TYPES.FraudReportMapper).to(FraudReportMapper);
     bind<UserSuspensionMapper>(TYPES.UserSuspensionMapper).to(
         UserSuspensionMapper,
+    );
+
+    bind<SubscriptionFeaturesMapper>(TYPES.SubscriptionFeaturesMapper).to(
+        SubscriptionFeaturesMapper,
+    );
+    bind<AutoBidConfigMapper>(TYPES.AutoBidConfigMapper).to(
+        AutoBidConfigMapper,
     );
 });

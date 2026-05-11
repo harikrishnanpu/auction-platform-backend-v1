@@ -1,11 +1,14 @@
-import { IBlockUserOutput } from '@application/dtos/admin/blockuser.dto';
+import {
+    IBlockUserInput,
+    IBlockUserOutput,
+} from '@application/dtos/admin/blockuser.dto';
 import { IBlockUserUsecase } from '@application/interfaces/usecases/admin/IBlockUserUsecase';
+
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
 import { UserStatus } from '@domain/entities/user/user.entity';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
-import { ZodBlockUserInputType } from '@presentation/validators/schemas/admin/blockUsers.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -15,9 +18,7 @@ export class BlockUserUseCase implements IBlockUserUsecase {
         private readonly _userRepository: IUserRepository,
     ) {}
 
-    async execute(
-        data: ZodBlockUserInputType,
-    ): Promise<Result<IBlockUserOutput>> {
+    async execute(data: IBlockUserInput): Promise<Result<IBlockUserOutput>> {
         const dto = AdminMapperProfile.toBlockUserInputDto(data);
         const { userId, block } = dto;
 

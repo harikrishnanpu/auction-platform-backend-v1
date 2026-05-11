@@ -1,12 +1,12 @@
 import type {
     IGetBrowseAuctionsOutputDto,
+    IValidatedGetBrowseAuctionsInput,
     IGetBrowseAuctionsUsecase,
 } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -17,12 +17,20 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
     ) {}
 
     async execute(
-        data: ZodGetBrowseAuctionsInputType,
+        data: IValidatedGetBrowseAuctionsInput,
     ): Promise<Result<IGetBrowseAuctionsOutputDto>> {
         const dto = AuctionMapperProrfile.toGetBrowseAuctionsDto(data);
 
-        const { page, limit, auctionType, categoryId, sort, order, search } =
-            dto;
+        const {
+            page,
+            limit,
+            auctionType,
+            categoryId,
+            sort,
+            order,
+            search,
+            scope,
+        } = dto;
 
         const safePage = Number(page) > 0 ? page : 1;
         const safeLimit = Number(limit) > 0 ? limit : 10;
@@ -36,6 +44,7 @@ export class GetBrowseAuctionsUsecase implements IGetBrowseAuctionsUsecase {
             sort: sort,
             order: order,
             search: search,
+            scope: scope ?? 'default',
         });
 
         if (auctionsRes.isFailure) return Result.fail(auctionsRes.getError());

@@ -81,10 +81,42 @@ import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/
 import { ReleaseParticipantsWalletUsecase } from '@application/usecases/auction/releaseParticipantsWallet.usecase';
 import { IReleaseParticipantsWalletUsecase } from '@application/interfaces/usecases/auction/IReleaseParticipantsWalletUsecase';
 import { LiveAuctionCreatePolicy } from '@domain/policies/auction/liveAuction.create.policy';
+import { IAutoBidService } from '@application/interfaces/services/IAutoBidService';
+import { AutoBidService } from '@infrastructure/services/auction/autoBid.service';
+import { IAutoBidConfigRepository } from '@domain/repositories/IAutoBidConfigRepository';
+import { PrismaAutoBidConfigRepository } from '@infrastructure/repositories/auction/autoBidConfig.repo';
+import { ICreateAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/ICreateAutoBidConfigUsecase';
+import { CreateAutoBidConfigUsecase } from '@application/usecases/auction/createAutoBidConfig.usecase';
+import { IUpdateAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IUpdateAutoBidConfigUsecase';
+import { UpdateAutoBidConfigUsecase } from '@application/usecases/auction/updateAutoBidConfig.usecase';
+import { IDisableAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IDisableAutoBidConfigUsecase';
+import { DisableAutoBidConfigUsecase } from '@application/usecases/auction/disableAutoBidConfig.usecase';
+import { IGetUserAutoBidConfigUsecase } from '@application/interfaces/usecases/auction/IGetUserAutoBidConfigUsecase';
+import { GetUserAutoBidConfigUsecase } from '@application/usecases/auction/getUserAutoBidConfig.usecase';
+import { IAuctionNumberGeneratingService } from '@application/interfaces/services/IAuctionNumberGeneratingService';
+import { GenerateAuctionNumberService } from '@infrastructure/services/auction/generateAuctionNumber.service';
 
 export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IAuctionRepository>(TYPES.IAuctionRepository).to(PrismaAuctionRepo);
     bind<IBidRepository>(TYPES.IBidRepository).to(PrismaBidRepo);
+    bind<IAutoBidConfigRepository>(TYPES.IAutoBidConfigRepository).to(
+        PrismaAutoBidConfigRepository,
+    );
+    bind<IAutoBidService>(TYPES.IAutoBidService)
+        .to(AutoBidService)
+        .inSingletonScope();
+    bind<ICreateAutoBidConfigUsecase>(TYPES.ICreateAutoBidConfigUsecase).to(
+        CreateAutoBidConfigUsecase,
+    );
+    bind<IUpdateAutoBidConfigUsecase>(TYPES.IUpdateAutoBidConfigUsecase).to(
+        UpdateAutoBidConfigUsecase,
+    );
+    bind<IDisableAutoBidConfigUsecase>(TYPES.IDisableAutoBidConfigUsecase).to(
+        DisableAutoBidConfigUsecase,
+    );
+    bind<IGetUserAutoBidConfigUsecase>(TYPES.IGetUserAutoBidConfigUsecase).to(
+        GetUserAutoBidConfigUsecase,
+    );
     bind<IAuctionParticipantRepository>(TYPES.IAuctionParticipantRepository).to(
         PrismaAuctionParticipantRepo,
     );
@@ -224,4 +256,7 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<LiveAuctionCreatePolicy>(TYPES.LiveAuctionCreatePolicy).to(
         LiveAuctionCreatePolicy,
     );
+    bind<IAuctionNumberGeneratingService>(
+        TYPES.IAuctionNumberGeneratingService,
+    ).to(GenerateAuctionNumberService);
 });

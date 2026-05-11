@@ -2,7 +2,18 @@ import type { AuctionType } from '@domain/entities/auction/auction.entity';
 
 import type { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import type { Result } from '@domain/shared/result';
-import { ZodGetBrowseAuctionsInputType } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+
+export interface IValidatedGetAdminAuctionsInput {
+    userId: string;
+    auctionType: string;
+    categoryId: string;
+    page: number;
+    limit: number;
+    sort: string;
+    order: 'asc' | 'desc';
+    search: string;
+    scope: 'default' | 'ending_soon';
+}
 
 export interface IGetAdminAuctionsInputDto {
     auctionType: AuctionType | 'ALL';
@@ -25,6 +36,6 @@ export interface IGetAdminAuctionsOutputDto {
 
 export interface IGetAdminAuctionsUsecase {
     execute(
-        input: ZodGetBrowseAuctionsInputType,
+        input: IValidatedGetAdminAuctionsInput,
     ): Promise<Result<IGetAdminAuctionsOutputDto>>;
 }

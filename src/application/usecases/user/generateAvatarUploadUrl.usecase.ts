@@ -5,12 +5,15 @@ import {
     GenerateUploadUrlData,
     IStorageService,
 } from '@application/interfaces/services/IStorageService';
-import { IGenerateAvatarUploadUrlUsecase } from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
+import {
+    IGenerateAvatarUploadUrlUsecase,
+    IValidatedGenerateAvatarUploadUrlInput,
+} from '@application/interfaces/usecases/user/IGenerateAvatarUploadUrlUsecase';
+
 import { TYPES } from '@di/types.di';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
-import { ZodGenerateUploadUrlInputType } from '@presentation/validators/schemas/user/generate-upload-url.schema';
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 
 @injectable()
@@ -25,7 +28,7 @@ export class GenerateAvatarUploadUrlUseCase implements IGenerateAvatarUploadUrlU
     ) {}
 
     async execute(
-        data: ZodGenerateUploadUrlInputType,
+        data: IValidatedGenerateAvatarUploadUrlInput,
     ): Promise<Result<AvatarUploadUrlResponseDto>> {
         try {
             const dto = UserMapperProfile.toGenerateAvatarUploadUrlInput(data);

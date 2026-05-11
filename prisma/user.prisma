@@ -10,6 +10,7 @@ model User {
   isVerified                        Boolean                             @default(false)
   status                            UserStatus                          @default(ACTIVE)
   userFraudLevel                    Int                                 @default(0)
+  razorpayCustomerId                String?                             @unique
   createdAt                         DateTime                            @default(now())
   updatedAt                         DateTime                            @updatedAt
   kyc                               Kyc[]
@@ -30,6 +31,8 @@ model User {
   fraudReportsTargeted             FraudReport[]          @relation("FraudTargetedUser")
   fraudReportsReviewed             FraudReport[]          @relation("FraudReviewedByAdmin")
   suspensions                      UserSuspension[] @relation("SuspendedUser")
+  subscriptions                    UserSubscription[]
+  autoBidConfigs                   AutoBidConfig[]
 }
 
 model UserRole {

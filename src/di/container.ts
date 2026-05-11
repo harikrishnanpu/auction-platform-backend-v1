@@ -32,9 +32,18 @@ import { dbMappersContainer } from './modules/mappers.container';
 import { PrismaNotificationRepo } from '@infrastructure/repositories/notifications/notification.repo';
 import { fraudContainer } from './modules/fraud.container';
 import { FraudController } from '@presentation/http/controllers/fraud/fraud.controller';
+import { agentContainer } from './modules/agent.container';
+import { webhookContainer } from './modules/webhook.container';
+import { WebhookController } from '@presentation/http/controllers/webhook/webhook.controller';
+import { IWalletService } from '@application/interfaces/services/IWalletService';
+import { WalletService } from '@infrastructure/services/wallet/wallet.service';
+import { subscriptionContainer } from './modules/subscription.container';
+import { ICacheService } from '@application/interfaces/services/ICacheService';
+import { CacheService } from '@infrastructure/services/cache/cache.service';
 
 const container = new Container();
 
+container.load(subscriptionContainer);
 container.load(loggerContainer);
 container.load(authContainer);
 container.load(userContainer);
@@ -47,6 +56,8 @@ container.load(walletContainer);
 container.load(paymentsContainer);
 container.load(dbMappersContainer);
 container.load(fraudContainer);
+container.load(agentContainer);
+container.load(webhookContainer);
 container.bind<AuthController>(TYPES.AuthController).to(AuthController);
 container.bind<UserController>(TYPES.UserController).to(UserController);
 container.bind<KycController>(TYPES.KycController).to(KycController);
@@ -57,6 +68,9 @@ container
     .bind<PaymentsController>(TYPES.PaymentsController)
     .to(PaymentsController);
 container.bind<FraudController>(TYPES.FraudController).to(FraudController);
+container
+    .bind<WebhookController>(TYPES.WebhookController)
+    .to(WebhookController);
 
 // --move for test only
 
@@ -84,5 +98,8 @@ container
 container
     .bind<AuthorizeMiddleware>(TYPES.AuthorizeMiddleware)
     .to(AuthorizeMiddleware);
+
+container.bind<IWalletService>(TYPES.IWalletService).to(WalletService);
+container.bind<ICacheService>(TYPES.ICacheService).to(CacheService);
 
 export { container };

@@ -6,6 +6,7 @@ import { createSocketAuthMiddleware } from '../middlewares/socket.auth.middlewar
 import { ILogger } from '@application/interfaces/services/ILogger';
 import { TYPES } from '@di/types.di';
 import { AuctionHandler } from '../handler/auction.handler';
+import { ChatAgentHandler } from '../handler/chatAgent.handler';
 import { hanldeSocketCallback } from '../helpers/socket.ack';
 import { LiveAuctionRoomManager } from './liveAuctionRoom.manager';
 import { MediaSoupeManager } from './mediaSoupe.manager';
@@ -76,6 +77,11 @@ export class SocketManager {
                 this._mediasoupeManager,
             );
 
+            const chatAgentHandler = new ChatAgentHandler(
+                socket,
+                this._container,
+            );
+
             socket.on(SocketEvents.JOIN, (payload, cl) => {
                 hanldeSocketCallback(cl, () =>
                     auctionHandler.handleJoin(payload),
@@ -91,6 +97,12 @@ export class SocketManager {
             socket.on(SocketEvents.SEND_CHAT, (payload, cl) => {
                 hanldeSocketCallback(cl, () =>
                     auctionHandler.handleSendChat(payload),
+                );
+            });
+
+            socket.on(SocketEvents.ASK_AGENT, (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    chatAgentHandler.handleAskAgent(payload),
                 );
             });
 
@@ -165,6 +177,18 @@ export class SocketManager {
             socket.on(SocketEvents.ADD_AUCTION_PARTICIPANT, (payload, cl) => {
                 hanldeSocketCallback(cl, () =>
                     auctionHandler.handleAddAuctionParticipant(payload),
+                );
+            });
+
+            socket.on(SocketEvents.SET_AUTO_BID, (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleSetAutoBid(payload),
+                );
+            });
+
+            socket.on(SocketEvents.DISABLE_AUTO_BID, (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    auctionHandler.handleDisableAutoBid(payload),
                 );
             });
 

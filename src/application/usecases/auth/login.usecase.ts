@@ -1,18 +1,20 @@
 import {
     LoginUserInput,
     LoginUserOutput,
-    userResponseDto,
-    UserRoleType,
 } from '@application/dtos/auth/loginUser.dto';
 import { IPasswordService } from '@application/interfaces/services/IPasswordService';
+import { ISubscriptionService } from '@application/interfaces/services/ISubscriptionService';
 import { ITokenGeneratorService } from '@application/interfaces/services/ITokenGeneratorService';
 import { ILoginUseCase } from '@application/interfaces/usecases/auth/ILoginUsecase';
+import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { TYPES } from '@di/types.di';
 import {
     AuthProviderType,
     UserStatus,
 } from '@domain/entities/user/user.entity';
+import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
@@ -27,6 +29,12 @@ export class LoginUseCase implements ILoginUseCase {
         private readonly _passwordService: IPasswordService,
         @inject(TYPES.ITokenGeneratorService)
         private readonly _tokenGeneratorService: ITokenGeneratorService,
+        @inject(TYPES.IUserSubscriptionRepository)
+        private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
+        @inject(TYPES.ISubscriptionPlanRepository)
+        private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
+        @inject(TYPES.ISubscriptionService)
+        private readonly _subscriptionService: ISubscriptionService,
     ) {}
 
     async execute(data: LoginUserInput): Promise<Result<LoginUserOutput>> {
@@ -86,24 +94,55 @@ export class LoginUseCase implements ILoginUseCase {
             const refreshToken =
                 this._tokenGeneratorService.generateRefreshToken(user.getId());
 
-            const userResponseDto: userResponseDto = {
-                id: user.getId(),
-                name: user.getName(),
-                email: user.getEmail().getValue(),
-                phone: user.getPhone()?.getValue() ?? '',
-                address: user.getAddress() ?? '',
-                avatar_url: user.getAvatarUrl() ?? '',
-                authProvider: user.getAuthProvider().getType(),
-                isProfileCompleted: user.isProfileCompleted(),
-                isVerified: user.getIsVerified(),
-                status: user.getStatus(),
-                roles: user
-                    .getRoles()
-                    .map((role) => role.getValue() as UserRoleType),
-            };
+            const currentUserSubscriptionEntity =
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                    user.getId(),
+                );
+            if (currentUserSubscriptionEntity.isFailure) {
+                return Result.fail(currentUserSubscriptionEntity.getError());
+            }
+
+            // --change ---===
+            const assignSub =
+                await this._subscriptionService.assignDefaultSubscriptionToUser(
+                    user.getId(),
+                );
+            if (assignSub.isFailure) {
+                return Result.fail(assignSub.getError());
+            }
+
+            const currUserSubcptionEntity =
+                currentUserSubscriptionEntity.getValue();
+            if (!currUserSubcptionEntity) {
+                const result = UserMapperProfile.toUserResponseDto(
+                    user,
+                    null,
+                    null,
+                );
+                return Result.ok({
+                    user: result,
+                    accessToken,
+                    refreshToken,
+                });
+            }
+
+            const subscription =
+                await this._subscriptionPlanRepository.findById(
+                    currUserSubcptionEntity.getSubscriptionPlanId(),
+                );
+            if (subscription.isFailure) {
+                return Result.fail(subscription.getError());
+            }
+            const subscriptionEntity = subscription.getValue();
+
+            const result = UserMapperProfile.toUserResponseDto(
+                user,
+                currUserSubcptionEntity,
+                subscriptionEntity,
+            );
 
             return Result.ok({
-                user: userResponseDto,
+                user: result,
                 accessToken,
                 refreshToken,
             });

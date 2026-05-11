@@ -4,6 +4,7 @@ import { IDbMapper } from '@domain/mappers/IDbMapper';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import {
+    IAuctionUserDashboardCounts,
     IAuctionStatsPublicCounts,
     IFindAllAuctionsFilters,
 } from '@domain/types/auctionRepo.types';
@@ -43,6 +44,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             where: { id: data.id },
             create: {
                 id: data.id,
+                auctionNumber: data.auctionNumber,
                 sellerId: data.sellerId,
                 auctionType: data.auctionType,
                 title: data.title,
@@ -111,7 +113,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         return this.mapper.toDomain(raw);
     }
 
-    async findById(id: string): Promise<Result<Auction>> {
+    async findById(id: string): Promise<Result<Auction | null>> {
         const raw = await this._prisma.auction.findUnique({
             where: { id },
             include: {
@@ -217,11 +219,66 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         const safeLimit =
             Number(filters.limit) > 0 ? Number(filters.limit) : 10;
 
+        const include = {
+            assets: true,
+            category: {
+                include: { submittedByUser: true },
+            },
+        } as const;
+
+        if (filters.scope === 'ending_soon') {
+            const now = new Date();
+            const where: Prisma.AuctionWhereInput = {
+                status: PrismaAuctionStatus.ACTIVE,
+                startAt: { lte: now },
+                endAt: { gt: now },
+            };
+
+            if (filters.categoryId && filters.categoryId !== 'ALL') {
+                where.categoryId = filters.categoryId;
+            }
+            if (filters.auctionType && filters.auctionType !== 'ALL') {
+                where.auctionType = filters.auctionType as AuctionType;
+            }
+            if (filters.search?.trim()) {
+                const term = filters.search.trim();
+                where.OR = [
+                    { title: { contains: term, mode: 'insensitive' } },
+                    { description: { contains: term, mode: 'insensitive' } },
+                ];
+            }
+
+            const sortOrder = filters.order === 'desc' ? 'desc' : 'asc';
+
+            const list = await this._prisma.auction.findMany({
+                where,
+                include,
+                orderBy: [{ endAt: sortOrder }, { createdAt: 'desc' }],
+                skip: (safePage - 1) * safeLimit,
+                take: safeLimit,
+            });
+
+            const result: Auction[] = [];
+            for (const raw of list) {
+                const r = this.mapper.toDomain(raw);
+                if (r.isFailure) return Result.fail(r.getError());
+                result.push(r.getValue());
+            }
+            return Result.ok(result);
+        }
+
         const where: Prisma.AuctionWhereInput = {};
 
         where.endAt = {
             gte: new Date(),
         };
+
+        if (filters.categoryId && filters.categoryId !== 'ALL') {
+            where.categoryId = filters.categoryId;
+        }
+        if (filters.auctionType && filters.auctionType !== 'ALL') {
+            where.auctionType = filters.auctionType as AuctionType;
+        }
 
         if (filters.status) {
             if (filters.status === 'ALL') {
@@ -262,12 +319,7 @@ export class PrismaAuctionRepo implements IAuctionRepository {
 
         const list = await this._prisma.auction.findMany({
             where,
-            include: {
-                assets: true,
-                category: {
-                    include: { submittedByUser: true },
-                },
-            },
+            include,
             orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
             skip: (safePage - 1) * safeLimit,
             take: safeLimit,
@@ -287,7 +339,13 @@ export class PrismaAuctionRepo implements IAuctionRepository {
     async findParticipatedByUserId(
         userId: string,
         filters: IFindAllAuctionsFilters,
-    ): Promise<Result<{ auctions: Auction[]; total: number }>> {
+    ): Promise<
+        Result<{
+            auctions: Auction[];
+            total: number;
+            leadBidderUserIdByAuctionId: Map<string, string | null>;
+        }>
+    > {
         const safePage = Number(filters.page) > 0 ? Number(filters.page) : 1;
         const safeLimit =
             Number(filters.limit) > 0 ? Number(filters.limit) : 10;
@@ -329,6 +387,11 @@ export class PrismaAuctionRepo implements IAuctionRepository {
                             submittedByUser: true,
                         },
                     },
+                    bids: {
+                        orderBy: { amount: 'desc' },
+                        take: 1,
+                        select: { userId: true },
+                    },
                 },
                 orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
                 skip: (safePage - 1) * safeLimit,
@@ -337,14 +400,21 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             this._prisma.auction.count({ where }),
         ]);
 
+        const leadBidderUserIdByAuctionId = new Map<string, string | null>();
         const auctions: Auction[] = [];
+
         for (const raw of rows) {
-            const result = this.mapper.toDomain(raw);
+            const topBidderId = raw.bids[0]?.userId ?? null;
+            leadBidderUserIdByAuctionId.set(raw.id, topBidderId);
+
+            const { bids, ...rest } = raw;
+            console.log(bids);
+            const result = this.mapper.toDomain(rest);
             if (result.isFailure) return Result.fail(result.getError());
             auctions.push(result.getValue());
         }
 
-        return Result.ok({ auctions, total });
+        return Result.ok({ auctions, total, leadBidderUserIdByAuctionId });
     }
 
     async countAuctionStats(): Promise<Result<IAuctionStatsPublicCounts>> {
@@ -386,12 +456,9 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             ]);
 
             return Result.ok({ liveCount, upcomingCount, endedCount });
-        } catch (error) {
-            return Result.fail(
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to count public auctions',
-            );
+        } catch (err) {
+            console.log(err);
+            return Result.fail('Failed to count public auctions');
         }
     }
 
@@ -413,5 +480,89 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         } catch {
             return Result.fail('Failed to count admin auctions');
         }
+    }
+
+    async getUserDahsboardAuctionStats(
+        userId: string,
+    ): Promise<Result<IAuctionUserDashboardCounts>> {
+        const now = new Date();
+        try {
+            const liveRows = await this._prisma.auction.findMany({
+                where: {
+                    participants: { some: { userId } },
+                    status: PrismaAuctionStatus.ACTIVE,
+                    startAt: { lte: now },
+                    endAt: { gt: now },
+                },
+                select: {
+                    bids: {
+                        select: { userId: true },
+                        orderBy: { amount: 'desc' },
+                        take: 1,
+                    },
+                },
+            });
+
+            const liveWinningCount = liveRows.filter(
+                (row) => row.bids[0]?.userId === userId,
+            ).length;
+            const liveLosingCount = liveRows.length - liveWinningCount;
+
+            const [wonCount, lostCount] = await Promise.all([
+                this._prisma.auction.count({
+                    where: {
+                        winnerId: userId,
+                        participants: { some: { userId } },
+                    },
+                }),
+                this._prisma.auction.count({
+                    where: {
+                        participants: { some: { userId } },
+                        status: {
+                            in: [
+                                PrismaAuctionStatus.ENDED,
+                                PrismaAuctionStatus.SOLD,
+                                PrismaAuctionStatus.FALLBACK_ENDED,
+                                PrismaAuctionStatus.FALLBACK_PUBLIC_NOTIFICATION,
+                                PrismaAuctionStatus.FAILED,
+                            ],
+                        },
+                        NOT: { winnerId: userId },
+                    },
+                }),
+            ]);
+
+            // console.log(wonCount, lostCount)
+
+            return Result.ok({
+                liveWinningCount,
+                liveLosingCount,
+                wonCount,
+                lostCount,
+            });
+        } catch (error) {
+            console.log(error);
+            return Result.fail('fail!! --dashbaord counts');
+        }
+    }
+
+    async countBySellerId(sellerId: string): Promise<Result<number>> {
+        const count = await this._prisma.auction.count({
+            where: { sellerId },
+        });
+
+        return Result.ok(count);
+    }
+
+    async findByAuctionNum(
+        auctionNumber: string,
+    ): Promise<Result<Auction | null>> {
+        const raw = await this._prisma.auction.findUnique({
+            where: { auctionNumber },
+        });
+
+        if (!raw) return Result.ok(null);
+
+        return Result.ok(this.mapper.toDomain(raw).getValue());
     }
 }

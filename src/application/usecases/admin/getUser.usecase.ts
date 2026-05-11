@@ -2,12 +2,14 @@ import {
     IGetUserInput,
     IGetUserOutput,
 } from '@application/dtos/admin/getUser.dto';
-import { UserRoleType } from '@application/dtos/auth/loginUser.dto';
+import { UserRoleType } from '@application/dtos/auth/userRole.dto';
 import { userResponseDto } from '@application/dtos/user/userResponse.dto';
 import { IGetAdminUserUsecase } from '@application/interfaces/usecases/admin/IGetAdminUserUsecase';
 import { AdminMapperProfile } from '@application/mappers/admin/admin.mapper';
 import { TYPES } from '@di/types.di';
+import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -16,6 +18,10 @@ export class GetAdminUserUseCase implements IGetAdminUserUsecase {
     constructor(
         @inject(TYPES.IUserRepository)
         private readonly _userRepository: IUserRepository,
+        @inject(TYPES.IUserSubscriptionRepository)
+        private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
+        @inject(TYPES.ISubscriptionPlanRepository)
+        private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
     ) {}
 
     async execute(data: IGetUserInput): Promise<Result<IGetUserOutput>> {
@@ -31,7 +37,21 @@ export class GetAdminUserUseCase implements IGetAdminUserUsecase {
 
             const user = userResult.getValue();
 
-            const userResponseDto: userResponseDto = {
+            const subRes =
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                    user.getId(),
+                );
+            if (subRes.isFailure) return Result.fail(subRes.getError());
+            const row = subRes.getValue();
+            let planName: string | null = null;
+            if (row) {
+                const planRes = await this._subscriptionPlanRepository.findById(
+                    row.getSubscriptionPlanId(),
+                );
+                if (planRes.isFailure) return Result.fail(planRes.getError());
+                planName = planRes.getValue()?.getName() ?? null;
+            }
+            const userDto: userResponseDto = {
                 id: user.getId(),
                 name: user.getName(),
                 email: user.getEmail().getValue(),
@@ -45,10 +65,19 @@ export class GetAdminUserUseCase implements IGetAdminUserUsecase {
                 roles: user
                     .getRoles()
                     .map((role) => role.getValue() as UserRoleType),
+                subscription:
+                    row && planName
+                        ? {
+                              planId: row.getSubscriptionPlanId(),
+                              planName,
+                              status: row.getStatus(),
+                              endDate: row.getEndDate().toISOString(),
+                          }
+                        : null,
             };
 
             return Result.ok({
-                user: userResponseDto,
+                user: userDto,
             });
         } catch (error) {
             console.log(error);
