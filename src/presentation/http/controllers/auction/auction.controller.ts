@@ -61,6 +61,14 @@ export class AuctionController {
         private readonly _getBrowseAuctionsUsecase: IGetBrowseAuctionsUsecase,
     ) {}
 
+    /**
+     * Creates a draft auction for the authenticated seller from validated `req.body`.
+     *
+     * @param req - Express request; `body` merged with `userId` and validated with `createAuctionSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after created auction DTO is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or create fails
+     */
     createAuction = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -98,6 +106,14 @@ export class AuctionController {
         );
     });
 
+    /**
+     * Lists all auction categories (browse filters and seller create flows).
+     *
+     * @param req - Express request (unused; kept for handler signature consistency)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after category list is sent
+     * @throws {AppError} When the use case fails
+     */
     getAllAuctionCategories = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const result = await this._getAllAuctionCategoryUsecase.execute();
@@ -120,6 +136,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Paginated browse/search of auctions for the authenticated user.
+     *
+     * @param req - Express request; `query` merged with `userId` and validated with `getBrowseAuctionsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after listings page is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or browse fails
+     */
     getBrowseAuctions = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -157,6 +181,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Fetches one auction by `req.params.id` for the authenticated user.
+     *
+     * @param req - Express request; `params.id` is auction id, `user` from auth middleware
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after auction DTO is sent
+     * @throws {AppError} When user missing, id invalid, or use case denies access / not found
+     */
     getAuctionById = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -196,6 +228,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Issues upload credentials / URL for an auction media asset.
+     *
+     * @param req - Express request; `body` merged with `userId` and validated with `generateAuctionUploadUrlSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after upload URL payload is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or URL generation fails
+     */
     generateUploadUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -239,6 +279,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Updates a draft auction identified by `req.params.id` for the owning user.
+     *
+     * @param req - Express request; `body` + route `id` + `userId` validated with `updateAuctionSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after update DTO is sent
+     * @throws {AppError} When user missing, id missing, validation fails, or update fails
+     */
     updateAuction = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -285,6 +333,14 @@ export class AuctionController {
         );
     });
 
+    /**
+     * Publishes a draft auction so it follows visibility rules for buyers.
+     *
+     * @param req - Express request; `params.id` and `userId` validated with `publishAuctionParamsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after publish result is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or publish is rejected
+     */
     publishAuction = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {

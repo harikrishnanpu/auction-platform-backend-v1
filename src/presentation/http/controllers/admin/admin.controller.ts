@@ -179,6 +179,14 @@ export class AdminController {
         private readonly _updateSubscriptionPlanUsecase: IUpdateSubscriptionPlanUsecase,
     ) {}
 
+    /**
+     * Paginated list of platform users with filters from `query`.
+     *
+     * @param req - Express request; `query` validated with `getAllUsersSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after user list payload is sent
+     * @throws {AppError} When validation fails or fetch fails
+     */
     getAllUsers = expressAsyncHandler(async (req: Request, res: Response) => {
         console.log(req.query);
 
@@ -207,6 +215,14 @@ export class AdminController {
         );
     });
 
+    /**
+     * Blocks or unblocks a user per validated `body`.
+     *
+     * @param req - Express request; `body` validated with `blockUserSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after block result is sent
+     * @throws {AppError} When validation fails or the use case fails
+     */
     blockUser = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult =
             ValidationHelper.validate<ZodBlockUserInputType>(
@@ -232,6 +248,14 @@ export class AdminController {
         );
     });
 
+    /**
+     * Fetches a single user record for admin review by `req.params.id`.
+     *
+     * @param req - Express request; `params.id` validated via `getAdminUserSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after user detail is sent
+     * @throws {AppError} When validation fails or user is not found
+     */
     getUser = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult =
             ValidationHelper.validate<ZodGetAdminUserInputType>(
@@ -259,6 +283,14 @@ export class AdminController {
         );
     });
 
+    /**
+     * Paginated list of sellers with filters from `query`.
+     *
+     * @param req - Express request; `query` validated with `getAllSellersSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after seller list is sent
+     * @throws {AppError} When validation fails or fetch fails
+     */
     getAllSellers = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult =
             ValidationHelper.validate<ZodGetAllSellersInputType>(
@@ -284,6 +316,14 @@ export class AdminController {
         );
     });
 
+    /**
+     * High-level counts and aggregates for the admin dashboard home.
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after stats DTO is sent
+     * @throws {AppError} When aggregation fails
+     */
     getDashboardStats = expressAsyncHandler(
         async (_req: Request, res: Response) => {
             const result = await this._getAdminDashboardStatsUsecase.execute();
@@ -303,6 +343,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Loads seller profile and related admin data by `req.params.id`.
+     *
+     * @param req - Express request; `params.id` wrapped for `getAdminSellerSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after seller detail is sent
+     * @throws {AppError} When validation fails or seller is not found
+     */
     getSeller = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult =
             ValidationHelper.validate<ZodGetAdminSellerInputType>(
@@ -328,6 +376,14 @@ export class AdminController {
         );
     });
 
+    /**
+     * Approves seller KYC for the seller id in `req.params.id`.
+     *
+     * @param req - Express request; `params.id` validated with `getAdminSellerSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after approval payload is sent
+     * @throws {AppError} When validation fails or approval is rejected by rules
+     */
     approveSellerKyc = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -355,6 +411,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Rejects seller KYC with a reason for the seller id in `req.params.id`.
+     *
+     * @param req - Express request; route id + `body.reason` validated with `rejectSellerKycSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after rejection payload is sent
+     * @throws {AppError} When validation fails or rejection fails
+     */
     rejectSellerKyc = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -385,6 +449,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Lists pending and historical auction category requests from sellers.
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after requests payload is sent
+     * @throws {AppError} When fetch fails
+     */
     getAllCategoryRequest = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const result = await this._getAllCategoryRequestUsecase.execute();
@@ -405,6 +477,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Approves a seller-requested auction category by `req.params.id`.
+     *
+     * @param req - Express request; `params.id` validated with `approveAuctionCategorySchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after approval DTO is sent
+     * @throws {AppError} When validation fails or approval fails
+     */
     approveAuctionCategory = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -436,6 +516,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Rejects a category request with reason (`req.params.id` + `body.reason`).
+     *
+     * @param req - Express request validated with `rejectAuctionCategorySchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after rejection DTO is sent
+     * @throws {AppError} When validation fails or rejection fails
+     */
     rejectAuctionCategory = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -468,6 +556,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Changes active/disabled (or similar) status on an auction category.
+     *
+     * @param req - Express request; route id + `body.status` validated with `changeAuctionCategoryStatusSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after status DTO is sent
+     * @throws {AppError} When validation fails or update fails
+     */
     changeAuctionCategoryStatus = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -501,6 +597,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Lists all admin-managed auction categories (tree/flat per use case output).
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after categories payload is sent
+     * @throws {AppError} When fetch fails
+     */
     getAllAdminAuctionCategories = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const result =
@@ -523,6 +627,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Admin browse of auctions with filters (same shape as user browse, scoped for admins).
+     *
+     * @param req - Express request; `query` merged with admin `userId`, validated with `getBrowseAuctionsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after listings page is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or fetch fails
+     */
     getAllAdminAuctions = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -562,6 +674,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Updates name/parent fields on an auction category identified by `req.params.id`.
+     *
+     * @param req - Express request; `body` + route id validated with `UpdateAuctionCategorySchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated category is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or update fails
+     */
     updateAuctionCategory = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -602,6 +722,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Creates a new global auction category (optionally under a parent).
+     *
+     * @param req - Express request; `body` merged with admin `userId`, validated with `createAuctionCategorySchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after created category is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or create fails
+     */
     createAuctionCategory = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -642,6 +770,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Streams a KYC document for admin review (binary pipe to `res`).
+     *
+     * @param req - Express request; `params.id` as document id, `user` from auth middleware
+     * @param res - Express response receiving the document stream
+     * @returns Promise that settles after the stream is piped or errors
+     * @throws {AppError} When `req.user` is missing, validation fails, or document cannot be opened
+     */
     viewKyc = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -670,6 +806,14 @@ export class AdminController {
         result.getValue().stream.pipe(res);
     });
 
+    /**
+     * Returns all system configuration key/value rows for admin UI.
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after configs are sent
+     * @throws {AppError} When fetch fails
+     */
     getSystemConfigs = expressAsyncHandler(
         async (_req: Request, res: Response) => {
             const result = await this._getSystemConfigsUsecase.execute();
@@ -690,6 +834,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Updates a single system config entry from validated `body`.
+     *
+     * @param req - Express request; `body` validated with `editSystemConfigSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated row is sent
+     * @throws {AppError} When validation fails or update fails
+     */
     updateSystemConfig = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -717,6 +869,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Creates a subscription plan from validated `body` (pricing, features linkage, etc.).
+     *
+     * @param req - Express request; `body` validated with `createSubscriptionPlanSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after plan DTO is sent
+     * @throws {AppError} When validation fails or create fails
+     */
     createSubscriptionPlan = expressAsyncHandler(
         async (req: Request, res: Response) => {
             console.log(req.body);
@@ -748,6 +908,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Lists subscription plans for admin management UI.
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after plans payload is sent
+     * @throws {AppError} When fetch fails
+     */
     getSubscriptionPlans = expressAsyncHandler(
         async (_req: Request, res: Response) => {
             const result = await this._getSubscriptionPlansUsecase.execute();
@@ -768,6 +936,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Updates default/active flags on a plan identified by `req.params.id`.
+     *
+     * @param req - Express request; route id + `body` validated with `updateSubscriptionPlanStatusSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated plan is sent
+     * @throws {AppError} When validation fails or update fails
+     */
     updateSubscriptionPlanStatus = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -802,6 +978,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Lists users with an active subscription (admin reporting).
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after subscribed users payload is sent
+     * @throws {AppError} When fetch fails
+     */
     getSubscribedUsers = expressAsyncHandler(
         async (_req: Request, res: Response) => {
             const result = await this._getSubscribedUsersUsecase.execute();
@@ -822,6 +1006,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Lists subscription feature definitions usable when composing plans.
+     *
+     * @param req - Express request (unused)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after features payload is sent
+     * @throws {AppError} When fetch fails
+     */
     getSubscriptionFeatures = expressAsyncHandler(
         async (_req: Request, res: Response) => {
             const result = await this._getSubscriptionFeaturesUsecase.execute();
@@ -842,6 +1034,14 @@ export class AdminController {
         },
     );
 
+    /**
+     * Updates editable fields on a subscription plan from validated `body`.
+     *
+     * @param req - Express request; `body` validated with `updateSubscriptionPlanSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated plan is sent
+     * @throws {AppError} When validation fails or update fails
+     */
     updateSubscriptionPlan = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =

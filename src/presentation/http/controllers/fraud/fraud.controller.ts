@@ -65,6 +65,14 @@ export class FraudController {
         private readonly _updateFraudReportUsecase: IUpdateFraudReportUsecase,
     ) {}
 
+    /**
+     * Creates a fraud report filed by the authenticated reporter against another user.
+     *
+     * @param req - Express request; `body` validated with `createFraudReportSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after created report payload is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or persistence fails
+     */
     createReport = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -103,6 +111,14 @@ export class FraudController {
         );
     });
 
+    /**
+     * Lists fraud reports with optional filters from `query`.
+     *
+     * @param req - Express request; `query` validated with `getFraudReportsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after paged reports are sent
+     * @throws {AppError} When validation fails or fetch fails
+     */
     getReports = expressAsyncHandler(async (req: Request, res: Response) => {
         const query = ValidationHelper.validate<ZodGetFraudReportsInputType>(
             getFraudReportsSchema,
@@ -128,6 +144,14 @@ export class FraudController {
         );
     });
 
+    /**
+     * Admin decision on a fraud report (`req.params.id`) with validated body.
+     *
+     * @param req - Express request; `params.id` is report id, `body` validated with `reviewFraudReportSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after review acknowledgement is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or review fails
+     */
     reviewReport = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -159,6 +183,14 @@ export class FraudController {
         );
     });
 
+    /**
+     * Updates mutable fields on a fraud report identified by `req.params.id`.
+     *
+     * @param req - Express request; `body` + `params.id` validated with `updateFraudReportSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after update acknowledgement is sent
+     * @throws {AppError} When validation fails or update fails
+     */
     updateReport = expressAsyncHandler(async (req: Request, res: Response) => {
         const body = ValidationHelper.validate<ZodUpdateFraudReportInputType>(
             updateFraudReportSchema,
@@ -189,6 +221,14 @@ export class FraudController {
         );
     });
 
+    /**
+     * Marks a fraud report as under review by the authenticated admin.
+     *
+     * @param req - Express request; `params.id` is report id; `user` is admin from auth middleware
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after acknowledgement is sent
+     * @throws {AppError} When `req.user` is missing or the transition fails
+     */
     markUnderReview = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -217,6 +257,14 @@ export class FraudController {
         },
     );
 
+    /**
+     * Lists users currently suspended for fraud or policy reasons (admin query).
+     *
+     * @param req - Express request; `query` validated with `getSuspendedUsersSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after list payload is sent
+     * @throws {AppError} When validation fails or fetch fails
+     */
     getSuspendedUsers = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const query =
@@ -240,6 +288,14 @@ export class FraudController {
         },
     );
 
+    /**
+     * Returns suspension timeline/history for a user id from `req.params.userId`.
+     *
+     * @param req - Express request; `params.userId` validated with `getSuspensionTimelineSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after timeline payload is sent
+     * @throws {AppError} When validation fails or lookup fails
+     */
     getSuspensionTimeline = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const params =

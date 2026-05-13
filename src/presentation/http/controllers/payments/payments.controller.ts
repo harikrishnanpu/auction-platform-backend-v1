@@ -40,6 +40,14 @@ export class PaymentsController {
         private readonly _declinePaymentUsecase: IDeclinePaymentUsecase,
     ) {}
 
+    /**
+     * Lists the authenticated user's auction-related payments with filters from `query`.
+     *
+     * @param req - Express request; `query` merged with `userId`, validated with `getUsersPaymentsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after paged payments are sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or fetch fails
+     */
     getUserPayments = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -77,6 +85,14 @@ export class PaymentsController {
         },
     );
 
+    /**
+     * Creates a Razorpay order for paying a pending payment row owned by the user.
+     *
+     * @param req - Express request; `body` validated with `createPaymentOrderSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after order metadata is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or order creation fails
+     */
     createPaymentOrder = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -113,6 +129,14 @@ export class PaymentsController {
         },
     );
 
+    /**
+     * Confirms a payment after Razorpay client success using validated body fields.
+     *
+     * @param req - Express request; `body` merged with `userId`, validated with `verifyPaymentSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after verification acknowledgement is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or verification fails
+     */
     verifyPayment = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -148,6 +172,14 @@ export class PaymentsController {
         );
     });
 
+    /**
+     * Declines a pending payment on behalf of the authenticated payer.
+     *
+     * @param req - Express request; `body` validated with `declinePaymentSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after decline acknowledgement is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or decline fails
+     */
     declinePayment = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {

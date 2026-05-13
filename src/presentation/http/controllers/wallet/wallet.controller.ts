@@ -43,6 +43,14 @@ export class WalletController {
         private readonly _confirmWalletTopupUsecase: IConfirmWalletTopupUsecase,
     ) {}
 
+    /**
+     * Returns the authenticated user's wallet, creating it on first access when applicable.
+     *
+     * @param req - Express request with `user` from auth middleware
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after wallet payload is sent
+     * @throws {AppError} When `req.user` is missing or the use case fails
+     */
     getWallet = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -70,6 +78,14 @@ export class WalletController {
         );
     });
 
+    /**
+     * Credits the authenticated user's wallet by a validated amount.
+     *
+     * @param req - Express request; `body` validated with `creditWalletSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated wallet is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or credit fails
+     */
     creditWallet = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -104,6 +120,14 @@ export class WalletController {
         );
     });
 
+    /**
+     * Debits the authenticated user's wallet by a validated amount when funds allow.
+     *
+     * @param req - Express request; `body` validated with `debitWalletSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated wallet is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or debit fails
+     */
     debitWallet = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -138,6 +162,14 @@ export class WalletController {
         );
     });
 
+    /**
+     * Creates a Razorpay checkout session / order for wallet top-up.
+     *
+     * @param req - Express request; `body` validated with `createWalletTopupSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after order metadata is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or session creation fails
+     */
     createTopupOrder = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -174,6 +206,14 @@ export class WalletController {
         },
     );
 
+    /**
+     * Confirms a wallet top-up after Razorpay client success (order, payment, signature).
+     *
+     * @param req - Express request; `body` validated with `verifyWalletTopupSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after confirmation payload is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or confirmation fails
+     */
     verifyTopup = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
