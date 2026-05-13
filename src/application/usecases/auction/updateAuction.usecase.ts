@@ -48,6 +48,10 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
 
         const auction = existing.getValue();
 
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         if (auction.getSellerId() !== dto.userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_UPDATE);
         }
@@ -79,6 +83,7 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
 
         const updatedResult = Auction.create({
             id: auction.getId(),
+            auctionNumber: auction.getAuctionNumber(),
             sellerId: auction.getSellerId(),
             auctionType: dto.auctionType ?? auction.getAuctionType(),
             title: dto.title,

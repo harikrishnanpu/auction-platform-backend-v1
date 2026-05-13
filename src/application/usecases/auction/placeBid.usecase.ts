@@ -143,12 +143,17 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                 );
             }
 
+            const auction = auctionResult.getValue();
+            if (!auction) {
+                return Result.fail('Auction not found');
+            }
+
             const placeBidStrategy = this._placeBidStartegyFactory.getStrategy(
-                auctionResult.getValue().getAuctionType(),
+                auction.getAuctionType(),
             );
 
             const newBidEntity = placeBidStrategy.validateAndCreateBid({
-                auction: auctionResult.getValue(),
+                auction: auction,
                 userId: input.userId,
                 amount: input.amount,
                 latestBid: latestBidResult.getValue(),
@@ -161,42 +166,41 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
 
             const newBid = newBidEntity.getValue();
 
-            const auctionEntity = auctionResult.getValue();
-            const remainingMs = auctionEntity.getEndAt().getTime() - Date.now();
+            const remainingMs = auction.getEndAt().getTime() - Date.now();
 
             const shouldExtend = ShouldExtendAuctionPolicy.shouldExtendAuction(
-                auctionEntity,
+                auction,
                 remainingMs,
             );
 
-            let auctionForOutput = auctionEntity;
+            let auctionForOutput = auction;
 
             if (shouldExtend) {
-                const nextExtensionCount =
-                    auctionEntity.getExtensionCount() + 1;
+                const nextExtensionCount = auction.getExtensionCount() + 1;
                 const updatedAuctionRes = Auction.create({
-                    id: auctionEntity.getId(),
-                    sellerId: auctionEntity.getSellerId(),
-                    auctionType: auctionEntity.getAuctionType(),
-                    title: auctionEntity.getTitle(),
-                    description: auctionEntity.getDescription(),
-                    category: auctionEntity.getCategory(),
-                    condition: auctionEntity.getCondition(),
-                    startPrice: auctionEntity.getStartPrice(),
-                    minIncrement: auctionEntity.getMinIncrement(),
-                    startAt: auctionEntity.getStartAt(),
+                    id: auction.getId(),
+                    auctionNumber: auction.getAuctionNumber(),
+                    sellerId: auction.getSellerId(),
+                    auctionType: auction.getAuctionType(),
+                    title: auction.getTitle(),
+                    description: auction.getDescription(),
+                    category: auction.getCategory(),
+                    condition: auction.getCondition(),
+                    startPrice: auction.getStartPrice(),
+                    minIncrement: auction.getMinIncrement(),
+                    startAt: auction.getStartAt(),
                     endAt: new Date(
-                        auctionEntity.getEndAt().getTime() +
-                            auctionEntity.getAntiSnipSeconds() * 1000,
+                        auction.getEndAt().getTime() +
+                            auction.getAntiSnipSeconds() * 1000,
                     ),
-                    antiSnipSeconds: auctionEntity.getAntiSnipSeconds(),
+                    antiSnipSeconds: auction.getAntiSnipSeconds(),
                     extensionCount: nextExtensionCount,
-                    maxExtensionCount: auctionEntity.getMaxExtensionCount(),
-                    bidCooldownSeconds: auctionEntity.getBidCooldownSeconds(),
-                    status: auctionEntity.getStatus(),
-                    winnerId: auctionEntity.getWinnerId(),
-                    winAmount: auctionEntity.getWinAmount(),
-                    assets: auctionEntity.getAssets(),
+                    maxExtensionCount: auction.getMaxExtensionCount(),
+                    bidCooldownSeconds: auction.getBidCooldownSeconds(),
+                    status: auction.getStatus(),
+                    winnerId: auction.getWinnerId(),
+                    winAmount: auction.getWinAmount(),
+                    assets: auction.getAssets(),
                 });
 
                 if (updatedAuctionRes.isFailure) {
