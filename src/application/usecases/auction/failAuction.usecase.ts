@@ -29,6 +29,10 @@ export class FailAuctionUsecase implements IFailAuctionUsecase {
 
         const auction = auctionEntity.getValue();
 
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         const setStatusResult = auction.setStatus(AuctionStatus.FAILED);
         if (setStatusResult.isFailure) {
             return Result.fail(setStatusResult.getError());

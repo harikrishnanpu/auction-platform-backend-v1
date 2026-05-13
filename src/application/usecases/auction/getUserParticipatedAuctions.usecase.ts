@@ -1,7 +1,7 @@
 import type { IGetUserParticipatedAuctionsOutputDto } from '@application/dtos/auction/get-user-participated-auctions.dto';
 import type {
     IGetUserParticipatedAuctionsUsecase,
-    IValidatedIGetUserParticipatedAuctionsInput,
+    IValidatedGetUserParticipatedAuctionsInput,
 } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { TYPES } from '@di/types.di';
@@ -21,7 +21,7 @@ export class GetUserParticipatedAuctionsUsecase implements IGetUserParticipatedA
     ) {}
 
     async execute(
-        input: IValidatedIGetUserParticipatedAuctionsInput,
+        input: IValidatedGetUserParticipatedAuctionsInput,
     ): Promise<Result<IGetUserParticipatedAuctionsOutputDto>> {
         const {
             userId,

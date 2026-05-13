@@ -25,9 +25,14 @@ export class UpdateAutoBidConfigUsecase implements IUpdateAutoBidConfigUsecase {
         const auctionResult = await this._auctionRepository.findById(
             input.auctionId,
         );
-        if (auctionResult.isFailure)
+        if (auctionResult.isFailure) {
             return Result.fail(auctionResult.getError());
-        if (auctionResult.getValue().getAuctionType() !== AuctionType.LONG) {
+        }
+        const auction = auctionResult.getValue();
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+        if (auction.getAuctionType() !== AuctionType.LONG) {
             return Result.fail('Auto bid is supported only for long auctions');
         }
 

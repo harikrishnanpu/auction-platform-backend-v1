@@ -51,6 +51,10 @@ export class GetAuctionRoomUsecase implements IGetAuctionRoomUsecase {
 
         const auction = auctionResult.getValue();
 
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         if (auction.getStatus() === AuctionStatus.DRAFT) {
             return Result.fail('Only non-draft auctions can be viewed');
         }

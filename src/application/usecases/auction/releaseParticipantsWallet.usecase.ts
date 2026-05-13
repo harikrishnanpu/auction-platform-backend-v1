@@ -45,16 +45,17 @@ export class ReleaseParticipantsWalletUsecase implements IReleaseParticipantsWal
             return Result.fail(auctionResult.getError());
         }
 
+        const auction = auctionResult.getValue();
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         const auctionParticipants = auctionParticipantsResult.getValue();
         const intialdepositedAmount =
-            auctionResult.getValue().getStartPrice() *
-            AUCTION_INTIAL_DEPOSIT_AMOUNT.PERCENTAGE;
+            auction.getStartPrice() * AUCTION_INTIAL_DEPOSIT_AMOUNT.PERCENTAGE;
 
         for (const auctionParticipant of auctionParticipants) {
-            if (
-                auctionParticipant.getUserId() ===
-                auctionResult.getValue().getWinnerId()
-            ) {
+            if (auctionParticipant.getUserId() === auction.getWinnerId()) {
                 continue;
                 // --
             }

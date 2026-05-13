@@ -37,11 +37,16 @@ export class CreateAutoBidConfigUsecase implements ICreateAutoBidConfigUsecase {
 
         console.log('AUCTION RESULT: ', auctionResult.getValue());
 
-        if (auctionResult.getValue().getStatus() !== AuctionStatus.ACTIVE) {
+        const auction = auctionResult.getValue();
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
+        if (auction.getStatus() !== AuctionStatus.ACTIVE) {
             return Result.fail('Auto bid: support only for active');
         }
 
-        if (auctionResult.getValue().getAuctionType() !== AuctionType.LONG) {
+        if (auction.getAuctionType() !== AuctionType.LONG) {
             return Result.fail('Auto bid is supported only for long auctions');
         }
 

@@ -47,6 +47,10 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
         const auction = existing.getValue();
         const isAdmin = input.isAdmin ?? false;
 
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         if (!isAdmin && auction.getSellerId() !== input.userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_END);
         }
@@ -93,6 +97,7 @@ export class EndAuctionUsecase implements IEndAuctionUsecase {
 
         const endedResult = Auction.create({
             id: auction.getId(),
+            auctionNumber: auction.getAuctionNumber(),
             sellerId: auction.getSellerId(),
             auctionType: auction.getAuctionType(),
             title: auction.getTitle(),

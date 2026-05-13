@@ -50,6 +50,10 @@ export class ProcessFallbackPublicNotificationUsecase implements IProcessFallbac
 
             const auction = auctionEntity.getValue();
 
+            if (!auction) {
+                return Result.fail('Auction not found');
+            }
+
             if (auction.getStatus() !== AuctionStatus.FALLBACK_ENDED) {
                 throw new Error('Auction is not ended');
             }

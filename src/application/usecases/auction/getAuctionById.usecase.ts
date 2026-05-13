@@ -30,6 +30,11 @@ export class GetAuctionByIdUsecase implements IGetAuctionByIdUsecase {
         }
 
         const auction = existing.getValue();
+
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         if (auction.getSellerId() !== userId) {
             return Result.fail(AUCTION_MESSAGES.NOT_AUTHORIZED_TO_VIEW_AUCTION);
         }

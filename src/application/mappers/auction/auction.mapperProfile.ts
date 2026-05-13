@@ -4,7 +4,11 @@ import {
     IRequestAuctionCategoryOutputDto,
 } from '@application/dtos/admin/request-auction-category.dto';
 import { AuctionCategory } from '@domain/entities/auction/auction-category.entity';
-import { Auction, AuctionType } from '@domain/entities/auction/auction.entity';
+import {
+    Auction,
+    AuctionStatus,
+    AuctionType,
+} from '@domain/entities/auction/auction.entity';
 import { ZodRequestAuctionCategoryInputType } from '@presentation/validators/schemas/seller/requestAuctionCategory.schema';
 import {
     IApproveAuctionCategoryInputDto,
@@ -36,9 +40,10 @@ import { ZodPublishAuctionParamsInputType } from '@presentation/validators/schem
 import { IPublishAuctionInput } from '@application/dtos/auction/publish-auction.dto';
 import { IEndAuctionInput } from '@application/dtos/auction/end-auction.dto';
 import { IGetUserParticipatedAuctionsInputDto } from '@application/dtos/auction/get-user-participated-auctions.dto';
-import { ZodGetUserParticipatedAuctionsInputType } from '@presentation/validators/schemas/auction/getUserParticipatedAuctionsInput.schema';
 import { IValidatedGetBrowseAuctionsInput } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { IValidatedUpdateAuctionInput } from '@application/interfaces/usecases/auction/IUpdateAuctionUsecase';
+import { IGetAuctionByAuctionNumberInputDto } from '@application/dtos/auction/getAuctionByAuctionNumber.dto';
+import { IValidatedGetUserParticipatedAuctionsInput } from '@application/interfaces/usecases/auction/IGetUserParticipatedAuctionsUsecase';
 
 export class AuctionMapperProrfile {
     public static toCreateAuctionDto(
@@ -70,6 +75,7 @@ export class AuctionMapperProrfile {
     public static toAuctionOutputDto(data: Auction): IAuctionDto {
         return {
             id: data.getId(),
+            auctionNumber: data.getAuctionNumber(),
             sellerId: data.getSellerId(),
             auctionType: data.getAuctionType(),
             title: data.getTitle(),
@@ -291,7 +297,7 @@ export class AuctionMapperProrfile {
     }
 
     public static toGetUserParticipatedAuctionsInputDto(
-        data: ZodGetUserParticipatedAuctionsInputType,
+        data: IValidatedGetUserParticipatedAuctionsInput,
     ): IGetUserParticipatedAuctionsInputDto {
         return {
             userId: data.userId,
@@ -299,11 +305,21 @@ export class AuctionMapperProrfile {
                 page: data.page,
                 limit: data.limit,
                 search: data.search || '',
-                auctionType: data.auctionType || 'ALL',
-                status: data.status || 'ALL',
+                auctionType: data.auctionType as AuctionType | 'ALL',
+                status: data.status as AuctionStatus | 'ALL',
                 sort: data.sort || '',
                 order: data.order || 'asc',
             },
+        };
+    }
+
+    public static toGetAuctionByAuctionNumberDto(
+        auctionNumber: string,
+        userId: string,
+    ): IGetAuctionByAuctionNumberInputDto {
+        return {
+            auctionNumber,
+            userId,
         };
     }
 }

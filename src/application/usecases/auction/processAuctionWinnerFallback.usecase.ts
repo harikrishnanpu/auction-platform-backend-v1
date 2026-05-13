@@ -61,6 +61,11 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
         }
 
         const auction = auctionResult.getValue();
+
+        if (!auction) {
+            return Result.fail('Auction not found');
+        }
+
         const status = auction.getStatus();
         if (status !== AuctionStatus.ENDED) {
             return Result.ok();
@@ -95,6 +100,7 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
         if (newWinner.isFallbackFailed) {
             const updatedAuctionResult = Auction.create({
                 id: auction.getId(),
+                auctionNumber: auction.getAuctionNumber(),
                 sellerId: auction.getSellerId(),
                 auctionType: auction.getAuctionType(),
                 title: auction.getTitle(),
@@ -149,6 +155,7 @@ export class ProcessAuctionWinnerFallbackUsecase implements IProcessAuctionWinne
 
         const updatedAuctionResult = Auction.create({
             id: auction.getId(),
+            auctionNumber: auction.getAuctionNumber(),
             sellerId: auction.getSellerId(),
             auctionType: auction.getAuctionType(),
             title: auction.getTitle(),
