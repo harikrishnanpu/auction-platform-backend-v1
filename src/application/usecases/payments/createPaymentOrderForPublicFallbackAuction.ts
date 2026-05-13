@@ -4,9 +4,9 @@ import {
 } from '@application/dtos/payments/create-payment-order-for-public-fallback-auction.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IPaymentGatewayService } from '@application/interfaces/services/IPaymentGatewayService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { ICreatePaymentOrderForPublicFallbackAuctionUsecase } from '@application/interfaces/usecases/payments/ICreatePaymentOrderForPublicFallbackAuctionUsecase';
 import { TYPES } from '@di/types.di';
-import { AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY } from '@domain/constants/auction.constants';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import {
     PublicAuctionFallbackParticipants,
@@ -39,6 +39,8 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
         private readonly _auctionRepository: IAuctionRepository,
         @inject(TYPES.IAuctionWinnerRepository)
         private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -101,8 +103,6 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
             return Result.fail(fallbackAuctionUser.getError());
         const fallbackAuctionUserEntity = fallbackAuctionUser.getValue();
 
-        console.log('fallbackAuctionUserEntity', fallbackAuctionUserEntity);
-
         if (fallbackAuctionUserEntity) {
             if (
                 fallbackAuctionUserEntity.getStatus() ===
@@ -116,19 +116,22 @@ export class CreatePaymentOrderForPublicFallbackAuctionUsecase implements ICreat
             )
                 return Result.fail('Fallback auction user not pending payment');
 
+            const initialSplitResult =
+                await this._systemConfigService.getAuctionPublicFallbackInitialSplitRatio();
+            if (initialSplitResult.isFailure) {
+                return Result.fail(initialSplitResult.getError());
+            }
+
             const paymentOrder = await this._paymentGatewayService.createOrder({
                 userId: input.userId,
                 amount:
-                    fallbackAuction.getAmount() *
-                    AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY.INITIAL_AMOUNT_PERCENTAGE,
+                    fallbackAuction.getAmount() * initialSplitResult.getValue(),
                 referenceId: fallbackAuction.getAuctionId(),
             });
 
             if (paymentOrder.isFailure)
                 return Result.fail(paymentOrder.getError());
             const order = paymentOrder.getValue();
-
-            console.log('order', order);
 
             return Result.ok({
                 orderId: order.orderId,

@@ -146,6 +146,9 @@ export const TYPES = {
     ),
     IRejectAuctionCategoryUsecase: Symbol.for('IRejectAuctionCategoryUsecase'),
     IGetAllSellerAuctionsUsecase: Symbol.for('IGetAllSellerAuctionsUsecase'),
+    IGetSellerDashboardStatsUsecase: Symbol.for(
+        'IGetSellerDashboardStatsUsecase',
+    ),
     Redis: Symbol.for('Redis'),
     IBidLockService: Symbol.for('IBidLockService'),
     ISocketServer: Symbol.for('ISocketServer'),

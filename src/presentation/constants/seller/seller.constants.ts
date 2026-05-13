@@ -13,6 +13,8 @@ export const SELLER_MESSAGES = {
     GET_ALL_SELLER_AUCTIONS_FAILED: 'Failed to fetch all seller auctions',
     GET_SELLER_AUCTION_PAYMENTS_SUCCESSFULLY:
         'Seller auction payments fetched successfully',
+    GET_SELLER_DASHBOARD_STATS_SUCCESSFULLY:
+        'Seller dashboard stats fetched successfully',
 };
 
 export const SELLER_CONSTANTS = {

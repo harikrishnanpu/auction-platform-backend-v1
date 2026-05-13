@@ -11,12 +11,14 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { validateAuctionDraftPricingWithSystemConfig } from '@application/helpers/validateAuctionDraftPricingWithSystemConfig';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { AuctionCreatePolicyFactory } from '@application/factories/auctionCreatePolicy.factory';
 import { ICreateAuctionInputDto } from '@application/dtos/auction/create-auction.dto';
 import { ISubscriptionConfigService } from '@application/interfaces/services/ISubscriptionConfigService';
 import { IAuctionNumberGeneratingService } from '@application/interfaces/services/IAuctionNumberGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 
 @injectable()
 export class CreateAuctionUsecase implements ICreateAuctionUsecase {
@@ -33,6 +35,8 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
         private readonly _subscriptionConfigService: ISubscriptionConfigService,
         @inject(TYPES.IAuctionNumberGeneratingService)
         private readonly _auctionNumberGeneratingService: IAuctionNumberGeneratingService,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(data: ICreateAuctionInputDto): Promise<Result<IAuctionDto>> {
@@ -88,6 +92,17 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
                 assetType: a.assetType,
             });
         });
+
+        const pricingOk = await validateAuctionDraftPricingWithSystemConfig(
+            this._systemConfigService,
+            {
+                startPrice: validatedAuctionInput.startPrice,
+                maxExtensionCount: validatedAuctionInput.maxExtensionCount,
+            },
+        );
+        if (pricingOk.isFailure) {
+            return Result.fail(pricingOk.getError());
+        }
 
         const auctionResult = Auction.create({
             id: auctionId,

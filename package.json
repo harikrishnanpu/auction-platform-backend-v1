@@ -8,7 +8,10 @@
     "build": "tsc",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "seed:system": "npx tsx scripts/systemConfig.seed.ts",
+    "seed:subscription:features": "npx tsx scripts/subscriptionFeatures.seed.ts",
+    "seed:all": "npm run seed:system && npm run seed:subscription"
   },
   "keywords": [],
   "author": "",

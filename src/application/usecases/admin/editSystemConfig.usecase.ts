@@ -13,12 +13,15 @@ import {
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 
 @injectable()
 export class EditSystemConfigUsecase implements IEditSystemConfigUsecase {
     constructor(
         @inject(TYPES.ISystemConfigRepository)
         private readonly _systemConfigRepository: ISystemConfigRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -69,6 +72,8 @@ export class EditSystemConfigUsecase implements IEditSystemConfigUsecase {
             config.getValue(),
         );
         if (result.isFailure) return Result.fail(result.getError());
+
+        await this._systemConfigService.revalidateChache(dto.key);
 
         const outputDto = AdminMapperProfile.toSystemConfigDto(
             result.getValue(),

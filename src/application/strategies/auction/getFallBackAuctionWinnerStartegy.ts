@@ -4,6 +4,7 @@ import {
     IGetFallBackAuctionWinnerStrategy,
 } from '@application/interfaces/strategies/auction/getFallBackWinner.stratgy';
 import { IEncryptionService } from '@application/interfaces/services/IEncryptionService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { TYPES } from '@di/types.di';
 import { AuctionType } from '@domain/entities/auction/auction.entity';
 import { Bid } from '@domain/entities/auction/bid.entity';
@@ -12,7 +13,6 @@ import { IBidRepository } from '@domain/repositories/IBidRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { IAuctionWinnerRepository } from '@domain/repositories/IAuctionWinnerRepo';
-import { AUCTION_WINNER_FALLBACK_CONSTANTS } from '@domain/constants/auction.constants';
 
 @injectable()
 export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinnerStrategy {
@@ -25,11 +25,20 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
         private readonly _encryptionService: IEncryptionService,
         @inject(TYPES.IAuctionWinnerRepository)
         private readonly _auctionWinnerRepository: IAuctionWinnerRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
         input: IGetFallBackAuctionWinnerInput,
     ): Promise<Result<IGetFallBackAuctionWinnerOutput>> {
+        const maxRankResult =
+            await this._systemConfigService.getAuctionWinnerFallbackMaxRank();
+        if (maxRankResult.isFailure) {
+            return Result.fail(maxRankResult.getError());
+        }
+        const maxRank = maxRankResult.getValue();
+
         const auctionResult = await this._auctionRepository.findById(
             input.auctionId,
         );
@@ -47,10 +56,7 @@ export class GetFallBackAuctionWinnerStartegy implements IGetFallBackAuctionWinn
 
         const allAuctionWinners = allAuctionWinnersResult.getValue();
 
-        if (
-            allAuctionWinners.length >=
-            AUCTION_WINNER_FALLBACK_CONSTANTS.MAX_RANK
-        ) {
+        if (allAuctionWinners.length >= maxRank) {
             return Result.ok({
                 winnerId: null,
                 winAmount: null,

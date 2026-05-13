@@ -22,4 +22,9 @@ export class CacheService implements ICacheService {
         await this._redis.set(key, value, 'EX', ttl);
         return Result.ok();
     }
+
+    async remove(key: string): Promise<Result<void>> {
+        await this._redis.del(key);
+        return Result.ok();
+    }
 }

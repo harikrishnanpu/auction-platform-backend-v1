@@ -19,12 +19,14 @@ import {
 } from '@presentation/validators/schemas/seller/getAllAuctions.schema';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetSellerAuctionPaymentsUsecase } from '@application/interfaces/usecases/seller/IGetSellerAuctionPaymentsUsecase';
+import { IGetSellerDashboardStatsUsecase } from '@application/interfaces/usecases/seller/IGetSellerDashboardStatsUsecase';
 import { AUCTION_CONSTANTS } from '@presentation/constants/auction/auction.constants';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
 import { IRequestAuctionCategoryOutputDto } from '@application/dtos/admin/request-auction-category.dto';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { IGetSellerAuctionPaymentsOutputDto } from '@application/dtos/seller/sellerAuctionPayments.dto';
+import { ISellerDashboardStatsDto } from '@application/dtos/seller/sellerDashboardStats.dto';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { PaymentStatus } from '@domain/entities/payments/payments.entity';
 import {
@@ -45,6 +47,8 @@ export class SellerController {
         private readonly _getAuctionByIdUsecase: IGetAuctionByIdUsecase,
         @inject(TYPES.IGetSellerAuctionPaymentsUsecase)
         private readonly _getSellerAuctionPaymentsUsecase: IGetSellerAuctionPaymentsUsecase,
+        @inject(TYPES.IGetSellerDashboardStatsUsecase)
+        private readonly _getSellerDashboardStatsUsecase: IGetSellerDashboardStatsUsecase,
     ) {}
 
     getAllSellerAuctionCategory = expressAsyncHandler(
@@ -227,6 +231,36 @@ export class SellerController {
                 result.getValue(),
                 SELLER_CONSTANTS.MESSAGES
                     .GET_SELLER_AUCTION_PAYMENTS_SUCCESSFULLY,
+                SELLER_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getSellerDashboardStats = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    SELLER_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    SELLER_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const result = await this._getSellerDashboardStatsUsecase.execute({
+                sellerId: req.user.id,
+            });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    SELLER_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISellerDashboardStatsDto>(
+                res,
+                result.getValue(),
+                SELLER_CONSTANTS.MESSAGES
+                    .GET_SELLER_DASHBOARD_STATS_SUCCESSFULLY,
                 SELLER_CONSTANTS.CODES.OK,
             );
         },

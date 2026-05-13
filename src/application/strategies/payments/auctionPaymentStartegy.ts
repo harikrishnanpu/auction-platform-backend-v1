@@ -2,9 +2,9 @@ import {
     IAuctionPaymentsStrategy,
     IAuctionPaymentsStrategyInput,
 } from '@application/interfaces/strategies/payments/IAuctionPaymentsStrategy';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { TYPES } from '@di/types.di';
 import { inject, injectable } from 'inversify';
-import { IPaymentRepository } from '@domain/repositories/IPaymentRepository';
 import { Result } from '@domain/shared/result';
 import {
     PaymentFor,
@@ -13,30 +13,38 @@ import {
     PaymentStatus,
 } from '@domain/entities/payments/payments.entity';
 import { IAuctionPaymentAmountSplitStrategy } from '@application/interfaces/strategies/payments/IAuctionPaymentAmountStrategy';
-import { AUCTION_PAYMENT_DUE_AT_STRATEGY } from '@domain/constants/auction.constants';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 
 @injectable()
 export class AuctionPaymentStrategy implements IAuctionPaymentsStrategy {
     constructor(
-        @inject(TYPES.IPaymentRepository)
-        private readonly _paymentRepository: IPaymentRepository,
         @inject(TYPES.IAuctionPaymentAmountSplitStrategy)
         private readonly _amountSplitStrategy: IAuctionPaymentAmountSplitStrategy,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async createDepositPayment(
         input: IAuctionPaymentsStrategyInput,
     ): Promise<Result<Payments>> {
-        const calculateDeposit = this._amountSplitStrategy.splitWinningAmount(
+        const splitResult = await this._amountSplitStrategy.splitWinningAmount(
             input.winAmount,
         );
+        if (splitResult.isFailure) {
+            return Result.fail(splitResult.getError());
+        }
+        const calculateDeposit = splitResult.getValue();
+
+        const depositMsResult =
+            await this._systemConfigService.getAuctionPaymentDepositDueMs();
+        if (depositMsResult.isFailure) {
+            return Result.fail(depositMsResult.getError());
+        }
 
         const depositDueAt = new Date(
-            new Date(input.endedAt).getTime() +
-                AUCTION_PAYMENT_DUE_AT_STRATEGY.DEPOSIT_DAYS_MS,
+            new Date(input.endedAt).getTime() + depositMsResult.getValue(),
         );
 
         const depositPayment = Payments.create({
@@ -61,13 +69,22 @@ export class AuctionPaymentStrategy implements IAuctionPaymentsStrategy {
     async createBalancePayment(
         input: IAuctionPaymentsStrategyInput,
     ): Promise<Result<Payments>> {
-        const calculateBalance = this._amountSplitStrategy.splitWinningAmount(
+        const splitResult = await this._amountSplitStrategy.splitWinningAmount(
             input.winAmount,
         );
+        if (splitResult.isFailure) {
+            return Result.fail(splitResult.getError());
+        }
+        const calculateBalance = splitResult.getValue();
+
+        const balanceMsResult =
+            await this._systemConfigService.getAuctionPaymentBalanceDueMs();
+        if (balanceMsResult.isFailure) {
+            return Result.fail(balanceMsResult.getError());
+        }
 
         const balanceDueAt = new Date(
-            new Date(input.endedAt).getTime() +
-                AUCTION_PAYMENT_DUE_AT_STRATEGY.BALANCE_MONTHS_MS,
+            new Date(input.endedAt).getTime() + balanceMsResult.getValue(),
         );
 
         const balancePayment = Payments.create({

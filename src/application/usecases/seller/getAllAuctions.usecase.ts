@@ -8,9 +8,10 @@ import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapp
 import { TYPES } from '@di/types.di';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
-import { inject } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { SellerMapperProfile } from '@infrastructure/mappers/seller/seller.mapper';
 
+@injectable()
 export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase {
     constructor(
         @inject(TYPES.IAuctionRepository)
@@ -25,7 +26,7 @@ export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase
         const safePage = Number(dto.page) > 0 ? dto.page : 1;
         const safeLimit = Number(dto.limit) > 0 ? dto.limit : 10;
 
-        const auctions = await this._auctionRepository.findAll({
+        const pageRes = await this._auctionRepository.findSellerAuctionsPage({
             sellerId: dto.userId,
             status: dto.status,
             auctionType: dto.auctionType,
@@ -37,20 +38,16 @@ export class GetAllSellerAuctionsUsecase implements IGetAllSellerAuctionsUsecase
             limit: safeLimit,
         });
 
-        if (auctions.isFailure) {
-            return Result.fail(auctions.getError());
+        if (pageRes.isFailure) {
+            return Result.fail(pageRes.getError());
         }
 
-        const allAuctions = auctions.getValue();
-        const total = allAuctions.length;
+        const { total, auctions, page: currentPage } = pageRes.getValue();
         const totalPages = Math.max(1, Math.ceil(total / safeLimit));
-        const currentPage = Math.min(safePage, totalPages);
-        const start = (currentPage - 1) * safeLimit;
-        const end = start + safeLimit;
 
-        const auctionsResult = allAuctions.slice(start, end).map((a) => {
-            return AuctionMapperProrfile.toAuctionOutputDto(a);
-        });
+        const auctionsResult = auctions.map((a) =>
+            AuctionMapperProrfile.toAuctionOutputDto(a),
+        );
 
         return Result.ok({
             auctions: auctionsResult,

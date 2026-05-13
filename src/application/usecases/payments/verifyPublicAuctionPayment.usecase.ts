@@ -3,12 +3,9 @@ import {
     IVerifyPublicFallbackAuctionPaymentOutputDto,
 } from '@application/dtos/payments/verify-public-fallback-auction-payment.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { IVerifyFallbackPublicAuctionPaymentUsecase } from '@application/interfaces/usecases/payments/IVerifyFallbackPublicAuctionPaymentUsecase';
 import { TYPES } from '@di/types.di';
-import {
-    AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY,
-    AUCTION_PAYMENT_DUE_AT_STRATEGY,
-} from '@domain/constants/auction.constants';
 import { AuctionStatus } from '@domain/entities/auction/auction.entity';
 import { PublicAuctionFallbackParticipantsPaymentStatus } from '@domain/entities/auction/public-auction-fallback-participants.entity';
 import { AuctionPublicFallbackPaymentStatus } from '@domain/entities/auction/public-fallback-auction.entity';
@@ -38,6 +35,8 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
         private readonly _auctionRepository: IAuctionRepository,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -109,20 +108,28 @@ export class VerifyPublicAuctionPaymentUsecase implements IVerifyFallbackPublicA
         if (setAuctionWinnerResult.isFailure)
             return Result.fail(setAuctionWinnerResult.getError());
 
+        const [remainingRatioResult, balanceMsResult] = await Promise.all([
+            this._systemConfigService.getAuctionPublicFallbackRemainingSplitRatio(),
+            this._systemConfigService.getAuctionPaymentBalanceDueMs(),
+        ]);
+        if (remainingRatioResult.isFailure) {
+            return Result.fail(remainingRatioResult.getError());
+        }
+        if (balanceMsResult.isFailure) {
+            return Result.fail(balanceMsResult.getError());
+        }
+
         const remaningPaymentCreate = Payments.create({
             id: this._idGeneratingService.generateId(),
             userId: fallbackAuctionPaymentParticipantEntity.getUserId(),
             amount:
-                fallbackAuction.getAmount() *
-                AUCTION_FALLBACK_PUBLIC_NOTIFICATION_AMOUNT_SPLIT_STRATEGY.REMAINING_AMOUNT_PERCENTAGE,
+                fallbackAuction.getAmount() * remainingRatioResult.getValue(),
             currency: 'INR',
             status: PaymentStatus.PENDING,
             forPayment: PaymentFor.AUCTION,
             referenceId: fallbackAuction.getAuctionId(),
             phase: PaymentPhase.BALANCE,
-            dueAt: new Date(
-                Date.now() + AUCTION_PAYMENT_DUE_AT_STRATEGY.BALANCE_MONTHS_MS,
-            ),
+            dueAt: new Date(Date.now() + balanceMsResult.getValue()),
         });
 
         if (remaningPaymentCreate.isFailure)
