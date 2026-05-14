@@ -8,67 +8,74 @@ import { inject, injectable } from 'inversify';
 
 @injectable()
 export class AuctionRoutes {
-  private _router: Router;
+    private _router: Router;
 
-  constructor(
-    @inject(TYPES.AuthenticateMiddleware)
-    private _authenticateMiddleware: AuthenticateMiddleware,
-    @inject(TYPES.AuthorizeMiddleware)
-    private _authorizeMiddleware: AuthorizeMiddleware,
-    @inject(TYPES.AuctionController)
-    private _auctionController: AuctionController,
-  ) {
-    this._router = Router();
-  }
+    constructor(
+        @inject(TYPES.AuthenticateMiddleware)
+        private _authenticateMiddleware: AuthenticateMiddleware,
+        @inject(TYPES.AuthorizeMiddleware)
+        private _authorizeMiddleware: AuthorizeMiddleware,
+        @inject(TYPES.AuctionController)
+        private _auctionController: AuctionController,
+    ) {
+        this._router = Router();
+    }
 
-  register(): Router {
-    this._router.post(
-      '/',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.createAuction,
-    );
+    register(): Router {
+        this._router.post(
+            '/',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+            this._auctionController.createAuction,
+        );
 
-    this._router.get(
-      '/auctions',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.USER]),
-      this._auctionController.getBrowseAuctions,
-    );
+        this._router.get(
+            '/home-feed',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._auctionController.getUserHomeAuctionFeed,
+        );
 
-    this._router.get(
-      '/categories',
-      this._auctionController.getAllAuctionCategories,
-    );
+        this._router.get(
+            '/auctions',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.USER]),
+            this._auctionController.getBrowseAuctions,
+        );
 
-    this._router.post(
-      '/upload-url',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.generateUploadUrl,
-    );
+        this._router.get(
+            '/categories',
+            this._auctionController.getAllAuctionCategories,
+        );
 
-    this._router.get(
-      '/:id',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.getAuctionById,
-    );
+        this._router.post(
+            '/upload-url',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+            this._auctionController.generateUploadUrl,
+        );
 
-    this._router.put(
-      '/:id',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.updateAuction,
-    );
+        this._router.get(
+            '/:id',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+            this._auctionController.getAuctionById,
+        );
 
-    this._router.post(
-      '/:id/publish',
-      this._authenticateMiddleware.authenticate,
-      this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
-      this._auctionController.publishAuction,
-    );
+        this._router.put(
+            '/:id',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+            this._auctionController.updateAuction,
+        );
 
-    return this._router;
-  }
+        this._router.post(
+            '/:id/publish',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+            this._auctionController.publishAuction,
+        );
+
+        return this._router;
+    }
 }

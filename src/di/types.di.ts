@@ -68,6 +68,9 @@ export const TYPES = {
     ),
     IUpdateAuctionUsecase: Symbol.for('IUpdateAuctionUsecase'),
     IGetBrowseAuctionsUsecase: Symbol.for('IGetBrowseAuctionsUsecase'),
+    IGetUserHomeAuctionFeedUsecase: Symbol.for(
+        'IGetUserHomeAuctionFeedUsecase',
+    ),
     IGetUserParticipatedAuctionsUsecase: Symbol.for(
         'IGetUserParticipatedAuctionsUsecase',
     ),

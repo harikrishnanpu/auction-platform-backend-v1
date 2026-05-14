@@ -28,10 +28,15 @@ import {
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { IGetUserHomeAuctionFeedUsecase } from '@application/interfaces/usecases/auction/IGetUserHomeAuctionFeedUsecase';
 import {
     getBrowseAuctionsSchema,
     ZodGetBrowseAuctionsInputType,
 } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import {
+    getUserHomeAuctionFeedQuerySchema,
+    ZodGetUserHomeAuctionFeedQueryType,
+} from '@presentation/validators/schemas/auction/getUserHomeAuctionFeed.schema';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
@@ -39,6 +44,7 @@ import {
     GetAllAuctionCategoryDto,
     IGetAllAuctionsOutputDto,
 } from '@application/dtos/auction/getAllAuction.dto';
+import { IGetUserHomeAuctionFeedOutputDto } from '@application/dtos/auction/getUserHomeAuctionFeed.dto';
 import { IGenerateAuctionUploadUrlOutput } from '@application/dtos/auction/generate-auction-upload-url.dto';
 import { IPublishAuctionOutput } from '@application/dtos/auction/publish-auction.dto';
 
@@ -59,6 +65,8 @@ export class AuctionController {
         private readonly _getAuctionByIdUsecase: IGetAuctionByIdUsecase,
         @inject(TYPES.IGetBrowseAuctionsUsecase)
         private readonly _getBrowseAuctionsUsecase: IGetBrowseAuctionsUsecase,
+        @inject(TYPES.IGetUserHomeAuctionFeedUsecase)
+        private readonly _getUserHomeAuctionFeedUsecase: IGetUserHomeAuctionFeedUsecase,
     ) {}
 
     /**
@@ -173,6 +181,42 @@ export class AuctionController {
             }
 
             ResponseHelper.success<IGetAllAuctionsOutputDto>(
+                res,
+                result.getValue(),
+                AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,
+                AUCTION_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    getUserHomeAuctionFeed = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const validatedResult =
+                ValidationHelper.validate<ZodGetUserHomeAuctionFeedQueryType>(
+                    getUserHomeAuctionFeedQuerySchema,
+                    req.query as unknown as ZodGetUserHomeAuctionFeedQueryType,
+                );
+
+            const result = await this._getUserHomeAuctionFeedUsecase.execute({
+                liveLimit: validatedResult.liveLimit,
+                longSealedLimit: validatedResult.longSealedLimit,
+            });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetUserHomeAuctionFeedOutputDto>(
                 res,
                 result.getValue(),
                 AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,

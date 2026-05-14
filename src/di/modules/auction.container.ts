@@ -13,6 +13,7 @@ import { EndAuctionUsecase } from '@application/usecases/auction/endAuction.usec
 import { PlaceBidUsecase } from '@application/usecases/auction/placeBid.usecase';
 import { GetAuctionRoomUsecase } from '@application/usecases/auction/getAuctionRoom.usecase';
 import { GetBrowseAuctionsUsecase } from '@application/usecases/auction/getBrowseAuctions.usecase';
+import { GetUserHomeAuctionFeedUsecase } from '@application/usecases/auction/getUserHomeAuctionFeed.usecase';
 import { PauseAuctionUsecase } from '@application/usecases/auction/pauseAuction.usecase';
 import { ResumeAuctionUsecase } from '@application/usecases/auction/resumeAuction.usecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
@@ -38,6 +39,7 @@ import { GetAuctionChatMessagesUsecase } from '@application/usecases/auction/get
 import { IGetAuctionChatMessagesUsecase } from '@application/interfaces/usecases/auction/IGetAuctionChatMessagesUsecase';
 import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { IGetUserHomeAuctionFeedUsecase } from '@application/interfaces/usecases/auction/IGetUserHomeAuctionFeedUsecase';
 import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
 import { IResumeAuctionUsecase } from '@application/interfaces/usecases/auction/IResumeAuctionUsecase';
 import { PlaceBidPolicyService } from '@domain/policies/auction/place-bid-policy.service';
@@ -156,6 +158,10 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
     bind<IGetBrowseAuctionsUsecase>(TYPES.IGetBrowseAuctionsUsecase).to(
         GetBrowseAuctionsUsecase,
     );
+
+    bind<IGetUserHomeAuctionFeedUsecase>(
+        TYPES.IGetUserHomeAuctionFeedUsecase,
+    ).to(GetUserHomeAuctionFeedUsecase);
 
     bind<IGetUserParticipatedAuctionsUsecase>(
         TYPES.IGetUserParticipatedAuctionsUsecase,
