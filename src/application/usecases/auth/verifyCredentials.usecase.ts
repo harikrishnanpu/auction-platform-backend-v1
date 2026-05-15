@@ -15,6 +15,7 @@ import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscript
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -50,6 +51,14 @@ export class VerifyCredentialsUseCase implements IVerifyCredentialsUseCase {
 
             if (userEntity.isFailure) {
                 return Result.fail('User not found');
+            }
+
+            const foundUser = userEntity.getValue();
+            if (foundUser.isBlocked()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+            }
+            if (foundUser.isSuspended()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
             }
 
             const otpEntity =

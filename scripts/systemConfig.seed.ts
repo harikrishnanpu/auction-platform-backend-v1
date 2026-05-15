@@ -1,18 +1,21 @@
+/// <reference types="node" />
 import { PrismaClient, SystemConfigValueType } from '@prisma/client';
 
 const prisma = new PrismaClient();
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const systemConfigs = [
     {
         key: 'FRAUD_SUSPENSION_THRESHOLD',
         value: '10',
-        description: 'The threshold for fraud suspension',
+        description: 'Fraud points at or above this level trigger suspension',
         type: SystemConfigValueType.NUMBER,
     },
     {
         key: 'FRAUD_TEMPORARY_SUSPENSION_DURATION_MS',
-        value: '10000',
-        description: 'The duration for fraud temporary suspension',
+        value: String(7 * MS_PER_DAY),
+        description: 'Duration of the first (temporary) fraud suspension',
         type: SystemConfigValueType.NUMBER,
     },
     {
@@ -29,13 +32,13 @@ const systemConfigs = [
     },
     {
         key: 'AUCTION_PAYMENT_DEPOSIT_DUE_MS',
-        value: String(24 * 60 * 60 * 1000),
+        value: String(MS_PER_DAY),
         description: 'Ms after auction end that deposit payment is due',
         type: SystemConfigValueType.NUMBER,
     },
     {
         key: 'AUCTION_PAYMENT_BALANCE_DUE_MS',
-        value: String(30 * 24 * 60 * 60 * 1000),
+        value: String(30 * MS_PER_DAY),
         description: 'Ms after auction end that balance payment is due',
         type: SystemConfigValueType.NUMBER,
     },
@@ -71,7 +74,7 @@ const systemConfigs = [
     },
 ];
 
-const seed = async () => {
+async function seed(): Promise<void> {
     for (const row of systemConfigs) {
         await prisma.systemDbConfig.upsert({
             where: { key: row.key },
@@ -84,11 +87,12 @@ const seed = async () => {
         });
     }
     console.log(`Seeded ${systemConfigs.length} system config rows`);
-};
+}
 
 seed()
     .catch((e) => {
-        console.log(e);
+        console.error(e);
+        process.exit(1);
     })
     .finally(async () => {
         await prisma.$disconnect();

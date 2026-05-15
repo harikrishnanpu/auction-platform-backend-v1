@@ -12,6 +12,7 @@ import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { inject, injectable } from 'inversify';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 
 @injectable()
 export class SendOtpUseCase implements ISendOtpUsecase {
@@ -44,9 +45,17 @@ export class SendOtpUseCase implements ISendOtpUsecase {
                 return Result.fail(user.getError());
             }
 
+            const domainUser = user.getValue();
+            if (domainUser.isBlocked()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+            }
+            if (domainUser.isSuspended()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
+            }
+
             const previousOtps =
                 await this._otpRepository.findRecentOtpsByUserIdAndPurpose(
-                    user.getValue().getId(),
+                    domainUser.getId(),
                     data.purpose,
                 );
 
@@ -59,7 +68,7 @@ export class SendOtpUseCase implements ISendOtpUsecase {
 
             const otpEntity = Otp.create({
                 id: this._idGeneratingService.generateId(),
-                userId: user.getValue().getId(),
+                userId: domainUser.getId(),
                 purpose: data.purpose,
                 channel: data.channel,
                 otp: otp,
@@ -75,7 +84,7 @@ export class SendOtpUseCase implements ISendOtpUsecase {
 
             console.log('otpEntity', otpEntity.getValue());
             await this._emailService.sendOtpEmail(
-                user.getValue().getEmail(),
+                domainUser.getEmail(),
                 otp,
                 data.purpose,
                 EMAIL_TEMPLATES.CHANGE_PROFILE_PASSWORD,

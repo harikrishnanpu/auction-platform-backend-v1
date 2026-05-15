@@ -129,6 +129,18 @@ export class User {
         return this.status === UserStatus.ACTIVE;
     }
 
+    public isBlocked(): boolean {
+        return this.status === UserStatus.BLOCKED;
+    }
+
+    public isSuspended(): boolean {
+        return this.status === UserStatus.SUSPENDED;
+    }
+
+    public isBlockedOrSuspended(): boolean {
+        return this.isBlocked() || this.isSuspended();
+    }
+
     public getId(): string {
         return this.id;
     }

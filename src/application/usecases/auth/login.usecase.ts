@@ -8,16 +8,14 @@ import { ITokenGeneratorService } from '@application/interfaces/services/ITokenG
 import { ILoginUseCase } from '@application/interfaces/usecases/auth/ILoginUsecase';
 import { UserMapperProfile } from '@application/mappers/user/user.mapper';
 import { TYPES } from '@di/types.di';
-import {
-    AuthProviderType,
-    UserStatus,
-} from '@domain/entities/user/user.entity';
+import { AuthProviderType } from '@domain/entities/user/user.entity';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 import { inject, injectable } from 'inversify';
 
 @injectable()
@@ -82,10 +80,11 @@ export class LoginUseCase implements ILoginUseCase {
             }
 
             const user = userEntity.getValue();
-            if (user.getStatus() === UserStatus.BLOCKED) {
-                return Result.fail(
-                    'Your account has been blocked. Please contact support for assistance.',
-                );
+            if (user.isBlocked()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+            }
+            if (user.isSuspended()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
             }
 
             const accessToken = this._tokenGeneratorService.generateAccessToken(

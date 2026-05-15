@@ -5,7 +5,6 @@ import {
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { IRazorpaySubscriptionGatewayService } from '@application/interfaces/services/IRazorpaySubscriptionGatewayService';
 import { IWalletService } from '@application/interfaces/services/IWalletService';
-import { ICreditWalletUsecase } from '@application/interfaces/usecases/wallet/ICreditWalletUsecase';
 import { IRazorpaySubscriptionWebhookHandlerUsecase } from '@application/interfaces/usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
 import { TYPES } from '@di/types.di';
 import {
@@ -38,8 +37,6 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
         private readonly _subscriptionPlanRepository: ISubscriptionPlanRepository,
         @inject(TYPES.IRazorpaySubscriptionGatewayService)
         private readonly _razorpayGatewayService: IRazorpaySubscriptionGatewayService,
-        @inject(TYPES.ICreditWalletUsecase)
-        private readonly _creditWalletUsecase: ICreditWalletUsecase,
         @inject(TYPES.IWalletService)
         private readonly _walletService: IWalletService,
         @inject(TYPES.IIdGeneratingService)
@@ -211,15 +208,15 @@ export class RazorpaySubscriptionWebhookHandlerUsecase implements IRazorpaySubsc
                             return Result.fail(walletRes.getError());
                         }
 
-                        const creditRes =
-                            await this._creditWalletUsecase.execute({
-                                userId: existingUserSubscriptionPendingEntity.getUserId(),
-                                amount: refundAmount,
-                            });
-
-                        if (creditRes.isFailure) {
-                            return Result.fail(creditRes.getError());
-                        }
+                        // const creditRes =
+                        //     await this._creditWalletUsecase.execute({
+                        //         userId: existingUserSubscriptionPendingEntity.getUserId(),
+                        //         amount: refundAmount,
+                        //     });
+                        //
+                        // if (creditRes.isFailure) {
+                        //     return Result.fail(creditRes.getError());
+                        // }
                     }
 
                     existingActiveUserSubscription.setStatus(

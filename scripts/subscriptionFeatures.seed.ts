@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import {
     PrismaClient,
     SubscriptionPlanFeatureEnum,
@@ -6,7 +7,7 @@ import {
 
 const prisma = new PrismaClient();
 
-const FEATURE_ROWS: {
+const featureRows: {
     feature: SubscriptionPlanFeatureEnum;
     description: string;
     type: SubscriptionPlanFeatureType;
@@ -29,11 +30,9 @@ const FEATURE_ROWS: {
     },
 ];
 
-export async function seedSubscriptionFeatures(
-    client: PrismaClient = prisma,
-): Promise<void> {
-    for (const row of FEATURE_ROWS) {
-        await client.features.upsert({
+async function seed(): Promise<void> {
+    for (const row of featureRows) {
+        await prisma.features.upsert({
             where: { feature: row.feature },
             create: {
                 feature: row.feature,
@@ -46,16 +45,14 @@ export async function seedSubscriptionFeatures(
             },
         });
     }
+    console.log(`Seeded ${featureRows.length} subscription feature rows`);
 }
 
-async function main() {
-    try {
-        await seedSubscriptionFeatures();
-    } catch (e) {
-        console.log(e);
-    } finally {
+seed()
+    .catch((e) => {
+        console.error(e);
+        process.exit(1);
+    })
+    .finally(async () => {
         await prisma.$disconnect();
-    }
-}
-
-main();
+    });
