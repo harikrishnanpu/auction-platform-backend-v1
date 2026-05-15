@@ -1,8 +1,8 @@
 import { IReleaseParticipantsWalletInputDto } from '@application/dtos/auction/releaseParticipantsWallet.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { IReleaseParticipantsWalletUsecase } from '@application/interfaces/usecases/auction/IReleaseParticipantsWalletUsecase';
 import { TYPES } from '@di/types.di';
-import { AUCTION_INTIAL_DEPOSIT_AMOUNT } from '@domain/constants/auction.constants';
 import {
     WalletTransaction,
     WalletTransactionType,
@@ -24,6 +24,8 @@ export class ReleaseParticipantsWalletUsecase implements IReleaseParticipantsWal
         private readonly _walletRepository: IWalletRepository,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -51,8 +53,15 @@ export class ReleaseParticipantsWalletUsecase implements IReleaseParticipantsWal
         }
 
         const auctionParticipants = auctionParticipantsResult.getValue();
+
+        const depositRatioResult =
+            await this._systemConfigService.getAuctionParticipantInitialDepositRatio();
+        if (depositRatioResult.isFailure) {
+            return Result.fail(depositRatioResult.getError());
+        }
+
         const intialdepositedAmount =
-            auction.getStartPrice() * AUCTION_INTIAL_DEPOSIT_AMOUNT.PERCENTAGE;
+            auction.getStartPrice() * depositRatioResult.getValue();
 
         for (const auctionParticipant of auctionParticipants) {
             if (auctionParticipant.getUserId() === auction.getWinnerId()) {

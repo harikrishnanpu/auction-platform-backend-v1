@@ -93,6 +93,7 @@ export class AutoBidService implements IAutoBidService {
         if (shouldExtend) {
             const updatedAuctionRes = Auction.create({
                 id: input.auction.getId(),
+                auctionNumber: input.auction.getAuctionNumber(),
                 sellerId: input.auction.getSellerId(),
                 auctionType: input.auction.getAuctionType(),
                 title: input.auction.getTitle(),

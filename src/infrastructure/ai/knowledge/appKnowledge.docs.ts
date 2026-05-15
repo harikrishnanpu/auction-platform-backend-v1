@@ -42,9 +42,9 @@ export const APP_KNOWLEDGE_DOCS = [
         metadata: { section: 'categories', priority: 'high' },
     }),
 
-    // --- Auction creation validation (domain Auction.create defaults & limits) ---
+    // --- Auction creation validation (system config + domain defaults) ---
     new Document({
-        pageContent: `Hard validation on create: minimum start price is greater than ${500} (numeric constant MIN_START_PRICE). maxExtensionCount must be strictly less than ${10} (MAX_MAX_EXTENSION_COUNT bound). extensionCount must not exceed maxExtensionCount. For AuctionType LONG, minIncrement must not be below 1 (domain rejects with min increment error). Defaults when creating include antiSnipSeconds 60, extensionCount 0, maxExtensionCount 3, bidCooldownSeconds 10 unless overridden.`,
+        pageContent: `Draft auction pricing rules: minimum start price and maximum maxExtensionCount are read from system config (keys AUCTION_MIN_START_PRICE and AUCTION_MAX_MAX_EXTENSION_COUNT; defaults seeded to 500 and 10) and validated in application use cases when creating a draft, updating a draft, and publishing—not inside the Auction entity. extensionCount must not exceed maxExtensionCount (domain invariant on Auction.create). For AuctionType LONG, minIncrement must not be below 1 (domain). Defaults when creating include antiSnipSeconds 60, extensionCount 0, maxExtensionCount 3, bidCooldownSeconds 10 unless overridden.`,
         metadata: { section: 'auction-creation-rules', priority: 'high' },
     }),
 
@@ -87,7 +87,7 @@ export const APP_KNOWLEDGE_DOCS = [
     }),
 
     new Document({
-        pageContent: `Payment strategy constants (domain): deposit share of amount ${0.25} (AUCTION_PAYMENT_AMOUNT_SPLIT_STRATEGY.DEPOSIT_PERCENTAGE). Initial deposit portion constant ${0.1} (AUCTION_INTIAL_DEPOSIT_AMOUNT.PERCENTAGE). Due windows: deposit due offset ${24} hours in ms (DEPOSIT_DAYS_MS), balance horizon ${30} days in ms (BALANCE_MONTHS_MS). Public notification split: initial ${0.25}, remaining ${0.75} of the notification amount strategy.`,
+        pageContent: `Payment timing and splits are driven by SystemDbConfig keys (defaults match former domain constants): winner deposit share AUCTION_WINNER_DEPOSIT_SPLIT_RATIO (default 0.25); participant initial hold AUCTION_PARTICIPANT_INITIAL_DEPOSIT_RATIO (default 0.1); deposit due offset after auction end AUCTION_PAYMENT_DEPOSIT_DUE_MS (default 24h); balance due offset AUCTION_PAYMENT_BALANCE_DUE_MS (default 30d); public fallback first instalment AUCTION_PUBLIC_FALLBACK_INITIAL_SPLIT_RATIO (default 0.25) and remainder AUCTION_PUBLIC_FALLBACK_REMAINING_SPLIT_RATIO (default 0.75). Runtime reads go through ISystemConfigService dedicated methods with short-lived Redis cache on numeric values; editing a row in admin invalidates that key’s cache.`,
         metadata: { section: 'payment-constants', priority: 'medium' },
     }),
 
@@ -99,7 +99,7 @@ export const APP_KNOWLEDGE_DOCS = [
 
     // --- Winners & participants ---
     new Document({
-        pageContent: `AuctionWinnerStatus: PENDING, PARTIAL_PAYMENT_PENDING, COMPLETED, FAILED, CANCELLED. AuctionParticipantPaymentStatus (participation payment flag): PENDING, PAID. Winner fallback max rank constant in domain is ${1} (AUCTION_WINNER_FALLBACK_CONSTANTS.MAX_RANK).`,
+        pageContent: `AuctionWinnerStatus: PENDING, PARTIAL_PAYMENT_PENDING, COMPLETED, FAILED, CANCELLED. AuctionParticipantPaymentStatus (participation payment flag): PENDING, PAID. Winner fallback selection stops when existing winner rows reach the cap from system config key AUCTION_WINNER_FALLBACK_MAX_RANK (default seeded to 1).`,
         metadata: { section: 'winners-participants', priority: 'medium' },
     }),
 

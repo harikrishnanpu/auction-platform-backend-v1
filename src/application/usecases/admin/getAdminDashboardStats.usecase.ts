@@ -29,6 +29,8 @@ export class GetAdminDashboardStatsUsecase implements IGetAdminDashboardStatsUse
             pendingKycResult,
             totalAuctionsResult,
             auctionStatsResult,
+            buyerUsersResult,
+            adminUsersResult,
         ] = await Promise.all([
             this._userRepository.count(),
             this._userRepository.count({ status: UserStatus.SUSPENDED }),
@@ -36,6 +38,8 @@ export class GetAdminDashboardStatsUsecase implements IGetAdminDashboardStatsUse
             this._kycRepository.countByKycFor(KycFor.SELLER, KycStatus.PENDING),
             this._auctionRepository.countAdminVisibleAuctions(),
             this._auctionRepository.countAuctionStats(),
+            this._userRepository.count({ role: UserRoleType.USER }),
+            this._userRepository.count({ role: UserRoleType.ADMIN }),
         ]);
 
         const results = [
@@ -45,6 +49,8 @@ export class GetAdminDashboardStatsUsecase implements IGetAdminDashboardStatsUse
             pendingKycResult,
             totalAuctionsResult,
             auctionStatsResult,
+            buyerUsersResult,
+            adminUsersResult,
         ];
 
         const failed = results.find((result) => result.isFailure);
@@ -60,6 +66,10 @@ export class GetAdminDashboardStatsUsecase implements IGetAdminDashboardStatsUse
             pendingKyc: pendingKycResult.getValue(),
             totalAuctions: totalAuctionsResult.getValue(),
             liveAuctions: auctionStats.liveCount,
+            upcomingAuctions: auctionStats.upcomingCount,
+            endedAuctions: auctionStats.endedCount,
+            buyerUsers: buyerUsersResult.getValue(),
+            adminUsers: adminUsersResult.getValue(),
         });
     }
 }

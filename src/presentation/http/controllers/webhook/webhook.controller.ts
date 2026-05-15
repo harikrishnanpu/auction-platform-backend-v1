@@ -14,6 +14,14 @@ export class WebhookController {
         private readonly _razorpaySubscriptionWebhookHandlerUsecase: IRazorpaySubscriptionWebhookHandlerUsecase,
     ) {}
 
+    /**
+     * Validates Razorpay subscription webhook signature headers and processes the event body.
+     *
+     * @param req - Express request; `body` is Razorpay payload, headers carry signature and event id
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after acknowledgement is sent
+     * @throws {AppError} When signature verification or downstream handling fails
+     */
     razorpaySubscriptionWebhook = expressAsyncHandler(
         async (req: Request, res: Response) => {
             console.log(req.headers);

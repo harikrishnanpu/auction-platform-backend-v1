@@ -2,17 +2,29 @@ import {
     IAuctionPaymentAmountSplitStrategy,
     IAuctionWinningAmountSplit,
 } from '@application/interfaces/strategies/payments/IAuctionPaymentAmountStrategy';
-import { AUCTION_PAYMENT_AMOUNT_SPLIT_STRATEGY } from '@domain/constants/auction.constants';
-import { injectable } from 'inversify';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
+import { TYPES } from '@di/types.di';
+import { Result } from '@domain/shared/result';
+import { inject, injectable } from 'inversify';
 
 @injectable()
 export class AuctionPaymentAmountSplitStrategy implements IAuctionPaymentAmountSplitStrategy {
-    splitWinningAmount(winAmount: number): IAuctionWinningAmountSplit {
-        const deposit = Math.floor(
-            winAmount *
-                AUCTION_PAYMENT_AMOUNT_SPLIT_STRATEGY.DEPOSIT_PERCENTAGE,
-        );
+    constructor(
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
+    ) {}
+
+    async splitWinningAmount(
+        winAmount: number,
+    ): Promise<Result<IAuctionWinningAmountSplit>> {
+        const ratioResult =
+            await this._systemConfigService.getAuctionWinnerDepositSplitRatio();
+        if (ratioResult.isFailure) {
+            return Result.fail(ratioResult.getError());
+        }
+        const depositPercentage = ratioResult.getValue();
+        const deposit = Math.floor(winAmount * depositPercentage);
         const balance = winAmount - deposit;
-        return { deposit, balance };
+        return Result.ok({ deposit, balance });
     }
 }

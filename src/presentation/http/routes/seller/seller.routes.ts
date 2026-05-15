@@ -36,6 +36,13 @@ export class SellerRoutes {
         );
 
         this._router.get(
+            '/dashboard-stats',
+            this._authenticateMiddleware.authenticate,
+            this._authorizeMiddleware.authorize([UserRoleType.SELLER]),
+            this._sellerController.getSellerDashboardStats,
+        );
+
+        this._router.get(
             '/auctions',
             this._authenticateMiddleware.authenticate,
             this._authorizeMiddleware.authorize([UserRoleType.SELLER]),

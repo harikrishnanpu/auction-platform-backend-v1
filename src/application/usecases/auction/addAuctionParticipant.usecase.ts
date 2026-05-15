@@ -3,9 +3,9 @@ import {
     IAddAuctionParticipantOutput,
 } from '@application/dtos/auction/addAuctionParticipant.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { IAddAuctionParticipantUsecase } from '@application/interfaces/usecases/auction/IAddAuctionParticipantUsecase';
 import { TYPES } from '@di/types.di';
-import { AUCTION_INTIAL_DEPOSIT_AMOUNT } from '@domain/constants/auction.constants';
 import {
     AuctionParticipant,
     AuctionParticipantPaymentStatus,
@@ -37,6 +37,8 @@ export class AddAuctionParticipantUsecase implements IAddAuctionParticipantUseca
         private readonly _walletRepository: IWalletRepository,
         @inject(TYPES.IWalletTransactionsRepository)
         private readonly _walletTransactionsRepository: IWalletTransactionsRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -75,8 +77,14 @@ export class AddAuctionParticipantUsecase implements IAddAuctionParticipantUseca
             return Result.fail('User wallet not found');
         }
 
+        const depositRatioResult =
+            await this._systemConfigService.getAuctionParticipantInitialDepositRatio();
+        if (depositRatioResult.isFailure) {
+            return Result.fail(depositRatioResult.getError());
+        }
+
         const intialDepositAmount =
-            auction.getStartPrice() * AUCTION_INTIAL_DEPOSIT_AMOUNT.PERCENTAGE;
+            auction.getStartPrice() * depositRatioResult.getValue();
         const holdBalanceResult =
             userWallet.holdFromMainBalance(intialDepositAmount);
         if (holdBalanceResult.isFailure) {

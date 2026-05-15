@@ -60,7 +60,7 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
                         SubscriptionFeatureKey.AUCTION_CREATION,
                 )
                 ?.getValue() ??
-            SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_CREATE_FEATURE_VALUE;
+            String(SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_CREATE_FEATURE_VALUE);
 
         const totalCreatedAuctions =
             await this._auctionRepository.countBySellerId(userId);
@@ -104,7 +104,9 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
                         SubscriptionFeatureKey.AUCTION_BIDDING,
                 )
                 ?.getValue() ??
-            SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_BIDDING_FEATURE_VALUE;
+            String(
+                SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_BIDDING_FEATURE_VALUE,
+            );
 
         const totalBidsOfUserForAuction =
             await this._bidRepository.countBidsByAuctionIdAndUserId(
@@ -126,6 +128,34 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
         }
 
         return Result.ok(true);
+    }
+
+    async canUseAiAgent(userId: string): Promise<Result<boolean>> {
+        const subscriptionPlanResult =
+            await this.getUserSubscriptionPlan(userId);
+        if (subscriptionPlanResult.isFailure) {
+            return Result.fail(subscriptionPlanResult.getError());
+        }
+
+        const subscriptionPlan = subscriptionPlanResult.getValue();
+        if (!subscriptionPlan) {
+            return Result.fail('Subscription plan not found');
+        }
+
+        const raw =
+            subscriptionPlan
+                .getFeatures()
+                .find(
+                    (feature) =>
+                        feature.getFeature().getFeatureKey() ===
+                        SubscriptionFeatureKey.AI_AGENT,
+                )
+                ?.getValue() ??
+            SUBSCRIPTION_CONSTANTS.DEFAULT_AI_AGENT_FEATURE_VALUE;
+
+        const n = Number(raw);
+        const allowed = Number.isFinite(n) && n >= 1;
+        return Result.ok(allowed);
     }
 
     private async getUserSubscriptionPlan(
@@ -186,10 +216,8 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             cachedSubscriptionPlan = jsonSubscriptionPlan;
         }
 
-        console.log('jsonSubscriptionPla===', cachedSubscriptionPlan);
         const plainObject = JSON.parse(cachedSubscriptionPlan);
 
-        // doubt -- change==
         const subscriptionPlanMapped =
             this._subscriptionPlanMapper.toDomain(plainObject);
 

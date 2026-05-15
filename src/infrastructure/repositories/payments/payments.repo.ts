@@ -75,15 +75,13 @@ export class PrismaPaymentRepository
         userId: string,
         filters: IFindUserPayments,
     ): Promise<Result<IFindUserPaymentsResult>> {
-        const where = { userId };
+        const statusWhere =
+            filters.status === 'ALL' ? {} : { status: filters.status };
+        const where = { userId, ...statusWhere };
 
         const [rows, total] = await Promise.all([
             this._prisma.payments.findMany({
-                where: {
-                    ...where,
-                    status:
-                        filters.status === 'ALL' ? undefined : filters.status,
-                },
+                where,
                 orderBy: { createdAt: 'desc' },
                 skip: (filters.page - 1) * filters.limit,
                 take: filters.limit,

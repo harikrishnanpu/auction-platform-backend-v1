@@ -18,7 +18,6 @@ import { inject, injectable } from 'inversify';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
 import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
-import { SystemConfigKey } from '@domain/entities/system-config/system-config.entity';
 
 @injectable()
 export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
@@ -83,15 +82,13 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
             return Result.fail(saveTargetedUserResult.getError());
         }
         const suspensionThresholdResult =
-            await this._systemConfigService.getConfigByKey(
-                SystemConfigKey.FRAUD_SUSPENSION_THRESHOLD,
-            );
+            await this._systemConfigService.getFraudSuspensionThreshold();
         if (suspensionThresholdResult.isFailure) {
             return Result.fail(suspensionThresholdResult.getError());
         }
         const shouldSuspend =
             targetedUser.getUserFraudLevel() >=
-            Number(suspensionThresholdResult.getValue().value);
+            suspensionThresholdResult.getValue();
 
         const notificationResult = Notification.create({
             id: this._idGeneratingService.generateId(),
@@ -129,17 +126,14 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
         const startsAt = new Date();
 
         const temporarySuspensionDurationResult =
-            await this._systemConfigService.getConfigByKey(
-                SystemConfigKey.FRAUD_TEMPORARY_SUSPENSION_DURATION_MS,
-            );
+            await this._systemConfigService.getFraudTemporarySuspensionDurationMs();
 
         if (temporarySuspensionDurationResult.isFailure) {
             return Result.fail(temporarySuspensionDurationResult.getError());
         }
 
-        const temporarySuspensionDuration = Number(
-            temporarySuspensionDurationResult.getValue().value,
-        );
+        const temporarySuspensionDuration =
+            temporarySuspensionDurationResult.getValue();
 
         const endsAt = hadPreviousSuspension
             ? null

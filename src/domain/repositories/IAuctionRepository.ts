@@ -12,6 +12,9 @@ export interface IAuctionRepository {
     findByAuctionNum(auctionNumber: string): Promise<Result<Auction | null>>;
     findBySellerId(sellerId: string): Promise<Result<Auction[]>>;
     findAll(filters: IFindAllAuctionsFilters): Promise<Result<Auction[]>>;
+    findSellerAuctionsPage(
+        filters: IFindAllAuctionsFilters,
+    ): Promise<Result<{ total: number; auctions: Auction[]; page: number }>>;
     findAllForUsers(
         filters: IFindAllAuctionsFilters,
     ): Promise<Result<Auction[]>>;

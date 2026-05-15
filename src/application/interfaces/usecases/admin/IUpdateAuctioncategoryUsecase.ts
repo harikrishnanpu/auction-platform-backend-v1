@@ -3,7 +3,7 @@ import { Result } from '@domain/shared/result';
 export interface IValidatedUpdateAuctionCategoryInput {
     categoryId: string;
     name: string;
-    parentId?: string;
+    parentId: string | undefined;
 }
 
 export interface IUpdateAuctionCategoryUsecase {

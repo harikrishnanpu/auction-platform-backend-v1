@@ -68,6 +68,9 @@ export const TYPES = {
     ),
     IUpdateAuctionUsecase: Symbol.for('IUpdateAuctionUsecase'),
     IGetBrowseAuctionsUsecase: Symbol.for('IGetBrowseAuctionsUsecase'),
+    IGetUserHomeAuctionFeedUsecase: Symbol.for(
+        'IGetUserHomeAuctionFeedUsecase',
+    ),
     IGetUserParticipatedAuctionsUsecase: Symbol.for(
         'IGetUserParticipatedAuctionsUsecase',
     ),
@@ -146,6 +149,9 @@ export const TYPES = {
     ),
     IRejectAuctionCategoryUsecase: Symbol.for('IRejectAuctionCategoryUsecase'),
     IGetAllSellerAuctionsUsecase: Symbol.for('IGetAllSellerAuctionsUsecase'),
+    IGetSellerDashboardStatsUsecase: Symbol.for(
+        'IGetSellerDashboardStatsUsecase',
+    ),
     Redis: Symbol.for('Redis'),
     IBidLockService: Symbol.for('IBidLockService'),
     ISocketServer: Symbol.for('ISocketServer'),

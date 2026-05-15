@@ -1,11 +1,12 @@
 import { z } from 'zod';
 import { AuctionAssetType } from '@domain/entities/auction/auction-asset.entity';
+import { AuctionType } from '@domain/entities/auction/auction.entity';
 
 export const updateAuctionSchema = z
     .object({
         userId: z.string().trim().min(1, 'User ID is required'),
         auctionId: z.string().trim().min(1, 'Auction ID is required'),
-        auctionType: z.enum(['LONG', 'LIVE', 'SEALED']).optional(),
+        auctionType: z.nativeEnum(AuctionType).optional(),
         title: z.string().trim().min(1, 'Title is required'),
         description: z.string().trim().min(1, 'Description is required'),
         category: z.string().trim().min(1, 'Category is required'),

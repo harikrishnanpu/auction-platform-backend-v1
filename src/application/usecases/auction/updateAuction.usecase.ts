@@ -8,6 +8,7 @@ import {
 import { TYPES } from '@di/types.di';
 import { IAuctionCategoryRepository } from '@domain/repositories/IAuctionCategoryRepo';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import {
     Auction,
     AuctionStatus,
@@ -20,6 +21,7 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { validateAuctionDraftPricingWithSystemConfig } from '@application/helpers/validateAuctionDraftPricingWithSystemConfig';
 
 @injectable()
 export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
@@ -30,6 +32,8 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
         private readonly _auctionCategoryRepository: IAuctionCategoryRepository,
         @inject(TYPES.IIdGeneratingService)
         private readonly _idGeneratingService: IIdGeneratingService,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -81,6 +85,18 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
                   )
                 : auction.getAssets();
 
+        const maxExt = dto.maxExtensionCount ?? auction.getMaxExtensionCount();
+        const pricingOk = await validateAuctionDraftPricingWithSystemConfig(
+            this._systemConfigService,
+            {
+                startPrice: dto.startPrice,
+                maxExtensionCount: maxExt,
+            },
+        );
+        if (pricingOk.isFailure) {
+            return Result.fail(pricingOk.getError());
+        }
+
         const updatedResult = Auction.create({
             id: auction.getId(),
             auctionNumber: auction.getAuctionNumber(),
@@ -98,8 +114,7 @@ export class UpdateAuctionUsecase implements IUpdateAuctionUsecase {
             antiSnipSeconds:
                 dto.antiSnipSeconds ?? auction.getAntiSnipSeconds(),
             extensionCount: auction.getExtensionCount(),
-            maxExtensionCount:
-                dto.maxExtensionCount ?? auction.getMaxExtensionCount(),
+            maxExtensionCount: maxExt,
             bidCooldownSeconds:
                 dto.bidCooldownSeconds ?? auction.getBidCooldownSeconds(),
             winnerId: auction.getWinnerId(),

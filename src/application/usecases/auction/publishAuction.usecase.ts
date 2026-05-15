@@ -6,6 +6,7 @@ import {
 } from '@application/interfaces/usecases/auction/IPublishAuctionUsecase';
 
 import { TYPES } from '@di/types.di';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import {
     Auction,
     AuctionStatus,
@@ -14,12 +15,15 @@ import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
+import { validateAuctionDraftPricingWithSystemConfig } from '@application/helpers/validateAuctionDraftPricingWithSystemConfig';
 
 @injectable()
 export class PublishAuctionUsecase implements IPublishAuctionUsecase {
     constructor(
         @inject(TYPES.IAuctionRepository)
         private readonly _auctionRepository: IAuctionRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
@@ -51,6 +55,17 @@ export class PublishAuctionUsecase implements IPublishAuctionUsecase {
         const now = new Date();
         if (auction.getEndAt() <= now) {
             return Result.fail(AUCTION_MESSAGES.END_TIME_ALREADY_PASSED);
+        }
+
+        const pricingOk = await validateAuctionDraftPricingWithSystemConfig(
+            this._systemConfigService,
+            {
+                startPrice: auction.getStartPrice(),
+                maxExtensionCount: auction.getMaxExtensionCount(),
+            },
+        );
+        if (pricingOk.isFailure) {
+            return Result.fail(pricingOk.getError());
         }
 
         const publishedResult = Auction.create({

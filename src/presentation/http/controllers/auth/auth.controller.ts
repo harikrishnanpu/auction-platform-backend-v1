@@ -80,10 +80,13 @@ export class AuthController {
     ) {}
 
     /**
-     * @description Register a new user
-     * @returns ApiResponse<RegisterUserOutput>
+     * Registers a new user with validated registration fields from the body.
+     *
+     * @param req - Express request; `body` validated with `registerSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after the success payload is sent (201)
+     * @throws {AppError} When validation fails or the register use case returns failure
      */
-
     register = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult =
             ValidationHelper.validate<ZodRegisterInputType>(
@@ -110,10 +113,13 @@ export class AuthController {
     });
 
     /**
-     * @description Send a verification code to the user's email
-     * @returns ApiResponse<void>
+     * Sends a one-time verification code to the user's email (OTP channel forced to email).
+     *
+     * @param req - Express request; `body` validated with `sendVerificationCodeSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after the success response is sent
+     * @throws {AppError} When validation fails or OTP dispatch fails
      */
-
     sendVerificationCode = expressAsyncHandler(
         async (req: Request, res: Response) => {
             console.log(req.body);
@@ -147,10 +153,13 @@ export class AuthController {
     );
 
     /**
-     * @description Verify the user's credentials
-     * @returns ApiResponse<VerifyCredentialsOutput>
+     * Verifies email / OTP credentials so the account can proceed past onboarding gates.
+     *
+     * @param req - Express request; `body` validated with `verifyCredentialsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after credentials output is sent
+     * @throws {AppError} When validation fails or verification fails
      */
-
     verifyCredentials = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -181,6 +190,14 @@ export class AuthController {
         },
     );
 
+    /**
+     * Logs a user in with email and password and returns access/refresh tokens in the JSON body.
+     *
+     * @param req - Express request; `body` validated with `loginSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after login payload is sent
+     * @throws {AppError} When validation fails or credentials are invalid
+     */
     login = expressAsyncHandler(async (req: Request, res: Response) => {
         const validationResult = ValidationHelper.validate<ZodLoginInputType>(
             loginSchema,
@@ -205,6 +222,14 @@ export class AuthController {
         );
     });
 
+    /**
+     * Returns the current user's profile using `req.user.id` from auth middleware.
+     *
+     * @param req - Express request including `user` set by auth middleware
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after the user DTO is sent
+     * @throws {AppError} When `req.user` is missing or the lookup use case fails
+     */
     getUser = expressAsyncHandler(async (req: Request, res: Response) => {
         console.log('getUser controller called');
 
@@ -234,6 +259,14 @@ export class AuthController {
         );
     });
 
+    /**
+     * Starts Google OAuth2: redirects the browser to Google (Passport, session disabled).
+     *
+     * @param req - Express request passed through to Passport
+     * @param res - Express response passed through to Passport
+     * @param next - Express `next` used by Passport middleware
+     * @returns Promise that settles when Passport hands off to Google
+     */
     googleAuth = expressAsyncHandler(
         async (req: Request, res: Response, next: NextFunction) => {
             passport.authenticate('google', {
@@ -243,6 +276,13 @@ export class AuthController {
         },
     );
 
+    /**
+     * Google OAuth callback: issues app tokens, sets HTTP-only cookies, redirects into the SPA.
+     *
+     * @param req - Express request carrying Google callback parameters
+     * @param res - Express response used for cookies and redirects (no JSON envelope on success)
+     * @returns Promise that settles after redirect or error redirect
+     */
     googleAuthCallback = expressAsyncHandler(
         async (req: Request, res: Response) => {
             passport.authenticate(
@@ -295,6 +335,14 @@ export class AuthController {
         },
     );
 
+    /**
+     * Completes remaining profile fields for the authenticated user.
+     *
+     * @param req - Express request; `body` merged with `userId` from `req.user` and validated
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after profile completion payload is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or the use case fails
+     */
     completeProfile = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -332,6 +380,14 @@ export class AuthController {
         },
     );
 
+    /**
+     * Starts forgot-password flow (e.g. email with reset link) for the submitted address.
+     *
+     * @param req - Express request; `body` validated with `forgottenPasswordSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after the acknowledgement is sent
+     * @throws {AppError} When validation fails or the use case fails
+     */
     forgotPassword = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -359,6 +415,14 @@ export class AuthController {
         },
     );
 
+    /**
+     * Changes password using token or current-password fields from the validated body.
+     *
+     * @param req - Express request; `body` validated with `changePasswordSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after the success acknowledgement is sent
+     * @throws {AppError} When validation fails or the password change use case fails
+     */
     changePassword = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =

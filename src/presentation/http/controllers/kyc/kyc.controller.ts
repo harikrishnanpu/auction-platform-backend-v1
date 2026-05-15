@@ -44,6 +44,14 @@ export class KycController {
         private readonly _submitKycUsecase: ISubmitKycUsecase,
     ) {}
 
+    /**
+     * Returns a secure upload target (e.g. pre-signed URL) for a KYC document described in the body.
+     *
+     * @param req - Express request; `body` validated with `uploadKycUrlSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after upload URL payload is sent
+     * @throws {AppError} When validation fails or URL generation fails
+     */
     getKycUploadUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const validationResult =
@@ -71,6 +79,14 @@ export class KycController {
         },
     );
 
+    /**
+     * Returns KYC workflow status for the authenticated user.
+     *
+     * @param req - Express request; `body` merged with `userId` from `req.user`, validated with `getKycStatusSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after status DTO is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or lookup fails
+     */
     getKycStatus = expressAsyncHandler(async (req: Request, res: Response) => {
         console.log('getKycStatus controller called');
 
@@ -111,6 +127,14 @@ export class KycController {
         );
     });
 
+    /**
+     * Updates KYC draft fields/documents for the authenticated user before submission.
+     *
+     * @param req - Express request; `body` merged with `userId` and validated with `updateKycSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after updated KYC payload is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or update fails
+     */
     updateKyc = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -144,6 +168,14 @@ export class KycController {
         );
     });
 
+    /**
+     * Submits KYC for review for the authenticated user.
+     *
+     * @param req - Express request; `body` merged with `userId` and validated with `submitKycSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after submission result is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or submit fails
+     */
     submitKyc = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(

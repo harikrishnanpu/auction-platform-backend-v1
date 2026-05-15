@@ -21,6 +21,7 @@ export class CreateWalletTopupSessionUsecase implements ICreateWalletTopupSessio
         const orderResult = await this._paymentGatewayService.createOrder({
             userId: input.userId,
             amount: input.amount,
+            referenceId: 'WALLET_TOPUP',
         });
 
         if (orderResult.isFailure) {

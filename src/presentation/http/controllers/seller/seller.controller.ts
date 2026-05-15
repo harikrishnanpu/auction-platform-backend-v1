@@ -19,12 +19,14 @@ import {
 } from '@presentation/validators/schemas/seller/getAllAuctions.schema';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetSellerAuctionPaymentsUsecase } from '@application/interfaces/usecases/seller/IGetSellerAuctionPaymentsUsecase';
+import { IGetSellerDashboardStatsUsecase } from '@application/interfaces/usecases/seller/IGetSellerDashboardStatsUsecase';
 import { AUCTION_CONSTANTS } from '@presentation/constants/auction/auction.constants';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
 import { IRequestAuctionCategoryOutputDto } from '@application/dtos/admin/request-auction-category.dto';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { IGetSellerAuctionPaymentsOutputDto } from '@application/dtos/seller/sellerAuctionPayments.dto';
+import { ISellerDashboardStatsDto } from '@application/dtos/seller/sellerDashboardStats.dto';
 import { AuctionMapperProrfile } from '@application/mappers/auction/auction.mapperProfile';
 import { PaymentStatus } from '@domain/entities/payments/payments.entity';
 import {
@@ -45,8 +47,18 @@ export class SellerController {
         private readonly _getAuctionByIdUsecase: IGetAuctionByIdUsecase,
         @inject(TYPES.IGetSellerAuctionPaymentsUsecase)
         private readonly _getSellerAuctionPaymentsUsecase: IGetSellerAuctionPaymentsUsecase,
+        @inject(TYPES.IGetSellerDashboardStatsUsecase)
+        private readonly _getSellerDashboardStatsUsecase: IGetSellerDashboardStatsUsecase,
     ) {}
 
+    /**
+     * Lists this seller's auction category requests and their statuses.
+     *
+     * @param req - Express request with authenticated `user`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after request list is sent
+     * @throws {AppError} When `req.user` is missing or fetch fails
+     */
     getAllSellerAuctionCategory = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -78,6 +90,14 @@ export class SellerController {
         },
     );
 
+    /**
+     * Submits a new custom auction category request for the authenticated seller.
+     *
+     * @param req - Express request; `body` validated with `requestAuctionCategorySchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after created request DTO is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or create fails
+     */
     requestAuctionCategory = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -117,6 +137,14 @@ export class SellerController {
         },
     );
 
+    /**
+     * Paginated list of auctions owned by the authenticated seller (`query` filters).
+     *
+     * @param req - Express request; `query` merged with `userId`, validated with `getAllAuctionsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after listings page is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or fetch fails
+     */
     getAllAuctions = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -154,6 +182,14 @@ export class SellerController {
         },
     );
 
+    /**
+     * Loads one seller auction by `req.params.id` for the authenticated owner.
+     *
+     * @param req - Express request; `params.id` is auction id; `user` from auth middleware
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after auction DTO is sent
+     * @throws {AppError} When user missing, id missing, or fetch fails
+     */
     getSellerAuctionById = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -193,6 +229,14 @@ export class SellerController {
         },
     );
 
+    /**
+     * Paginated buyer payment requests tied to the seller's auctions.
+     *
+     * @param req - Express request; `query` validated with `getSellerAuctionPaymentsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after payments page is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or fetch fails
+     */
     getSellerAuctionPayments = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -227,6 +271,44 @@ export class SellerController {
                 result.getValue(),
                 SELLER_CONSTANTS.MESSAGES
                     .GET_SELLER_AUCTION_PAYMENTS_SUCCESSFULLY,
+                SELLER_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    /**
+     * Aggregated dashboard metrics (auctions, payments) for the authenticated seller.
+     *
+     * @param req - Express request with authenticated `user`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after stats DTO is sent
+     * @throws {AppError} When `req.user` is missing or aggregation fails
+     */
+    getSellerDashboardStats = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    SELLER_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    SELLER_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const result = await this._getSellerDashboardStatsUsecase.execute({
+                sellerId: req.user.id,
+            });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    SELLER_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<ISellerDashboardStatsDto>(
+                res,
+                result.getValue(),
+                SELLER_CONSTANTS.MESSAGES
+                    .GET_SELLER_DASHBOARD_STATS_SUCCESSFULLY,
                 SELLER_CONSTANTS.CODES.OK,
             );
         },

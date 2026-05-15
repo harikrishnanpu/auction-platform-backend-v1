@@ -28,10 +28,15 @@ import {
 import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecases/auction/IGetAllAuctionCategoriesUsecase';
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
+import { IGetUserHomeAuctionFeedUsecase } from '@application/interfaces/usecases/auction/IGetUserHomeAuctionFeedUsecase';
 import {
     getBrowseAuctionsSchema,
     ZodGetBrowseAuctionsInputType,
 } from '@presentation/validators/schemas/auction/getBrowseAuctions.schema';
+import {
+    getUserHomeAuctionFeedQuerySchema,
+    ZodGetUserHomeAuctionFeedQueryType,
+} from '@presentation/validators/schemas/auction/getUserHomeAuctionFeed.schema';
 import { ResponseHelper } from '@presentation/http/helpers/response.helper';
 import { IAuctionDto } from '@application/dtos/auction/auction.dto';
 import { ValidationHelper } from '@presentation/http/helpers/validation.helper';
@@ -39,6 +44,7 @@ import {
     GetAllAuctionCategoryDto,
     IGetAllAuctionsOutputDto,
 } from '@application/dtos/auction/getAllAuction.dto';
+import { IGetUserHomeAuctionFeedOutputDto } from '@application/dtos/auction/getUserHomeAuctionFeed.dto';
 import { IGenerateAuctionUploadUrlOutput } from '@application/dtos/auction/generate-auction-upload-url.dto';
 import { IPublishAuctionOutput } from '@application/dtos/auction/publish-auction.dto';
 
@@ -59,8 +65,18 @@ export class AuctionController {
         private readonly _getAuctionByIdUsecase: IGetAuctionByIdUsecase,
         @inject(TYPES.IGetBrowseAuctionsUsecase)
         private readonly _getBrowseAuctionsUsecase: IGetBrowseAuctionsUsecase,
+        @inject(TYPES.IGetUserHomeAuctionFeedUsecase)
+        private readonly _getUserHomeAuctionFeedUsecase: IGetUserHomeAuctionFeedUsecase,
     ) {}
 
+    /**
+     * Creates a draft auction for the authenticated seller from validated `req.body`.
+     *
+     * @param req - Express request; `body` merged with `userId` and validated with `createAuctionSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after created auction DTO is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or create fails
+     */
     createAuction = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -80,8 +96,11 @@ export class AuctionController {
                 },
             );
 
-        const result =
-            await this._createAuctionUsecase.execute(validatedResult);
+        const result = await this._createAuctionUsecase.execute({
+            ...validatedResult,
+            startAt: new Date(validatedResult.startAt),
+            endAt: new Date(validatedResult.endAt),
+        });
 
         if (result.isFailure) {
             throw new AppError(
@@ -98,6 +117,14 @@ export class AuctionController {
         );
     });
 
+    /**
+     * Lists all auction categories (browse filters and seller create flows).
+     *
+     * @param req - Express request (unused; kept for handler signature consistency)
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after category list is sent
+     * @throws {AppError} When the use case fails
+     */
     getAllAuctionCategories = expressAsyncHandler(
         async (req: Request, res: Response) => {
             const result = await this._getAllAuctionCategoryUsecase.execute();
@@ -120,6 +147,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Paginated browse/search of auctions for the authenticated user.
+     *
+     * @param req - Express request; `query` merged with `userId` and validated with `getBrowseAuctionsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after listings page is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or browse fails
+     */
     getBrowseAuctions = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -157,6 +192,50 @@ export class AuctionController {
         },
     );
 
+    getUserHomeAuctionFeed = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const validatedResult =
+                ValidationHelper.validate<ZodGetUserHomeAuctionFeedQueryType>(
+                    getUserHomeAuctionFeedQuerySchema,
+                    req.query as unknown as ZodGetUserHomeAuctionFeedQueryType,
+                );
+
+            const result = await this._getUserHomeAuctionFeedUsecase.execute({
+                liveLimit: validatedResult.liveLimit,
+                longSealedLimit: validatedResult.longSealedLimit,
+            });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetUserHomeAuctionFeedOutputDto>(
+                res,
+                result.getValue(),
+                AUCTION_CONSTANTS.MESSAGES.AUCTION_FETCHED_SUCCESSFULLY,
+                AUCTION_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
+    /**
+     * Fetches one auction by `req.params.id` for the authenticated user.
+     *
+     * @param req - Express request; `params.id` is auction id, `user` from auth middleware
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after auction DTO is sent
+     * @throws {AppError} When user missing, id invalid, or use case denies access / not found
+     */
     getAuctionById = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -196,6 +275,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Issues upload credentials / URL for an auction media asset.
+     *
+     * @param req - Express request; `body` merged with `userId` and validated with `generateAuctionUploadUrlSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after upload URL payload is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or URL generation fails
+     */
     generateUploadUrl = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {
@@ -239,6 +326,14 @@ export class AuctionController {
         },
     );
 
+    /**
+     * Updates a draft auction identified by `req.params.id` for the owning user.
+     *
+     * @param req - Express request; `body` + route `id` + `userId` validated with `updateAuctionSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after update DTO is sent
+     * @throws {AppError} When user missing, id missing, validation fails, or update fails
+     */
     updateAuction = expressAsyncHandler(async (req: Request, res: Response) => {
         if (!req.user) {
             throw new AppError(
@@ -266,8 +361,11 @@ export class AuctionController {
                 },
             );
 
-        const result =
-            await this._updateAuctionUsecase.execute(validatedResult);
+        const result = await this._updateAuctionUsecase.execute({
+            ...validatedResult,
+            startAt: new Date(validatedResult.startAt),
+            endAt: new Date(validatedResult.endAt),
+        });
 
         if (result.isFailure) {
             console.log(result.getError());
@@ -285,6 +383,14 @@ export class AuctionController {
         );
     });
 
+    /**
+     * Publishes a draft auction so it follows visibility rules for buyers.
+     *
+     * @param req - Express request; `params.id` and `userId` validated with `publishAuctionParamsSchema`
+     * @param res - Express response for JSON output
+     * @returns Promise that settles after publish result is sent
+     * @throws {AppError} When `req.user` is missing, validation fails, or publish is rejected
+     */
     publishAuction = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {

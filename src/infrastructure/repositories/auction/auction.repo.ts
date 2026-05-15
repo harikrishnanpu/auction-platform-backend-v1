@@ -156,15 +156,27 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         return Result.ok(result);
     }
 
-    async findAll(
+    private buildAuctionListWhere(
         filters: IFindAllAuctionsFilters,
-    ): Promise<Result<Auction[]>> {
+    ): Prisma.AuctionWhereInput {
         const where: Prisma.AuctionWhereInput = {};
 
-        if (filters.sellerId) where.sellerId = filters.sellerId;
+        if (filters.sellerId) {
+            where.sellerId = filters.sellerId;
+        }
 
         if (filters.status && filters.status !== 'ALL') {
-            where.status = filters.status as PrismaAuctionStatus;
+            const raw = String(filters.status).toUpperCase();
+            if (raw === 'PUBLISHED' || raw === 'LIVE' || raw === 'UPCOMING') {
+                where.status = {
+                    in: [
+                        PrismaAuctionStatus.ACTIVE,
+                        PrismaAuctionStatus.PAUSED,
+                    ],
+                };
+            } else {
+                where.status = filters.status as PrismaAuctionStatus;
+            }
         }
 
         if (filters.categoryId && filters.categoryId !== 'ALL') {
@@ -183,7 +195,26 @@ export class PrismaAuctionRepo implements IAuctionRepository {
             ];
         }
 
-        const sortField = filters.sort ?? 'createdAt';
+        return where;
+    }
+
+    private resolveAuctionSortField(sort?: string): string {
+        const allowed = new Set([
+            'createdAt',
+            'startAt',
+            'endAt',
+            'startPrice',
+            'updatedAt',
+        ]);
+        if (sort && allowed.has(sort)) return sort;
+        return 'createdAt';
+    }
+
+    async findAll(
+        filters: IFindAllAuctionsFilters,
+    ): Promise<Result<Auction[]>> {
+        const where = this.buildAuctionListWhere(filters);
+        const sortField = this.resolveAuctionSortField(filters.sort);
         const sortOrder = filters.order === 'asc' ? 'asc' : 'desc';
 
         const list = await this._prisma.auction.findMany({
@@ -210,6 +241,53 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         }
 
         return Result.ok(result);
+    }
+
+    async findSellerAuctionsPage(
+        filters: IFindAllAuctionsFilters,
+    ): Promise<Result<{ total: number; auctions: Auction[]; page: number }>> {
+        if (!filters.sellerId) {
+            return Result.fail('Seller id is required');
+        }
+
+        try {
+            const safePage = Number(filters.page) > 0 ? filters.page : 1;
+            const safeLimit = Number(filters.limit) > 0 ? filters.limit : 10;
+
+            const where = this.buildAuctionListWhere(filters);
+            const total = await this._prisma.auction.count({ where });
+            const totalPages = Math.max(1, Math.ceil(total / safeLimit));
+            const currentPage = Math.min(safePage, totalPages);
+
+            const sortField = this.resolveAuctionSortField(filters.sort);
+            const sortOrder = filters.order === 'asc' ? 'asc' : 'desc';
+
+            const list = await this._prisma.auction.findMany({
+                where,
+                include: {
+                    assets: true,
+                    category: {
+                        include: {
+                            submittedByUser: true,
+                        },
+                    },
+                },
+                orderBy: [{ [sortField]: sortOrder }, { createdAt: 'desc' }],
+                take: safeLimit,
+                skip: (currentPage - 1) * safeLimit,
+            });
+
+            const auctions: Auction[] = [];
+            for (const raw of list) {
+                const r = this.mapper.toDomain(raw);
+                if (r.isFailure) return Result.fail(r.getError());
+                auctions.push(r.getValue());
+            }
+
+            return Result.ok({ total, auctions, page: currentPage });
+        } catch {
+            return Result.fail('Failed to list seller auctions');
+        }
     }
 
     async findAllForUsers(
