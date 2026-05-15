@@ -1,6 +1,6 @@
 import { Worker } from 'mediasoup/node/lib/WorkerTypes';
 import { Router } from 'mediasoup/node/lib/RouterTypes';
-import mediasoup from 'mediasoup';
+import * as mediasoup from 'mediasoup';
 
 const MEDIA_CODECS = [
     { kind: 'audio', mimeType: 'audio/opus', clockRate: 48000, channels: 2 },

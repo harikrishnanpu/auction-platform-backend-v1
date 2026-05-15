@@ -24,6 +24,7 @@ export class ConfirmWalletTopupUsecase implements IConfirmWalletTopupUsecase {
             orderId: input.orderId,
             paymentId: input.paymentId,
             signature: input.signature,
+            referenceId: 'WALLET_TOPUP',
         });
 
         if (verifyResult.isFailure) return Result.fail(verifyResult.getError());

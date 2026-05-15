@@ -243,6 +243,9 @@ export class AuctionHandler {
             return { success: false, error: auctionResult.getError() };
         }
         const auction = auctionResult.getValue();
+        if (!auction) {
+            return { success: false, error: 'Auction not found' };
+        }
         if (auction.getStatus() !== AuctionStatus.ACTIVE) {
             return {
                 success: false,
@@ -631,7 +634,11 @@ export class AuctionHandler {
         if (auctionRes.isFailure) {
             return { success: false, error: auctionRes.getError() };
         }
-        if (auctionRes.getValue().getSellerId() !== user.id) {
+        const auctionForControl = auctionRes.getValue();
+        if (!auctionForControl) {
+            return { success: false, error: 'Auction not found' };
+        }
+        if (auctionForControl.getSellerId() !== user.id) {
             return { success: false, error: 'Unauthorized' };
         }
 

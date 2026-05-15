@@ -89,15 +89,17 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
 
                 if (auctionResult.isSuccess) {
                     const auction = auctionResult.getValue();
-                    const status = auction.getStatus();
-                    const ended = status === AuctionStatus.ENDED;
+                    if (auction) {
+                        const status = auction.getStatus();
+                        const ended = status === AuctionStatus.ENDED;
 
-                    if (ended && auction.getWinnerId() === input.userId) {
-                        await this._auctionWinnerFallbackQueue.enqueue({
-                            auctionId: auction.getId(),
-                            declinedUserId: input.userId,
-                            paymentId: payment.getId(),
-                        });
+                        if (ended && auction.getWinnerId() === input.userId) {
+                            await this._auctionWinnerFallbackQueue.enqueue({
+                                auctionId: auction.getId(),
+                                declinedUserId: input.userId,
+                                paymentId: payment.getId(),
+                            });
+                        }
                     }
                 }
             }

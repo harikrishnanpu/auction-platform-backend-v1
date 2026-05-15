@@ -697,7 +697,7 @@ export class AdminController {
                     {
                         categoryId: req.params.id as string,
                         name: req.body.name as string,
-                        parentId: req.body.parentId as string | null,
+                        parentId: req.body.parentId,
                     },
                 );
 

@@ -5,7 +5,10 @@ export const createAuctionCategorySchema = z.object({
         .string()
         .trim()
         .min(3, 'Category name must be at least 3 characters long'),
-    parentId: z.string().optional().nullable(),
+    parentId: z
+        .string()
+        .nullish()
+        .transform((v) => (v == null || v === '' ? undefined : v)),
     userId: z.string().trim().min(1, 'userid is required'),
 });
 

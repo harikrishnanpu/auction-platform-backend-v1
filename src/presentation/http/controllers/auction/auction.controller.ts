@@ -96,8 +96,11 @@ export class AuctionController {
                 },
             );
 
-        const result =
-            await this._createAuctionUsecase.execute(validatedResult);
+        const result = await this._createAuctionUsecase.execute({
+            ...validatedResult,
+            startAt: new Date(validatedResult.startAt),
+            endAt: new Date(validatedResult.endAt),
+        });
 
         if (result.isFailure) {
             throw new AppError(
@@ -358,8 +361,11 @@ export class AuctionController {
                 },
             );
 
-        const result =
-            await this._updateAuctionUsecase.execute(validatedResult);
+        const result = await this._updateAuctionUsecase.execute({
+            ...validatedResult,
+            startAt: new Date(validatedResult.startAt),
+            endAt: new Date(validatedResult.endAt),
+        });
 
         if (result.isFailure) {
             console.log(result.getError());
