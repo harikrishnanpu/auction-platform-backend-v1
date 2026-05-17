@@ -12,6 +12,7 @@ import {
     OtpStatus,
 } from '@domain/entities/otp/otp.entity';
 import { AuthProviderType } from '@domain/entities/user/user.entity';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 import { IOtpRepository } from '@domain/repositories/IOtpRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
@@ -48,6 +49,13 @@ export class ForgotPasswordUsecase implements IForgotPasswordUsecase {
             AuthProviderType.LOCAL
         ) {
             return Result.fail('Only local auth can reset password');
+        }
+
+        if (user.getValue().isBlocked()) {
+            return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+        }
+        if (user.getValue().isSuspended()) {
+            return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
         }
 
         const token = this._tokenGeneratorService.generateToken(

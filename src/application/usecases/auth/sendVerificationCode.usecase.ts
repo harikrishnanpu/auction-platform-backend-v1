@@ -16,6 +16,7 @@ import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { Email } from '@domain/value-objects/email.vo';
 import { inject, injectable } from 'inversify';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 
 @injectable()
 export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase {
@@ -49,13 +50,21 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
             const user = await this._userRepository.findByEmail(
                 emailVo.getValue(),
             );
-            if (!user) {
-                return Result.fail('User not found');
+            if (user.isFailure) {
+                return Result.fail(user.getError());
+            }
+
+            const domainUser = user.getValue();
+            if (domainUser.isBlocked()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+            }
+            if (domainUser.isSuspended()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
             }
 
             const recentOtps =
                 await this._otpRepository.findRecentOtpsByUserIdAndPurpose(
-                    user.getValue().getId(),
+                    domainUser.getId(),
                     OtpPurpose.VERIFY_EMAIL,
                 );
 
@@ -76,7 +85,7 @@ export class SendVerificationCodeUsecase implements ISendVerificationCodeUsecase
 
             const otpEntity = Otp.create({
                 id: this._idGeneratingService.generateId(),
-                userId: user.getValue().getId(),
+                userId: domainUser.getId(),
                 purpose: OtpPurpose.VERIFY_EMAIL,
                 channel: OtpChannel.EMAIL,
                 otp,

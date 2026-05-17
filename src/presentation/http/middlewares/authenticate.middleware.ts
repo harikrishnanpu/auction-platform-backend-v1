@@ -13,76 +13,79 @@ import { UserStatus } from '@domain/entities/user/user.entity';
 
 @injectable()
 export class AuthenticateMiddleware {
-  constructor(
-    @inject(TYPES.IGetUserUsecase)
-    private _getUserUseCase: IGetUserUsecase,
-    @inject(TYPES.ITokenGeneratorService)
-    private _tokenGenerator: ITokenGeneratorService,
-  ) {}
+    constructor(
+        @inject(TYPES.IGetUserUsecase)
+        private _getUserUseCase: IGetUserUsecase,
+        @inject(TYPES.ITokenGeneratorService)
+        private _tokenGenerator: ITokenGeneratorService,
+    ) {}
 
-  authenticate = expressAsyncHandler(
-    async (req: Request, res: Response, next: NextFunction) => {
-      const token = req.cookies?.accessToken;
+    authenticate = expressAsyncHandler(
+        async (req: Request, res: Response, next: NextFunction) => {
+            const token = req.cookies?.accessToken;
 
-      console.log('token TEST --', token);
+            console.log('token TEST --', token);
 
-      if (!token) {
-        throw new AppError(
-          AUTH_MESSAGES.UNAUTHORIZED,
-          STATUS_CODES.UNAUTHORIZED,
-        );
-      }
+            if (!token) {
+                throw new AppError(
+                    AUTH_MESSAGES.UNAUTHORIZED,
+                    STATUS_CODES.UNAUTHORIZED,
+                );
+            }
 
-      const decoded = this._tokenGenerator.verifyAccesstoken(token);
+            const decoded = this._tokenGenerator.verifyAccesstoken(token);
 
-      if (!decoded) {
-        console.log('FAILED TOKEN VERIFI!--', decoded);
-        throw new AppError(
-          AUTH_MESSAGES.UNAUTHORIZED,
-          STATUS_CODES.UNAUTHORIZED,
-        );
-      }
+            if (!decoded) {
+                console.log('FAILED TOKEN VERIFI!--', decoded);
+                throw new AppError(
+                    AUTH_MESSAGES.UNAUTHORIZED,
+                    STATUS_CODES.UNAUTHORIZED,
+                );
+            }
 
-      const userEntity = await this._getUserUseCase.execute(decoded);
+            const userEntity = await this._getUserUseCase.execute(decoded);
 
-      console.log('userEntity TEST --', userEntity);
+            console.log('userEntity TEST --', userEntity);
 
-      if (userEntity.isFailure) {
-        throw new AppError(
-          AUTH_MESSAGES.USER_NOT_FOUND,
-          STATUS_CODES.NOT_FOUND,
-        );
-      }
+            if (userEntity.isFailure) {
+                throw new AppError(
+                    AUTH_MESSAGES.USER_NOT_FOUND,
+                    STATUS_CODES.NOT_FOUND,
+                );
+            }
 
-      const userDto = userEntity.getValue();
-      if (userDto.status === UserStatus.BLOCKED) {
-        throw new AppError('ACCOUNT_BLOCKED', STATUS_CODES.FORBIDDEN);
-      }
+            const userDto = userEntity.getValue();
+            if (userDto.status === UserStatus.BLOCKED) {
+                throw new AppError('ACCOUNT_BLOCKED', STATUS_CODES.FORBIDDEN);
+            }
+            if (userDto.status === UserStatus.SUSPENDED) {
+                throw new AppError('ACCOUNT_SUSPENDED', STATUS_CODES.FORBIDDEN);
+            }
 
-      if (!userDto.roles.includes(UserRoleType.USER)) {
-        throw new AppError(
-          AUTH_MESSAGES.UNAUTHORIZED,
-          STATUS_CODES.UNAUTHORIZED,
-        );
-      }
+            if (!userDto.roles.includes(UserRoleType.USER)) {
+                throw new AppError(
+                    AUTH_MESSAGES.UNAUTHORIZED,
+                    STATUS_CODES.UNAUTHORIZED,
+                );
+            }
 
-      const authUser: AuthUser = {
-        id: userDto.id,
-        name: userDto.name,
-        email: userDto.email,
-        phone: userDto.phone,
-        address: userDto.address,
-        avatar_url: userDto.avatar_url,
-        isProfileCompleted: userDto.isProfileCompleted,
-        isVerified: userDto.isVerified,
-        status: userDto.status,
-        authProvider: userDto.authProvider,
-        roles: userDto.roles,
-      };
+            const authUser: AuthUser = {
+                id: userDto.id,
+                name: userDto.name,
+                email: userDto.email,
+                phone: userDto.phone,
+                address: userDto.address,
+                avatar_url: userDto.avatar_url,
+                isProfileCompleted: userDto.isProfileCompleted,
+                isVerified: userDto.isVerified,
+                status: userDto.status,
+                authProvider: userDto.authProvider,
+                roles: userDto.roles,
+            };
 
-      req.user = authUser;
+            req.user = authUser;
 
-      next();
-    },
-  );
+            next();
+        },
+    );
 }

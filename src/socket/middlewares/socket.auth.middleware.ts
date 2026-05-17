@@ -9,67 +9,70 @@ import type { Container } from 'inversify';
 import type { Socket } from 'socket.io';
 
 export function createSocketAuthMiddleware(container: Container) {
-  return async (socket: Socket, next: (err?: Error) => void) => {
-    const tokenGenerator = container.get<ITokenGeneratorService>(
-      TYPES.ITokenGeneratorService,
-    );
+    return async (socket: Socket, next: (err?: Error) => void) => {
+        const tokenGenerator = container.get<ITokenGeneratorService>(
+            TYPES.ITokenGeneratorService,
+        );
 
-    const getUserUseCase = container.get<IGetUserUsecase>(
-      TYPES.IGetUserUsecase,
-    );
+        const getUserUseCase = container.get<IGetUserUsecase>(
+            TYPES.IGetUserUsecase,
+        );
 
-    const rawCookie = socket.handshake.headers.cookie;
-    if (!rawCookie) {
-      return next(new Error('Unauthorized'));
-    }
+        const rawCookie = socket.handshake.headers.cookie;
+        if (!rawCookie) {
+            return next(new Error('Unauthorized'));
+        }
 
-    const cookies = parse(rawCookie);
-    const token = cookies.accessToken;
-    if (!token) {
-      console.log('SOCKET ERROR!');
-      return next(new Error('Unauthorized'));
-    }
+        const cookies = parse(rawCookie);
+        const token = cookies.accessToken;
+        if (!token) {
+            console.log('SOCKET ERROR!');
+            return next(new Error('Unauthorized'));
+        }
 
-    let userId: string;
-    try {
-      userId = tokenGenerator.verifyAccesstoken(token);
-    } catch {
-      return next(new Error('Unauthorized'));
-    }
+        let userId: string;
+        try {
+            userId = tokenGenerator.verifyAccesstoken(token);
+        } catch {
+            return next(new Error('Unauthorized'));
+        }
 
-    if (!userId) {
-      return next(new Error('Unauthorized'));
-    }
+        if (!userId) {
+            return next(new Error('Unauthorized'));
+        }
 
-    const userEntity = await getUserUseCase.execute(userId);
-    if (userEntity.isFailure) {
-      return next(new Error('Unauthorized'));
-    }
+        const userEntity = await getUserUseCase.execute(userId);
+        if (userEntity.isFailure) {
+            return next(new Error('Unauthorized'));
+        }
 
-    const userDto = userEntity.getValue();
-    if (userDto.status === UserStatus.BLOCKED) {
-      return next(new Error('Unauthorized'));
-    }
+        const userDto = userEntity.getValue();
+        if (userDto.status === UserStatus.BLOCKED) {
+            return next(new Error('Unauthorized'));
+        }
+        if (userDto.status === UserStatus.SUSPENDED) {
+            return next(new Error('Unauthorized'));
+        }
 
-    if (!userDto.roles.includes(UserRoleType.USER)) {
-      return next(new Error('Unauthorized'));
-    }
+        if (!userDto.roles.includes(UserRoleType.USER)) {
+            return next(new Error('Unauthorized'));
+        }
 
-    const authUser: AuthUser = {
-      id: userDto.id,
-      name: userDto.name,
-      email: userDto.email,
-      phone: userDto.phone,
-      address: userDto.address,
-      avatar_url: userDto.avatar_url,
-      isProfileCompleted: userDto.isProfileCompleted,
-      isVerified: userDto.isVerified,
-      status: userDto.status,
-      authProvider: userDto.authProvider,
-      roles: userDto.roles,
+        const authUser: AuthUser = {
+            id: userDto.id,
+            name: userDto.name,
+            email: userDto.email,
+            phone: userDto.phone,
+            address: userDto.address,
+            avatar_url: userDto.avatar_url,
+            isProfileCompleted: userDto.isProfileCompleted,
+            isVerified: userDto.isVerified,
+            status: userDto.status,
+            authProvider: userDto.authProvider,
+            roles: userDto.roles,
+        };
+
+        socket.data.user = authUser;
+        next();
     };
-
-    socket.data.user = authUser;
-    next();
-  };
 }

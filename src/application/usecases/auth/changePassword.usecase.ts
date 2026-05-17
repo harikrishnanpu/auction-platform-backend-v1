@@ -10,6 +10,7 @@ import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { AuthMapperProfile } from '@infrastructure/mappers/auth/auth.mapper';
 import { inject, injectable } from 'inversify';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 
 @injectable()
 export class ChangePasswordUsecase implements IChangePasswordUsecase {
@@ -64,6 +65,14 @@ export class ChangePasswordUsecase implements IChangePasswordUsecase {
 
         if (userEntity.isFailure) {
             return Result.fail(userEntity.getError());
+        }
+
+        const user = userEntity.getValue();
+        if (user.isBlocked()) {
+            return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+        }
+        if (user.isSuspended()) {
+            return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
         }
 
         const hashedPassword =

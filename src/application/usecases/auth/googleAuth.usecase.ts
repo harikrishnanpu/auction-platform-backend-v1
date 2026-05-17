@@ -10,6 +10,7 @@ import {
     User,
     UserStatus,
 } from '@domain/entities/user/user.entity';
+import { AUTH_MESSAGES } from '@presentation/constants/auth/auth.constants';
 import { ISubscriptionPlanRepository } from '@domain/repositories/ISubscriptionPlanRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
@@ -56,10 +57,11 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
         if (userEntity.isSuccess) {
             const user = userEntity.getValue();
 
-            if (user.getStatus() === UserStatus.BLOCKED) {
-                return Result.fail(
-                    'Your account has been blocked. Please contact support for assistance.',
-                );
+            if (user.isBlocked()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_BLOCKED);
+            }
+            if (user.isSuspended()) {
+                return Result.fail(AUTH_MESSAGES.ACCOUNT_SUSPENDED);
             }
 
             const accessToken = this._tokenGenerator.generateAccessToken(
