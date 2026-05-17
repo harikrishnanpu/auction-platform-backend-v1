@@ -15,7 +15,7 @@ const systemConfigs = [
     {
         key: 'FRAUD_TEMPORARY_SUSPENSION_DURATION_MS',
         value: String(7 * MS_PER_DAY),
-        description: 'Duration of the first (temporary) fraud suspension',
+        description: 'Duration of the first fraud suspension',
         type: SystemConfigValueType.NUMBER,
     },
     {

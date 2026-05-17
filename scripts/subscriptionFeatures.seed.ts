@@ -14,18 +14,17 @@ const featureRows: {
 }[] = [
     {
         feature: SubscriptionPlanFeatureEnum.AUCTION_CREATION,
-        description:
-            'Maximum concurrent / lifetime auction creations (numeric cap)',
+        description: 'Maximum auction creations',
         type: SubscriptionPlanFeatureType.NUMBER,
     },
     {
         feature: SubscriptionPlanFeatureEnum.AUCTION_BIDDING,
-        description: 'Maximum bids per auction for this plan (numeric cap)',
+        description: 'Maximum bids per auction for this plan',
         type: SubscriptionPlanFeatureType.NUMBER,
     },
     {
         feature: SubscriptionPlanFeatureEnum.AI_AGENT,
-        description: 'AI assistant access (1 = enabled, 0 = disabled)',
+        description: 'AI assistant access',
         type: SubscriptionPlanFeatureType.NUMBER,
     },
 ];
