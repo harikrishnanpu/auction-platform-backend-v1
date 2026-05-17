@@ -187,7 +187,7 @@ export class AuthController {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
-                domain: '.harikrishnan.live',
+                domain: process.env.FRONTEND_HOST,
                 maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
             });
 
@@ -195,7 +195,7 @@ export class AuthController {
                 httpOnly: true,
                 secure: true,
                 sameSite: 'none',
-                domain: '.harikrishnan.live',
+                domain: process.env.FRONTEND_HOST,
                 maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
             });
 
@@ -238,7 +238,7 @@ export class AuthController {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
-            domain: '.harikrishnan.live',
+            domain: process.env.FRONTEND_HOST,
             maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
         });
 
@@ -246,7 +246,7 @@ export class AuthController {
             httpOnly: true,
             secure: true,
             sameSite: 'none',
-            domain: '.harikrishnan.live',
+            domain: process.env.FRONTEND_HOST,
             maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
         });
 
@@ -353,7 +353,7 @@ export class AuthController {
                         httpOnly: true,
                         secure: true,
                         sameSite: 'none',
-                        domain: '.harikrishnan.live',
+                        domain: process.env.FRONTEND_HOST,
                         maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
                     });
 
@@ -361,7 +361,7 @@ export class AuthController {
                         httpOnly: true,
                         secure: true,
                         sameSite: 'none',
-                        domain: '.harikrishnan.live',
+                        domain: process.env.FRONTEND_HOST,
                         maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
                     });
 
