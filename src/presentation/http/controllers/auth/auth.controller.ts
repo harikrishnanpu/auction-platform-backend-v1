@@ -315,16 +315,18 @@ export class AuthController {
 
                     res.cookie('accessToken', accessToken, {
                         httpOnly: true,
-                        secure: false,
+                        secure: true,
+                        sameSite: 'none',
+                        domain: '.harikrishnan.live',
                         maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
-                        sameSite: 'lax',
                     });
 
                     res.cookie('refreshToken', refreshToken, {
                         httpOnly: true,
-                        secure: false,
+                        secure: true,
+                        sameSite: 'none',
+                        domain: '.harikrishnan.live',
                         maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
-                        sameSite: 'lax',
                     });
 
                     res.redirect(
