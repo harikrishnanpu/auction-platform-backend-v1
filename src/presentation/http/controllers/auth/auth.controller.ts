@@ -181,6 +181,24 @@ export class AuthController {
                 );
             }
 
+            const { accessToken, refreshToken } = result.getValue();
+
+            res.cookie('accessToken', accessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+                domain: '.harikrishnan.live',
+                maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
+            });
+
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'none',
+                domain: '.harikrishnan.live',
+                maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
+            });
+
             ResponseHelper.success<verifyCredentialsOutput>(
                 res,
                 result.getValue(),
@@ -213,6 +231,24 @@ export class AuthController {
                 AUTH_CONSTANTS.CODES.BAD_REQUEST,
             );
         }
+
+        const { accessToken, refreshToken } = result.getValue();
+
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            domain: '.harikrishnan.live',
+            maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'none',
+            domain: '.harikrishnan.live',
+            maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
+        });
 
         ResponseHelper.success<LoginUserOutput>(
             res,
