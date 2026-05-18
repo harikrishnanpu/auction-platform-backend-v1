@@ -82,6 +82,12 @@ export class SocketManager {
                 this._container,
             );
 
+            socket.on(SocketEvents.ASK_AGENT, (payload, cl) => {
+                hanldeSocketCallback(cl, () =>
+                    chatAgentHandler.handleAskAgent(payload),
+                );
+            });
+
             socket.on(SocketEvents.JOIN, (payload, cl) => {
                 hanldeSocketCallback(cl, () =>
                     auctionHandler.handleJoin(payload),
@@ -97,12 +103,6 @@ export class SocketManager {
             socket.on(SocketEvents.SEND_CHAT, (payload, cl) => {
                 hanldeSocketCallback(cl, () =>
                     auctionHandler.handleSendChat(payload),
-                );
-            });
-
-            socket.on(SocketEvents.ASK_AGENT, (payload, cl) => {
-                hanldeSocketCallback(cl, () =>
-                    chatAgentHandler.handleAskAgent(payload),
                 );
             });
 

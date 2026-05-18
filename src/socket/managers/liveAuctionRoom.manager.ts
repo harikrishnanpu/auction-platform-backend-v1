@@ -1,15 +1,15 @@
 import { Router } from 'mediasoup/node/lib/RouterTypes';
-import { IAuctionRoom, IAuctionRoomUser } from 'socket/types/IAuctionRoom';
+import {
+    IAuctionRoom,
+    IAuctionRoomUser,
+    LiveTransportDirection,
+} from 'socket/types/IAuctionRoom';
 import { Producer } from 'mediasoup/node/lib/ProducerTypes';
 import { Consumer } from 'mediasoup/node/lib/ConsumerTypes';
 import { WebRtcTransport } from 'mediasoup/node/lib/WebRtcTransportTypes';
 
 export class LiveAuctionRoomManager {
     private auctionRooms: Map<string, IAuctionRoom> = new Map();
-
-    constructor() {
-        this.auctionRooms = new Map();
-    }
 
     public createAuctionRoom(roomId: string, router: Router): IAuctionRoom {
         const existing = this.auctionRooms.get(roomId);
@@ -32,7 +32,7 @@ export class LiveAuctionRoomManager {
 
     public joinAuctionRoom(roomId: string, user: IAuctionRoomUser): void {
         const auctionRoom = this.getAuctionRoom(roomId);
-        if (auctionRoom && !auctionRoom.users.has(user.id)) {
+        if (auctionRoom) {
             auctionRoom.users.set(user.id, user);
         }
     }
@@ -45,15 +45,34 @@ export class LiveAuctionRoomManager {
 
         const user = auctionRoom.users.get(userId);
         if (user) {
-            user.producers.forEach((producer) => producer.close());
-            user.consumers.forEach((consumer) => consumer.close());
-            user.transport?.close();
+            this.closeUserMedia(user);
             auctionRoom.users.delete(userId);
         }
 
         if (auctionRoom.users.size === 0) {
-            this.auctionRooms.delete(roomId);
+            this.disposeRoom(roomId);
         }
+    }
+
+    private closeUserMedia(user: IAuctionRoomUser): void {
+        user.producers.forEach((producer) => producer.close());
+        user.consumers.forEach((consumer) => consumer.close());
+        user.sendTransport?.close();
+        user.recvTransport?.close();
+        user.producers = [];
+        user.consumers = [];
+        user.sendTransport = null;
+        user.recvTransport = null;
+    }
+
+    private disposeRoom(roomId: string): void {
+        const auctionRoom = this.auctionRooms.get(roomId);
+        if (!auctionRoom) {
+            return;
+        }
+
+        auctionRoom.router.close();
+        this.auctionRooms.delete(roomId);
     }
 
     public getProducers(roomId: string): Producer[] {
@@ -80,14 +99,36 @@ export class LiveAuctionRoomManager {
     public setTransport(
         roomId: string,
         userId: string,
+        direction: LiveTransportDirection,
         transport: WebRtcTransport,
     ): boolean {
         const user = this.getUser(roomId, userId);
         if (!user) {
             return false;
         }
-        user.transport = transport;
+
+        if (direction === 'send') {
+            user.sendTransport?.close();
+            user.sendTransport = transport;
+        } else {
+            user.recvTransport?.close();
+            user.recvTransport = transport;
+        }
+
         return true;
+    }
+
+    public getTransport(
+        roomId: string,
+        userId: string,
+        direction: LiveTransportDirection,
+    ): WebRtcTransport | null {
+        const user = this.getUser(roomId, userId);
+        if (!user) {
+            return null;
+        }
+
+        return direction === 'send' ? user.sendTransport : user.recvTransport;
     }
 
     public addProducer(

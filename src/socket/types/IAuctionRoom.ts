@@ -3,12 +3,15 @@ import { Consumer } from 'mediasoup/node/lib/ConsumerTypes';
 import { Producer } from 'mediasoup/node/lib/ProducerTypes';
 import { WebRtcTransport } from 'mediasoup/node/lib/WebRtcTransportTypes';
 
+export type LiveTransportDirection = 'send' | 'recv';
+
 export interface IAuctionRoomUser {
     id: string;
     username: string;
     role: 'host' | 'viewer';
     isEnabledToSpeak: boolean;
-    transport: WebRtcTransport | null;
+    sendTransport: WebRtcTransport | null;
+    recvTransport: WebRtcTransport | null;
     producers: Producer[];
     consumers: Consumer[];
 }

@@ -47,6 +47,8 @@ import { MediaSoupeManager } from 'socket/managers/mediaSoupe.manager';
 import type { DtlsParameters } from 'mediasoup/node/lib/WebRtcTransportTypes';
 import { z } from 'zod';
 
+const liveTransportDirectionSchema = z.enum(['send', 'recv']);
+
 export class AuctionHandler {
     constructor(
         private readonly io: Server,
@@ -119,7 +121,7 @@ export class AuctionHandler {
         const isProducer =
             result.auction.status === AuctionStatus.ACTIVE &&
             (user.roles.includes(UserRoleType.ADMIN) ||
-                user.roles.includes(UserRoleType.SELLER));
+                result.auction.sellerId === user.id);
 
         this.socket.emit(SocketEvents.JOINED, {
             ...result,
@@ -876,34 +878,38 @@ export class AuctionHandler {
             return { success: false, error: 'Router not found' };
         }
 
+        await this.socket.join(roomId);
+
         const user = this.socket.data.user;
         const isHost =
             user.roles.includes(UserRoleType.ADMIN) ||
-            user.roles.includes(UserRoleType.SELLER);
+            roomData.auction.sellerId === user.id;
 
         this._liveAuctionRoomManager.joinAuctionRoom(roomId, {
             id: this.socket.id,
             username: user.name,
             role: isHost ? 'host' : 'viewer',
             isEnabledToSpeak: isHost,
-            transport: null,
+            sendTransport: null,
+            recvTransport: null,
             producers: [],
             consumers: [],
         });
 
-        const producerIds = this._liveAuctionRoomManager
-            .getProducers(roomId)
-            .map((producer) => producer.id);
-
-        console.log('producerIds', producerIds);
-
+        const producers = this._liveAuctionRoomManager.getProducers(roomId);
+        console.log('producers', producers);
         return {
             success: true,
             data: {
                 roomId,
+                auctionId,
                 isHost,
                 rtpCapabilities: router.rtpCapabilities,
-                producerIds,
+                producerIds: producers.map((producer) => producer.id),
+                producers: producers.map((producer) => ({
+                    id: producer.id,
+                    kind: producer.kind,
+                })),
             },
         };
     }
@@ -911,7 +917,12 @@ export class AuctionHandler {
     async handleLiveAuctionCreateTransport(
         payload: unknown,
     ): Promise<SocketAckPayload> {
-        const parsed = parseSocketPayload(auctionControlSocketSchema, payload);
+        const parsed = parseSocketPayload(
+            auctionControlSocketSchema.extend({
+                direction: liveTransportDirectionSchema,
+            }),
+            payload,
+        );
 
         if (!parsed.ok) {
             return { success: false, error: parsed.error };
@@ -934,11 +945,17 @@ export class AuctionHandler {
         const transport = await this._mediasoupeManager.createTransport(
             room.router,
         );
-        room.users.get(this.socket.id)!.transport = transport;
+        this._liveAuctionRoomManager.setTransport(
+            roomId,
+            this.socket.id,
+            parsed.data.direction,
+            transport,
+        );
 
         return {
             success: true,
             data: {
+                direction: parsed.data.direction,
                 id: transport.id,
                 iceParameters: transport.iceParameters,
                 iceCandidates: transport.iceCandidates,
@@ -951,6 +968,7 @@ export class AuctionHandler {
         // test-- change
         const parsed = parseSocketPayload(
             auctionControlSocketSchema.extend({
+                direction: liveTransportDirectionSchema,
                 dtlsParameters: z.any(),
             }),
             payload,
@@ -969,7 +987,11 @@ export class AuctionHandler {
             return { success: false, error: 'Live user not joined' };
         }
 
-        const transport = user.transport;
+        const transport = this._liveAuctionRoomManager.getTransport(
+            roomId,
+            this.socket.id,
+            parsed.data.direction,
+        );
 
         if (!transport) {
             return { success: false, error: 'Transport not found' };
@@ -1003,11 +1025,17 @@ export class AuctionHandler {
         if (!user || !user.isEnabledToSpeak) {
             return { success: false, error: 'Only host can publish media' };
         }
-        if (!user.transport) {
-            return { success: false, error: 'Transport not ready' };
+
+        const sendTransport = this._liveAuctionRoomManager.getTransport(
+            roomId,
+            this.socket.id,
+            'send',
+        );
+        if (!sendTransport) {
+            return { success: false, error: 'Send transport not ready' };
         }
 
-        const producer = await user.transport.produce({
+        const producer = await sendTransport.produce({
             kind: parsed.data.kind,
             rtpParameters: parsed.data.rtpParameters,
         });
@@ -1026,7 +1054,8 @@ export class AuctionHandler {
             });
         });
 
-        this.socket.to(roomId).emit(SocketEvents.LIVE_AUCTION_NEW_PRODUCER, {
+        this.io.to(roomId).emit(SocketEvents.LIVE_AUCTION_NEW_PRODUCER, {
+            auctionId: parsed.data.auctionId,
             producerId: producer.id,
             socketId: this.socket.id,
             kind: producer.kind,
@@ -1056,8 +1085,14 @@ export class AuctionHandler {
             this.socket.id,
         );
 
-        if (!room || !user || !user.transport) {
-            return { success: false, error: 'Transport not ready' };
+        const recvTransport = this._liveAuctionRoomManager.getTransport(
+            roomId,
+            this.socket.id,
+            'recv',
+        );
+
+        if (!room || !user || !recvTransport) {
+            return { success: false, error: 'Recv transport not ready' };
         }
 
         if (
@@ -1069,7 +1104,7 @@ export class AuctionHandler {
             return { success: false, error: 'Cannot consume this producer' };
         }
 
-        const consumer = await user.transport.consume({
+        const consumer = await recvTransport.consume({
             producerId: parsed.data.producerId,
             rtpCapabilities: parsed.data.rtpCapabilities,
             paused: true,
@@ -1084,9 +1119,12 @@ export class AuctionHandler {
         consumer.on('producerclose', () => {
             consumer.close();
             this.socket.emit(SocketEvents.LIVE_AUCTION_PRODUCER_CLOSED, {
+                auctionId: parsed.data.auctionId,
                 producerId: parsed.data.producerId,
             });
         });
+
+        await consumer.resume();
 
         return {
             success: true,
