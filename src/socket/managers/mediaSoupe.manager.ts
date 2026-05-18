@@ -4,16 +4,37 @@ import * as mediasoup from 'mediasoup';
 
 const MEDIA_CODECS = [
     { kind: 'audio', mimeType: 'audio/opus', clockRate: 48000, channels: 2 },
-    { kind: 'video', mimeType: 'video/VP8', clockRate: 90000 },
+    { kind: 'video', mimeType: 'video/H264', clockRate: 90000 },
 ];
 
-const TRANSPORT_OPTIONS: mediasoup.types.WebRtcTransportOptions = {
-    listenInfos: [
-        { protocol: 'udp', ip: '0.0.0.0', announcedAddress: '127.0.0.1' },
-    ],
-    enableUdp: true,
-    enableTcp: true,
-};
+function getAnnouncedAddress(): string {
+    return (
+        process.env.MEDIASOUP_ANNOUNCED_IP?.trim() ||
+        process.env.SERVER_HOST?.trim() ||
+        '127.0.0.1'
+    );
+}
+
+function buildTransportOptions(): mediasoup.types.WebRtcTransportOptions {
+    const announcedAddress = getAnnouncedAddress();
+    return {
+        listenInfos: [
+            {
+                protocol: 'udp',
+                ip: '0.0.0.0',
+                announcedAddress,
+            },
+            {
+                protocol: 'tcp',
+                ip: '0.0.0.0',
+                announcedAddress,
+            },
+        ],
+        enableUdp: true,
+        enableTcp: true,
+        preferUdp: true,
+    };
+}
 
 export class MediaSoupeManager {
     private static _instance: MediaSoupeManager;
@@ -47,6 +68,6 @@ export class MediaSoupeManager {
     async createTransport(
         router: Router,
     ): Promise<mediasoup.types.WebRtcTransport> {
-        return router.createWebRtcTransport(TRANSPORT_OPTIONS);
+        return router.createWebRtcTransport(buildTransportOptions());
     }
 }

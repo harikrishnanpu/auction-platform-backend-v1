@@ -186,16 +186,20 @@ export class AuthController {
             res.cookie('accessToken', accessToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'none',
-                domain: process.env.FRONTEND_HOST,
+                sameSite: 'lax',
+                ...(process.env.ENABLE_COOKIE_DOMAIN === 'true'
+                    ? { domain: process.env.FRONTEND_DOMAIN }
+                    : {}),
                 maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
             });
 
             res.cookie('refreshToken', refreshToken, {
                 httpOnly: true,
                 secure: true,
-                sameSite: 'none',
-                domain: process.env.FRONTEND_HOST,
+                sameSite: 'lax',
+                ...(process.env.ENABLE_COOKIE_DOMAIN === 'true'
+                    ? { domain: process.env.FRONTEND_DOMAIN }
+                    : {}),
                 maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
             });
 
@@ -236,17 +240,21 @@ export class AuthController {
 
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            domain: process.env.FRONTEND_HOST,
+            secure: process.env.ENVIRONMENT === 'production',
+            sameSite: 'lax',
+            ...(process.env.ENABLE_COOKIE_DOMAIN === 'true'
+                ? { domain: process.env.FRONTEND_DOMAIN }
+                : {}),
             maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
         });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
-            domain: process.env.FRONTEND_HOST,
+            secure: process.env.ENVIRONMENT === 'production',
+            sameSite: 'lax',
+            ...(process.env.ENABLE_COOKIE_DOMAIN === 'true'
+                ? { domain: process.env.FRONTEND_DOMAIN }
+                : {}),
             maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
         });
 
@@ -351,17 +359,21 @@ export class AuthController {
 
                     res.cookie('accessToken', accessToken, {
                         httpOnly: true,
-                        secure: true,
-                        sameSite: 'none',
-                        domain: process.env.FRONTEND_HOST,
+                        secure: process.env.ENVIRONMENT === 'production',
+                        sameSite: 'lax',
+                        ...(process.env.ENABLE_COOKIE_DOMAIN === 'true'
+                            ? { domain: process.env.FRONTEND_DOMAIN }
+                            : {}),
                         maxAge: JWT_CONSTANTS.ACCESS_TOKEN_EXPIRY,
                     });
 
                     res.cookie('refreshToken', refreshToken, {
                         httpOnly: true,
-                        secure: true,
-                        sameSite: 'none',
-                        domain: process.env.FRONTEND_HOST,
+                        secure: process.env.ENVIRONMENT === 'production',
+                        sameSite: 'lax',
+                        ...(process.env.ENABLE_COOKIE_DOMAIN === 'true'
+                            ? { domain: process.env.FRONTEND_DOMAIN }
+                            : {}),
                         maxAge: JWT_CONSTANTS.REFRESH_TOKEN_EXPIRY,
                     });
 
