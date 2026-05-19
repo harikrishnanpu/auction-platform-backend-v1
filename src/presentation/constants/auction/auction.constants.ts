@@ -12,6 +12,7 @@ export const AUCTION_MESSAGES = {
         'Action category requested successfully',
     AUCTION_CATEGORIES_FETCHED_SUCCESSFULLY:
         'Auction categories fetched successfully',
+    AUCTION_BIDS_FETCHED_SUCCESSFULLY: 'Auction bids fetched successfully',
     AUCTION_FAILED_SUCCESSFULLY: 'Auction failed successfully',
 };
 

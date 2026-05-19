@@ -133,6 +133,7 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
     async canUseAiAgent(userId: string): Promise<Result<boolean>> {
         const subscriptionPlanResult =
             await this.getUserSubscriptionPlan(userId);
+
         if (subscriptionPlanResult.isFailure) {
             return Result.fail(subscriptionPlanResult.getError());
         }
@@ -152,6 +153,8 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
                 )
                 ?.getValue() ??
             SUBSCRIPTION_CONSTANTS.DEFAULT_AI_AGENT_FEATURE_VALUE;
+
+        console.log('raw INside subscription config --==', raw);
 
         const n = Number(raw);
         const allowed = Number.isFinite(n) && n >= 1;

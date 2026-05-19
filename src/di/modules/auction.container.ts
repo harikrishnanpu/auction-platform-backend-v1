@@ -38,6 +38,8 @@ import { ISendAuctionChatMessageUsecase } from '@application/interfaces/usecases
 import { GetAuctionChatMessagesUsecase } from '@application/usecases/auction/getAuctionChatMessages.usecase';
 import { IGetAuctionChatMessagesUsecase } from '@application/interfaces/usecases/auction/IGetAuctionChatMessagesUsecase';
 import { IGetAuctionRoomUsecase } from '@application/interfaces/usecases/auction/IGetAuctionRoomUsecase';
+import { IGetAuctionBidsUsecase } from '@application/interfaces/usecases/auction/IGetAuctionBidsUsecase';
+import { GetAuctionBidsUsecase } from '@application/usecases/auction/getAuctionBids.usecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { IGetUserHomeAuctionFeedUsecase } from '@application/interfaces/usecases/auction/IGetUserHomeAuctionFeedUsecase';
 import { IPauseAuctionUsecase } from '@application/interfaces/usecases/auction/IPauseAuctionUsecase';
@@ -153,6 +155,10 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
 
     bind<IGetAuctionRoomUsecase>(TYPES.IGetAuctionRoomUsecase).to(
         GetAuctionRoomUsecase,
+    );
+
+    bind<IGetAuctionBidsUsecase>(TYPES.IGetAuctionBidsUsecase).to(
+        GetAuctionBidsUsecase,
     );
 
     bind<IGetBrowseAuctionsUsecase>(TYPES.IGetBrowseAuctionsUsecase).to(
