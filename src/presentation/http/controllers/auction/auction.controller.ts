@@ -29,6 +29,12 @@ import { IGetAllAuctionCategoriesUsecase } from '@application/interfaces/usecase
 import { IGetAuctionByIdUsecase } from '@application/interfaces/usecases/auction/IGetAuctionByIdUsecase';
 import { IGetBrowseAuctionsUsecase } from '@application/interfaces/usecases/auction/IGetBrowseAuctionsUsecase';
 import { IGetUserHomeAuctionFeedUsecase } from '@application/interfaces/usecases/auction/IGetUserHomeAuctionFeedUsecase';
+import { IGetAuctionBidsUsecase } from '@application/interfaces/usecases/auction/IGetAuctionBidsUsecase';
+import type { IGetAuctionBidsOutputDto } from '@application/dtos/auction/getAuctionBids.dto';
+import {
+    getAuctionBidsParamsSchema,
+    ZodGetAuctionBidsParamsInputType,
+} from '@presentation/validators/schemas/auction/getAuctionBidsParams.schema';
 import {
     getBrowseAuctionsSchema,
     ZodGetBrowseAuctionsInputType,
@@ -67,6 +73,8 @@ export class AuctionController {
         private readonly _getBrowseAuctionsUsecase: IGetBrowseAuctionsUsecase,
         @inject(TYPES.IGetUserHomeAuctionFeedUsecase)
         private readonly _getUserHomeAuctionFeedUsecase: IGetUserHomeAuctionFeedUsecase,
+        @inject(TYPES.IGetAuctionBidsUsecase)
+        private readonly _getAuctionBidsUsecase: IGetAuctionBidsUsecase,
     ) {}
 
     /**
@@ -236,6 +244,45 @@ export class AuctionController {
      * @returns Promise that settles after auction DTO is sent
      * @throws {AppError} When user missing, id invalid, or use case denies access / not found
      */
+    getAuctionBids = expressAsyncHandler(
+        async (req: Request, res: Response) => {
+            if (!req.user) {
+                throw new AppError(
+                    AUCTION_CONSTANTS.MESSAGES.USER_NOT_FOUND,
+                    AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            const validatedResult =
+                ValidationHelper.validate<ZodGetAuctionBidsParamsInputType>(
+                    getAuctionBidsParamsSchema,
+                    {
+                        id: req.params.id as string,
+                        userId: req.user.id,
+                    },
+                );
+
+            const result = await this._getAuctionBidsUsecase.execute({
+                auctionId: validatedResult.id,
+                userId: validatedResult.userId,
+            });
+
+            if (result.isFailure) {
+                throw new AppError(
+                    result.getError(),
+                    AUCTION_CONSTANTS.CODES.BAD_REQUEST,
+                );
+            }
+
+            ResponseHelper.success<IGetAuctionBidsOutputDto>(
+                res,
+                result.getValue(),
+                AUCTION_CONSTANTS.MESSAGES.AUCTION_BIDS_FETCHED_SUCCESSFULLY,
+                AUCTION_CONSTANTS.CODES.OK,
+            );
+        },
+    );
+
     getAuctionById = expressAsyncHandler(
         async (req: Request, res: Response) => {
             if (!req.user) {

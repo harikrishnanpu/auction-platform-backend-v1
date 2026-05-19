@@ -137,7 +137,7 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
             email: emailVo.getValue(),
             authProvider: authProviderVo,
             roles: [UserRole.USER],
-            isVerified: false,
+            isVerified: true,
             avatar_url: data.avatar,
             address: null,
             status: UserStatus.ACTIVE,
