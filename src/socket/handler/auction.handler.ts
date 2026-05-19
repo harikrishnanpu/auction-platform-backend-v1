@@ -123,12 +123,20 @@ export class AuctionHandler {
             (user.roles.includes(UserRoleType.ADMIN) ||
                 result.auction.sellerId === user.id);
 
+        const watchingNow = await this.getWatchingSocketCount(
+            roomId,
+            result.auction.sellerId,
+        );
+
         this.socket.emit(SocketEvents.JOINED, {
             ...result,
             chatMessages,
             isLiveAuction: result.auction.auctionType === AuctionType.LIVE,
             isProducer,
+            metrics: { watchingNow },
         });
+
+        await this.broadcastWatchingCount(auctionId, result.auction.sellerId);
 
         return { success: true, data: { auctionId } };
     }
@@ -1171,14 +1179,88 @@ export class AuctionHandler {
     }
 
     handleSocketDisconnect(roomIds: string[]): void {
-        console.log('hanlde sckdisconet: ', roomIds);
         for (const roomId of roomIds) {
-            if (roomId.startsWith('auction:')) {
-                this._liveAuctionRoomManager.leaveAuctionRoom(
-                    roomId,
-                    this.socket.id,
-                );
+            if (!roomId.startsWith('auction:')) {
+                continue;
             }
+
+            this._liveAuctionRoomManager.leaveAuctionRoom(
+                roomId,
+                this.socket.id,
+            );
+
+            const auctionId = roomId.slice('auction:'.length);
+            if (!auctionId) {
+                continue;
+            }
+
+            void this.broadcastWatchingCount(
+                auctionId,
+                undefined,
+                this.socket.id,
+            );
         }
+    }
+
+    private async getWatchingSocketCount(
+        roomId: string,
+        sellerId: string,
+        excludeSocketId?: string,
+    ): Promise<number> {
+        const sockets = await this.io.in(roomId).fetchSockets();
+        let count = 0;
+
+        for (const remoteSocket of sockets) {
+            if (excludeSocketId && remoteSocket.id === excludeSocketId) {
+                continue;
+            }
+
+            const socketUser = remoteSocket.data?.user;
+            if (!socketUser) {
+                continue;
+            }
+
+            if (socketUser.roles.includes(UserRoleType.ADMIN)) {
+                continue;
+            }
+
+            if (socketUser.id === sellerId) {
+                continue;
+            }
+
+            count += 1;
+        }
+
+        return count;
+    }
+
+    private async broadcastWatchingCount(
+        auctionId: string,
+        sellerId?: string,
+        excludeSocketId?: string,
+    ): Promise<void> {
+        const roomId = `auction:${auctionId}`;
+        let passedSellerId = sellerId;
+
+        if (!passedSellerId) {
+            const auctionRepo = this.container.get<IAuctionRepository>(
+                TYPES.IAuctionRepository,
+            );
+            const auctionResult = await auctionRepo.findById(auctionId);
+            if (auctionResult.isFailure || !auctionResult.getValue()) {
+                return;
+            }
+            passedSellerId = auctionResult.getValue()!.getSellerId();
+        }
+
+        const watchingNow = await this.getWatchingSocketCount(
+            roomId,
+            passedSellerId,
+            excludeSocketId,
+        );
+
+        this.io.to(roomId).emit(SocketEvents.STATS_UPDATED, {
+            metrics: { watchingNow },
+        });
     }
 }
