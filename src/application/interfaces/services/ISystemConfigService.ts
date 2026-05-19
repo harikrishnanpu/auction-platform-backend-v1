@@ -20,4 +20,6 @@ export interface ISystemConfigService {
     getAuctionPublicFallbackInitialSplitRatio(): Promise<Result<number>>;
     getAuctionPublicFallbackRemainingSplitRatio(): Promise<Result<number>>;
     getAuctionWinnerFallbackMaxRank(): Promise<Result<number>>;
+
+    getAuctionExpiryBatchSize(): Promise<Result<number>>;
 }

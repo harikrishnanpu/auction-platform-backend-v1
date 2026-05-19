@@ -29,6 +29,7 @@ import { PaymentsRouterFactory } from '@presentation/http/factories/payments.rou
 import { FallbackPublicNotificationWorker } from '@infrastructure/workers/fallbackPublicNotification.worker';
 import { FraudRouterFactory } from '@presentation/http/factories/fraud.router.factory';
 import { WebhookRouterFactory } from '@presentation/http/factories/webhook.router.factory';
+import AuctionExpiryCron from '@infrastructure/cron/auctionExpiry.cron';
 
 export const app = express();
 
@@ -56,6 +57,7 @@ new EmailWorker(new TemplateService());
 new AuctionEndWorker();
 new AuctionWinnerFallbackWorker();
 new FallbackPublicNotificationWorker();
+AuctionExpiryCron.start();
 
 const eventBus = container.get<IEventBus>(TYPES.IEventBus);
 
