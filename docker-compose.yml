@@ -88,7 +88,7 @@ services:
 
     ports:
       - "127.0.0.1:2500:2500"
-      - "0.0.0.0:10000-10100:10000-10100/udp"
+      - "0.0.0.0:0-65535:0-65535/udp"
     depends_on:
       redis:
         condition: service_healthy
