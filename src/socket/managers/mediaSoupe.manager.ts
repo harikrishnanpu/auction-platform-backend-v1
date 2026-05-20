@@ -8,11 +8,16 @@ const MEDIA_CODECS = [
 ];
 
 function getAnnouncedAddress(): string {
-    return (
+    const ip =
         process.env.MEDIASOUP_ANNOUNCED_IP?.trim() ||
-        process.env.SERVER_HOST?.trim() ||
-        '127.0.0.1'
-    );
+        process.env.SERVER_HOST?.trim();
+    if (!ip) {
+        console.log(
+            'MEDIASOUP_ANNOUNCED_IP is not set; remote clients may get black video',
+        );
+        return '127.0.0.1';
+    }
+    return ip;
 }
 
 function buildTransportOptions(): mediasoup.types.WebRtcTransportOptions {

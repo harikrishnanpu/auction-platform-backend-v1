@@ -8,11 +8,18 @@ import { inject, injectable } from 'inversify';
 import { ICacheService } from '@application/interfaces/services/ICacheService';
 import { CACHE_CONSTANTS } from '@application/constants/cache/cache.conatants';
 import { SubscriptionPlan } from '@domain/entities/subscription/subscription-plan.entity';
-import { SubscriptionFeatureKey } from '@domain/entities/subscription/features.entity';
+import {
+    SubscriptionFeatureKey,
+    SubscriptionFeatureValueType,
+} from '@domain/entities/subscription/features.entity';
+import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscriptionPlanFetaure.entity';
 import { SUBSCRIPTION_CONSTANTS } from '@domain/constants/subscription.constants';
 import { IAuctionRepository } from '@domain/repositories/IAuctionRepository';
 import { IBidRepository } from '@domain/repositories/IBidRepository';
-import { SubscriptionPlanMapper } from '@infrastructure/mappers/subscription/subscription-plan.mapper';
+import {
+    PrismaSubscriptionPlanWithFeatures,
+    SubscriptionPlanMapper,
+} from '@infrastructure/mappers/subscription/subscription-plan.mapper';
 
 @injectable()
 export class SubscriptionConfigService implements ISubscriptionConfigService {
@@ -143,22 +150,33 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail('Subscription plan not found');
         }
 
-        const raw =
-            subscriptionPlan
-                .getFeatures()
-                .find(
-                    (feature) =>
-                        feature.getFeature().getFeatureKey() ===
-                        SubscriptionFeatureKey.AI_AGENT,
-                )
-                ?.getValue() ??
-            SUBSCRIPTION_CONSTANTS.DEFAULT_AI_AGENT_FEATURE_VALUE;
+        const aiFeature = subscriptionPlan
+            .getFeatures()
+            .find(
+                (feature) =>
+                    feature.getFeature().getFeatureKey() ===
+                    SubscriptionFeatureKey.AI_AGENT,
+            );
 
-        console.log('raw INside subscription config --==', raw);
+        return Result.ok(this.isPlanFeatureEnabled(aiFeature));
+    }
+
+    private isPlanFeatureEnabled(
+        planFeature: SubscriptionPlanFeature | undefined,
+    ): boolean {
+        if (!planFeature) {
+            return false;
+        }
+
+        const raw = planFeature.getValue().trim();
+        const type = planFeature.getFeature().getType();
+
+        if (type === SubscriptionFeatureValueType.BOOLEAN) {
+            return ['true', '1', 'yes'].includes(raw.toLowerCase());
+        }
 
         const n = Number(raw);
-        const allowed = Number.isFinite(n) && n >= 1;
-        return Result.ok(allowed);
+        return Number.isFinite(n) && n >= 1;
     }
 
     private async getUserSubscriptionPlan(
@@ -188,48 +206,61 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail(cachedResult.getError());
         }
 
+        const planId = userSubscription.getSubscriptionPlanId();
+        const cacheKey = CACHE_CONSTANTS.SUBSCRIPTION_PLAN_KEY(planId);
         let cachedSubscriptionPlan = cachedResult.getValue();
 
-        if (!cachedSubscriptionPlan) {
+        const loadAndCachePlan = async (): Promise<Result<string>> => {
             const dbSubscriptionPlanResult =
-                await this._subscriptionPlanRepository.findById(
-                    userSubscription.getSubscriptionPlanId(),
-                );
+                await this._subscriptionPlanRepository.findById(planId);
 
             if (dbSubscriptionPlanResult.isFailure) {
                 return Result.fail(dbSubscriptionPlanResult.getError());
             }
 
             const dbSubscriptionPlan = dbSubscriptionPlanResult.getValue();
-
             if (!dbSubscriptionPlan) {
                 return Result.fail('Subscription plan not found -- v1');
             }
 
-            const jsonSubscriptionPlan = JSON.stringify(dbSubscriptionPlan);
+            const jsonSubscriptionPlan = JSON.stringify(
+                this._subscriptionPlanMapper.toPersistence(dbSubscriptionPlan),
+            );
 
             await this._cacheService.set(
-                CACHE_CONSTANTS.SUBSCRIPTION_PLAN_KEY(
-                    userSubscription.getSubscriptionPlanId(),
-                ),
+                cacheKey,
                 jsonSubscriptionPlan,
                 CACHE_CONSTANTS.SUBSCRIPTION_PLAN_TTL,
             );
 
-            cachedSubscriptionPlan = jsonSubscriptionPlan;
+            return Result.ok(jsonSubscriptionPlan);
+        };
+
+        if (!cachedSubscriptionPlan) {
+            const loaded = await loadAndCachePlan();
+            if (loaded.isFailure) return Result.fail(loaded.getError());
+            cachedSubscriptionPlan = loaded.getValue();
         }
 
-        const plainObject = JSON.parse(cachedSubscriptionPlan);
+        let plainObject = JSON.parse(cachedSubscriptionPlan) as {
+            features?: unknown[];
+        };
 
-        const subscriptionPlanMapped =
-            this._subscriptionPlanMapper.toDomain(plainObject);
+        if (
+            !Array.isArray(plainObject.features) ||
+            plainObject.features.length === 0
+        ) {
+            const reloaded = await loadAndCachePlan();
+            if (reloaded.isFailure) return Result.fail(reloaded.getError());
+            cachedSubscriptionPlan = reloaded.getValue();
+            plainObject = JSON.parse(cachedSubscriptionPlan);
+        }
+
+        const subscriptionPlanMapped = this._subscriptionPlanMapper.toDomain(
+            plainObject as PrismaSubscriptionPlanWithFeatures,
+        );
 
         const subscriptionPlanEntity = subscriptionPlanMapped;
-
-        console.log(
-            'subscriptionPlanEntity INside subscription config --==',
-            subscriptionPlanEntity,
-        );
 
         if (subscriptionPlanEntity.isFailure) {
             return Result.fail('error with the subscription plan entity');

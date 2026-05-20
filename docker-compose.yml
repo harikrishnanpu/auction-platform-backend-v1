@@ -20,15 +20,17 @@ services:
       FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
       ENABLE_COOKIE_DOMAIN: ${ENABLE_COOKIE_DOMAIN}
 
-      # Database (postgres service hostname inside compose network)
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      # Host network: app reaches postgres/redis via localhost (see postgres/redis ports below)
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@127.0.0.1:5432/${POSTGRES_DB}
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
-      # Redis (redis service hostname inside compose network)
-      REDIS_HOST: redis
+      REDIS_HOST: 127.0.0.1
       REDIS_PORT: ${REDIS_PORT:-6379}
+
+      # EC2 public IP — required for WebRTC/mediasoup (set in Doppler)
+      MEDIASOUP_ANNOUNCED_IP: ${MEDIASOUP_ANNOUNCED_IP}
 
       # Auth / JWT
       JWT_ACCESSTOKEN_SECRET: ${JWT_ACCESSTOKEN_SECRET}
@@ -86,17 +88,14 @@ services:
       DOPPLER_ENVIRONMENT: ${DOPPLER_ENVIRONMENT:-}
       DOPPLER_PROJECT: ${DOPPLER_PROJECT:-}
 
-    ports:
-      - "127.0.0.1:2500:2500"
-      - "0.0.0.0:0-65535:0-65535/udp"
+    # Host network fixes mediasoup black video (WebRTC UDP on host ports, no NAT)
+    network_mode: host
     depends_on:
       redis:
         condition: service_healthy
       postgres:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - auction_net
 
   # ── Redis ──────────────────────────────────────────────────
   redis:
@@ -110,8 +109,8 @@ services:
       --save 60 1
     volumes:
       - redis_data:/data
-    expose:
-      - "6379"
+    ports:
+      - "127.0.0.1:6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -137,8 +136,8 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - pg_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
+    ports:
+      - "127.0.0.1:5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 10s

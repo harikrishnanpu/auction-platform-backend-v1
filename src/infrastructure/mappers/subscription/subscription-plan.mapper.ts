@@ -46,7 +46,7 @@ export class SubscriptionPlanMapper implements IDbMapper<
 
             const mapped = SubscriptionPlanFeature.create({
                 id: rawFeature.id,
-                subscriptionPlanId: raw.id,
+                subscriptionPlanId: rawFeature.subscriptionPlanId,
                 featureId: rawFeature.featureId,
                 value: rawFeature.value,
                 feature: feature.getValue(),
@@ -83,10 +83,21 @@ export class SubscriptionPlanMapper implements IDbMapper<
             razorpayPlanId: entity.getRazorpayPlanId(),
             createdAt: entity.getCreatedAt(),
             updatedAt: entity.getUpdatedAt(),
-            features: entity.getFeatures().map((feature) => ({
-                id: feature.getId(),
-                value: feature.getValue(),
-                feature: feature.getFeature(),
+            features: entity.getFeatures().map((planFeature) => ({
+                id: planFeature.getId(),
+                subscriptionPlanId: planFeature.getSubscriptionPlanId(),
+                featureId: planFeature.getFeatureId(),
+                value: planFeature.getValue(),
+                createdAt: entity.getCreatedAt(),
+                updatedAt: entity.getUpdatedAt(),
+                feature: {
+                    id: planFeature.getFeature().getId(),
+                    feature: planFeature.getFeature().getFeatureKey(),
+                    description: planFeature.getFeature().getDescription(),
+                    type: planFeature.getFeature().getType(),
+                    createdAt: planFeature.getFeature().getCreatedAt(),
+                    updatedAt: planFeature.getFeature().getUpdatedAt(),
+                },
             })),
         };
     }
