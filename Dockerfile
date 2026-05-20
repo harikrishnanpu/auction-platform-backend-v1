@@ -55,6 +55,7 @@
   COPY --from=builder /app/prisma ./prisma
   COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
   COPY --from=builder /app/scripts ./scripts
+  COPY --from=builder /app/src ./src
 
   EXPOSE 2500
   EXPOSE 10000-10100/udp

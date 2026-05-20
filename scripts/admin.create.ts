@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
     const email = process.env.ADMIN_EMAIL ?? 'admin@hm.com';
-    const password = process.env.ADMIN_PASSWORD ?? 'admin123';
+    const password = process.env.ADMIN_PASSWORD ?? 'Admin@123';
     const name = process.env.ADMIN_NAME ?? 'Admin';
 
     const existing = await prisma.user.findUnique({ where: { email } });
