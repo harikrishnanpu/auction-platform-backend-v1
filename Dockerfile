@@ -58,5 +58,5 @@
   COPY --from=builder /app/src ./src
 
   EXPOSE 2500
-  EXPOSE 10000-10100/udp
+  EXPOSE 0-65535/udp
   CMD ["node", "dist/index.js"]
