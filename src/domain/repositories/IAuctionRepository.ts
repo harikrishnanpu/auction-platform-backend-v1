@@ -39,4 +39,9 @@ export interface IAuctionRepository {
     ): Promise<Result<IAuctionUserDashboardCounts>>;
 
     countBySellerId(sellerId: string): Promise<Result<number>>;
+
+    findOverdueActiveAuctions(
+        limit?: number,
+        now?: Date,
+    ): Promise<Result<Auction[]>>;
 }

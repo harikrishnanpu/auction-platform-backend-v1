@@ -632,6 +632,47 @@ export class PrismaAuctionRepo implements IAuctionRepository {
         return Result.ok(count);
     }
 
+    async findOverdueActiveAuctions(
+        limit = 50,
+        now: Date = new Date(),
+    ): Promise<Result<Auction[]>> {
+        try {
+            const list = await this._prisma.auction.findMany({
+                where: {
+                    status: {
+                        in: [
+                            PrismaAuctionStatus.ACTIVE,
+                            PrismaAuctionStatus.PAUSED,
+                        ],
+                    },
+                    endAt: { lte: now },
+                },
+                take: limit,
+                orderBy: { endAt: 'asc' },
+                include: {
+                    assets: true,
+                    category: {
+                        include: {
+                            submittedByUser: true,
+                        },
+                    },
+                },
+            });
+
+            const result: Auction[] = [];
+
+            for (const raw of list) {
+                const mapped = this.mapper.toDomain(raw);
+                if (mapped.isFailure) return Result.fail(mapped.getError());
+                result.push(mapped.getValue());
+            }
+
+            return Result.ok(result);
+        } catch {
+            return Result.fail('Failed to fetch overdue active auctions');
+        }
+    }
+
     async findByAuctionNum(
         auctionNumber: string,
     ): Promise<Result<Auction | null>> {

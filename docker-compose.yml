@@ -1,0 +1,164 @@
+services:
+
+  # ── App ────────────────────────────────────────────────────
+  app:
+    image: ${DOCKER_IMAGE:-haripavoor/auction-platform-backend:latest}
+    pull_policy: always
+    platform: linux/amd64
+    container_name: auction-platform-backend
+    environment:
+      NODE_ENV: production
+
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@hm.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_NAME: ${ADMIN_NAME:-Admin}
+
+      # Server
+      PORT: ${PORT:-2500}
+      ENVIRONMENT: ${ENVIRONMENT}
+      FRONTEND_URL: ${FRONTEND_URL}
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN}
+      ENABLE_COOKIE_DOMAIN: ${ENABLE_COOKIE_DOMAIN}
+
+      # Database (postgres service hostname inside compose network)
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # Redis (redis service hostname inside compose network)
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT:-6379}
+
+      # Auth / JWT
+      JWT_ACCESSTOKEN_SECRET: ${JWT_ACCESSTOKEN_SECRET}
+      JWT_REFRESHTOKEN_SECRET: ${JWT_REFRESHTOKEN_SECRET}
+      JWT_TOKEN_SECRET: ${JWT_TOKEN_SECRET}
+      JWT_ACCESSTOKEN_EXPIRY: ${JWT_ACCESSTOKEN_EXPIRY}
+      JWT_REFRESHTOKEN_EXPIRY: ${JWT_REFRESHTOKEN_EXPIRY}
+      OTP_EXPIRATION_TIME: ${OTP_EXPIRATION_TIME}
+
+      # Google OAuth
+      GOOGLE_AUTH_CLIENT_ID: ${GOOGLE_AUTH_CLIENT_ID}
+      GOOGLE_AUTH_CLIENT_SECRET: ${GOOGLE_AUTH_CLIENT_SECRET}
+      GOOGLE_AUTH_CALLBACK_URL: ${GOOGLE_AUTH_CALLBACK_URL}
+
+      # AWS S3
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION}
+      AWS_BUCKET_NAME: ${AWS_BUCKET_NAME}
+
+      # Mail
+      MAIL_USER: ${MAIL_USER}
+      MAIL_PASS: ${MAIL_PASS}
+
+      # Razorpay
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET}
+      RAZORPAY_API_KEY: ${RAZORPAY_API_KEY}
+      RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET}
+
+      # Encryption
+      ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+
+      # Ollama / AI
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      OLLAMA_API_KEY: ${OLLAMA_API_KEY}
+      OLLAMA_MODEL: ${OLLAMA_MODEL}
+      OLLAMA_TEMPERATURE: ${OLLAMA_TEMPERATURE}
+      OLLAMA_PREDICT_CAP: ${OLLAMA_PREDICT_CAP}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL}
+      OLLAMA_EMBEDDING_DIMENSIONS: ${OLLAMA_EMBEDDING_DIMENSIONS}
+
+      # Chroma
+      CHROMA_HOST: ${CHROMA_HOST}
+      CHROMA_PORT: ${CHROMA_PORT}
+      CHROMA_COLLECTION_NAME: ${CHROMA_COLLECTION_NAME}
+
+      # Gemini
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+
+      # Cron
+      AUCTION_EXPIRY_CRON_SCHEDULE: ${AUCTION_EXPIRY_CRON_SCHEDULE}
+
+      DOPPLER_CONFIG: ${DOPPLER_CONFIG:-}
+      DOPPLER_ENVIRONMENT: ${DOPPLER_ENVIRONMENT:-}
+      DOPPLER_PROJECT: ${DOPPLER_PROJECT:-}
+
+    ports:
+      - "127.0.0.1:2500:2500"
+      - "0.0.0.0:10000-10100:10000-10100/udp"
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - auction_net
+
+  # ── Redis ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: auction_redis
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 60 1
+    volumes:
+      - redis_data:/data
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - auction_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ── Postgres ───────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: auction_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - auction_net
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  redis_data:
+    driver: local
+  pg_data:
+    driver: local
+
+networks:
+  auction_net:
+    driver: bridge

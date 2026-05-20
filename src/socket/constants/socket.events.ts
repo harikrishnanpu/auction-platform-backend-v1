@@ -9,6 +9,7 @@ export enum SocketEvents {
     END = 'auction:end',
 
     JOINED = 'auction:joined',
+    STATS_UPDATED = 'auction:statsUpdated',
     BID_PLACED = 'auction:bidPlaced',
     CHAT_MESSAGE = 'auction:chatMessage',
     UPDATED = 'auction:updated',

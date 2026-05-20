@@ -10,6 +10,8 @@ import { GetAuctionByIdUsecase } from '@application/usecases/auction/getAuctionB
 import { UpdateAuctionUsecase } from '@application/usecases/auction/updateAuction.usecase';
 import { PublishAuctionUsecase } from '@application/usecases/auction/publishAuction.usecase';
 import { EndAuctionUsecase } from '@application/usecases/auction/endAuction.usecase';
+import { ExpireOverdueAuctionsUsecase } from '@application/usecases/auction/expireOverdueAuctions.usecase';
+import { IExpireOverdueAuctionsUsecase } from '@application/interfaces/usecases/auction/IExpireOverdueAuctionsUsecase';
 import { PlaceBidUsecase } from '@application/usecases/auction/placeBid.usecase';
 import { GetAuctionRoomUsecase } from '@application/usecases/auction/getAuctionRoom.usecase';
 import { GetBrowseAuctionsUsecase } from '@application/usecases/auction/getBrowseAuctions.usecase';
@@ -138,6 +140,9 @@ export const auctionContainer = new ContainerModule(({ bind }) => {
         PublishAuctionUsecase,
     );
     bind<IEndAuctionUsecase>(TYPES.IEndAuctionUsecase).to(EndAuctionUsecase);
+    bind<IExpireOverdueAuctionsUsecase>(TYPES.IExpireOverdueAuctionsUsecase).to(
+        ExpireOverdueAuctionsUsecase,
+    );
     bind<IPlaceBidUsecase>(TYPES.IPlaceBidUsecase).to(PlaceBidUsecase);
     bind<IGetAuctionByIdUsecase>(TYPES.IGetAuctionByIdUsecase).to(
         GetAuctionByIdUsecase,

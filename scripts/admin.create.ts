@@ -1,25 +1,54 @@
-import { PrismaClient } from '@prisma/client';
+/// <reference types="node" />
+import {
+    AuthProvider,
+    PrismaClient,
+    UserRoleType,
+    UserStatus,
+} from '@prisma/client';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
-function main() {
-  prisma.$connect().then(async () => {
-    const admin = await prisma.user.create({
-      data: {
-        id: '1',
-        authProvider: 'LOCAL',
-        isVerified: true,
-        status: 'ACTIVE',
-        name: 'Admin',
-        email: 'admin@hm.com',
-        password: 'admin123',
-        roles: {
-          create: ['ADMIN', 'USER'].map((role) => ({ role })),
-        },
-      },
+async function main(): Promise<void> {
+    const email = process.env.ADMIN_EMAIL ?? 'admin@hm.com';
+    const password = process.env.ADMIN_PASSWORD ?? 'admin123';
+    const name = process.env.ADMIN_NAME ?? 'Admin';
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+        console.log(`Admin already exists (${email}), skipping`);
+        return;
+    }
+
+    const hashedPassword = await argon2.hash(password, {
+        type: argon2.argon2id,
     });
-    console.log('admin created', admin);
-  });
+
+    await prisma.user.create({
+        data: {
+            name,
+            email,
+            password: hashedPassword,
+            authProvider: AuthProvider.LOCAL,
+            isVerified: true,
+            status: UserStatus.ACTIVE,
+            roles: {
+                create: [
+                    { role: UserRoleType.ADMIN },
+                    { role: UserRoleType.USER },
+                ],
+            },
+        },
+    });
+
+    console.log(`Admin created: ${email}`);
 }
 
-main();
+main()
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    })
+    .finally(async () => {
+        await prisma.$disconnect();
+    });

@@ -106,6 +106,12 @@ export class SystemConfigService implements ISystemConfigService {
         );
     }
 
+    async getAuctionExpiryBatchSize(): Promise<Result<number>> {
+        return this.getCachedNumValue(
+            SystemConfigKey.AUCTION_EXPIRY_BATCH_SIZE,
+        );
+    }
+
     private async getCachedNumValue(
         key: SystemConfigKey,
     ): Promise<Result<number>> {

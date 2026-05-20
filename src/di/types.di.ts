@@ -76,6 +76,7 @@ export const TYPES = {
     ),
     IPublishAuctionUsecase: Symbol.for('IPublishAuctionUsecase'),
     IEndAuctionUsecase: Symbol.for('IEndAuctionUsecase'),
+    IExpireOverdueAuctionsUsecase: Symbol.for('IExpireOverdueAuctionsUsecase'),
     AuctionController: Symbol.for('AuctionController'),
     AuctionRoutes: Symbol.for('AuctionRoutes'),
     IBidRepository: Symbol.for('IBidRepository'),
