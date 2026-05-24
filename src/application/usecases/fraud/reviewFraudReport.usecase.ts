@@ -47,7 +47,11 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
             return Result.fail('Fraud report not found');
         }
 
-        report.resolve(input.adminUserId, input.decision);
+        const resolveResult = report.resolve(input.adminUserId, input.decision);
+        if (resolveResult.isFailure) {
+            return Result.fail(resolveResult.getError());
+        }
+
         const updateResult = await this._fraudRepository.updateReport(report);
         if (updateResult.isFailure) {
             return Result.fail(updateResult.getError());
@@ -97,6 +101,9 @@ export class ReviewFraudReportUsecase implements IReviewFraudReportUsecase {
             message:
                 'Admin verified a fault against your account. Please review your account activity.',
         });
+
+        console.log('notificationResult --==', notificationResult);
+
         if (notificationResult.isFailure) {
             return Result.fail(notificationResult.getError());
         }

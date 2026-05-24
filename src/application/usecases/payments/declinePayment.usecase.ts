@@ -114,7 +114,7 @@ export class DeclinePaymentUsecase implements IDeclinePaymentUsecase {
 
             const newFraudReport = FraudReport.create({
                 id: this._idGeneratingService.generateId(),
-                reportedUserId: '',
+                reportedUserId: payment.getUserId(),
                 targetedUserId: payment.getUserId(),
                 reason: 'Payment declined',
                 category: FraudReportCategory.PAYMENT_CRITICAL,

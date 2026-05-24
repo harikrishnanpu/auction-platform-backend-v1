@@ -8,8 +8,9 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const systemConfigs = [
     {
         key: 'FRAUD_SUSPENSION_THRESHOLD',
-        value: '10',
-        description: 'Fraud points at or above this level trigger suspension',
+        value: '3',
+        description:
+            'Fraud level and daily report counts at or above this value trigger suspension',
         type: SystemConfigValueType.NUMBER,
     },
     {

@@ -56,18 +56,17 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail('Subscription plan not found');
         }
 
-        // console.log('subscriptionPlan.getFeatures() INside subscription config --==', subscriptionPlan.getFeatures().map(feature => feature.getFeature().getFeatureKey()));
+        const limit = this.getNumericLimit(
+            subscriptionPlan.getFeatures(),
+            SubscriptionFeatureKey.AUCTION_CREATION,
+            SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_CREATE_FEATURE_VALUE,
+        );
 
-        const auctionCreateFeatureValue =
-            subscriptionPlan
-                .getFeatures()
-                .find(
-                    (feature) =>
-                        feature.getFeature().getFeatureKey() ===
-                        SubscriptionFeatureKey.AUCTION_CREATION,
-                )
-                ?.getValue() ??
-            String(SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_CREATE_FEATURE_VALUE);
+        if (limit <= 0) {
+            return Result.fail(
+                'Auction creation is not included in your current subscription plan',
+            );
+        }
 
         const totalCreatedAuctions =
             await this._auctionRepository.countBySellerId(userId);
@@ -76,9 +75,7 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail(totalCreatedAuctions.getError());
         }
 
-        if (
-            totalCreatedAuctions.getValue() >= Number(auctionCreateFeatureValue)
-        ) {
+        if (totalCreatedAuctions.getValue() >= limit) {
             return Result.fail(
                 'You have reached the maximum number of auctions you can create with your subscription plan',
             );
@@ -102,18 +99,17 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail('Subscription plan not found');
         }
 
-        const auctionBiddingFeatureValue =
-            subscriptionPlan
-                .getFeatures()
-                .find(
-                    (feature) =>
-                        feature.getFeature().getFeatureKey() ===
-                        SubscriptionFeatureKey.AUCTION_BIDDING,
-                )
-                ?.getValue() ??
-            String(
-                SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_BIDDING_FEATURE_VALUE,
+        const limit = this.getNumericLimit(
+            subscriptionPlan.getFeatures(),
+            SubscriptionFeatureKey.AUCTION_BIDDING,
+            SUBSCRIPTION_CONSTANTS.DEFAULT_AUCTION_BIDDING_FEATURE_VALUE,
+        );
+
+        if (limit <= 0) {
+            return Result.fail(
+                'Bidding is not included in your current subscription plan',
             );
+        }
 
         const totalBidsOfUserForAuction =
             await this._bidRepository.countBidsByAuctionIdAndUserId(
@@ -125,10 +121,7 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail(totalBidsOfUserForAuction.getError());
         }
 
-        if (
-            totalBidsOfUserForAuction.getValue() >=
-            Number(auctionBiddingFeatureValue)
-        ) {
+        if (totalBidsOfUserForAuction.getValue() >= limit) {
             return Result.fail(
                 'You have reached the maximum number of bids you can place for this auction with your current plan',
             );
@@ -158,25 +151,37 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
                     SubscriptionFeatureKey.AI_AGENT,
             );
 
-        return Result.ok(this.isPlanFeatureEnabled(aiFeature));
+        return Result.ok(this.isFeatureEnabled(aiFeature));
     }
 
-    private isPlanFeatureEnabled(
+    private isFeatureEnabled(
         planFeature: SubscriptionPlanFeature | undefined,
     ): boolean {
-        if (!planFeature) {
-            return false;
-        }
+        if (!planFeature) return false;
 
-        const raw = planFeature.getValue().trim();
+        const raw = planFeature.getValue().trim().toLowerCase();
         const type = planFeature.getFeature().getType();
 
         if (type === SubscriptionFeatureValueType.BOOLEAN) {
-            return ['true', '1', 'yes'].includes(raw.toLowerCase());
+            return ['true', '1', 'yes'].includes(raw);
         }
 
         const n = Number(raw);
-        return Number.isFinite(n) && n >= 1;
+        return Number.isFinite(n) && n > 0;
+    }
+
+    private getNumericLimit(
+        features: SubscriptionPlanFeature[],
+        key: SubscriptionFeatureKey,
+        defaultValue: number,
+    ): number {
+        const planFeature = features.find(
+            (f) => f.getFeature().getFeatureKey() === key,
+        );
+        if (!planFeature) return defaultValue;
+
+        const n = Number(planFeature.getValue().trim());
+        return Number.isFinite(n) && n >= 0 ? n : defaultValue;
     }
 
     private async getUserSubscriptionPlan(
@@ -197,17 +202,14 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             return Result.fail('user subscription not found');
         }
 
-        const cachedResult = await this._cacheService.get(
-            CACHE_CONSTANTS.SUBSCRIPTION_PLAN_KEY(
-                userSubscription.getSubscriptionPlanId(),
-            ),
-        );
+        const planId = userSubscription.getSubscriptionPlanId();
+        const cacheKey = CACHE_CONSTANTS.SUBSCRIPTION_PLAN_KEY(planId);
+
+        const cachedResult = await this._cacheService.get(cacheKey);
         if (cachedResult.isFailure) {
             return Result.fail(cachedResult.getError());
         }
 
-        const planId = userSubscription.getSubscriptionPlanId();
-        const cacheKey = CACHE_CONSTANTS.SUBSCRIPTION_PLAN_KEY(planId);
         let cachedSubscriptionPlan = cachedResult.getValue();
 
         const loadAndCachePlan = async (): Promise<Result<string>> => {
@@ -260,12 +262,10 @@ export class SubscriptionConfigService implements ISubscriptionConfigService {
             plainObject as PrismaSubscriptionPlanWithFeatures,
         );
 
-        const subscriptionPlanEntity = subscriptionPlanMapped;
-
-        if (subscriptionPlanEntity.isFailure) {
+        if (subscriptionPlanMapped.isFailure) {
             return Result.fail('error with the subscription plan entity');
         }
 
-        return Result.ok(subscriptionPlanEntity.getValue());
+        return Result.ok(subscriptionPlanMapped.getValue());
     }
 }

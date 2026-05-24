@@ -93,21 +93,20 @@ export class LoginUseCase implements ILoginUseCase {
             const refreshToken =
                 this._tokenGeneratorService.generateRefreshToken(user.getId());
 
-            const currentUserSubscriptionEntity =
-                await this._userSubscriptionRepository.findCurrentActiveByUserId(
-                    user.getId(),
-                );
-            if (currentUserSubscriptionEntity.isFailure) {
-                return Result.fail(currentUserSubscriptionEntity.getError());
-            }
-
-            // --change ---===
             const assignSub =
                 await this._subscriptionService.assignDefaultSubscriptionToUser(
                     user.getId(),
                 );
             if (assignSub.isFailure) {
                 return Result.fail(assignSub.getError());
+            }
+
+            const currentUserSubscriptionEntity =
+                await this._userSubscriptionRepository.findCurrentActiveByUserId(
+                    user.getId(),
+                );
+            if (currentUserSubscriptionEntity.isFailure) {
+                return Result.fail(currentUserSubscriptionEntity.getError());
             }
 
             const currUserSubcptionEntity =

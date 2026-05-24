@@ -17,6 +17,7 @@ export interface IFraudReportRepository {
     save(report: FraudReport): Promise<Result<FraudReport>>;
     findById(id: string): Promise<Result<FraudReport | null>>;
     findAll(filters: IFindFraudReportsFilters): Promise<Result<FraudReport[]>>;
+    count(filters: IFindFraudReportsFilters): Promise<Result<number>>;
     updateReport(report: FraudReport): Promise<Result<FraudReport>>;
     findAllTodayReportsByTragetedUserId(
         userId: string,

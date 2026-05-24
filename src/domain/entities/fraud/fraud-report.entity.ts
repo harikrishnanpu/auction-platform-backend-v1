@@ -103,11 +103,16 @@ export class FraudReport {
         return Result.ok();
     }
 
-    resolve(reviewedById: string, decision: FraudAdminDecision) {
+    resolve(reviewedById: string, decision: FraudAdminDecision): Result<void> {
+        if (this.status === FraudReportStatus.RESOLVED) {
+            return Result.fail('Report is already resolved');
+        }
+
         this.status = FraudReportStatus.RESOLVED;
         this.adminDecision = decision;
         this.reviewedById = reviewedById;
         this.reviewedAt = new Date();
+        return Result.ok();
     }
 
     getId() {

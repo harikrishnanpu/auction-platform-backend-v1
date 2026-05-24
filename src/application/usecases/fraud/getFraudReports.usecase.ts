@@ -5,7 +5,6 @@ import {
 import { IGetFraudReportsUsecase } from '@application/interfaces/usecases/fraud/IGetFraudReportsUsecase';
 import { TYPES } from '@di/types.di';
 import { IFraudReportRepository } from '@domain/repositories/IFraudReportRepository';
-import { IUserRepository } from '@domain/repositories/IUserRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -14,25 +13,30 @@ export class GetFraudReportsUsecase implements IGetFraudReportsUsecase {
     constructor(
         @inject(TYPES.IFraudReportRepository)
         private readonly _fraudRepository: IFraudReportRepository,
-        @inject(TYPES.IUserRepository)
-        private readonly _userRepository: IUserRepository,
     ) {}
 
     async execute(
         input: IGetFraudReportsInputDto,
     ): Promise<Result<IGetFraudReportsOutputDto>> {
-        const result = await this._fraudRepository.findAll({
+        const filters = {
             page: input.page,
             limit: input.limit,
             search: input.search,
             status: input.status,
             sort: input.sort,
             order: input.order,
-        });
+        };
+
+        const [result, countResult] = await Promise.all([
+            this._fraudRepository.findAll(filters),
+            this._fraudRepository.count(filters),
+        ]);
 
         if (result.isFailure) return Result.fail(result.getError());
+        if (countResult.isFailure) return Result.fail(countResult.getError());
 
         const rawReports = result.getValue();
+        const total = countResult.getValue();
 
         return Result.ok({
             reports: rawReports.map((report) => ({
@@ -54,8 +58,8 @@ export class GetFraudReportsUsecase implements IGetFraudReportsUsecase {
             })),
             page: input.page,
             limit: input.limit,
-            total: rawReports.length,
-            totalPages: Math.max(1, Math.ceil(rawReports.length / input.limit)),
+            total,
+            totalPages: Math.max(1, Math.ceil(total / input.limit)),
         });
     }
 }

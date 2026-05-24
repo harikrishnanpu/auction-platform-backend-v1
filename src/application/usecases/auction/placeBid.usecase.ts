@@ -64,14 +64,6 @@ export class PlaceBidUsecase implements IPlaceBidUsecase {
                 return Result.fail(canPlaceBidResult.getError());
             }
 
-            console.log('canPlaceBidResult', canPlaceBidResult.getValue());
-
-            if (!canPlaceBidResult.getValue()) {
-                return Result.fail(
-                    'You have reached the maximum number of bids you can place for this auction with your current plan',
-                );
-            }
-
             const locked = await this._bidLockService.lock(
                 lockKey,
                 lockToken,

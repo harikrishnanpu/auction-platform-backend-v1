@@ -11,6 +11,7 @@ import {
 import { ISystemConfigRepository } from '@domain/repositories/ISystemConfigRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
+import { USER_SUSPENSION_CONSTANTS } from '@domain/constants/userSuspension.constants';
 
 @injectable()
 export class SystemConfigService implements ISystemConfigService {
@@ -41,9 +42,13 @@ export class SystemConfigService implements ISystemConfigService {
     }
 
     async getFraudSuspensionThreshold(): Promise<Result<number>> {
-        return this.getCachedNumValue(
+        const result = await this.getCachedNumValue(
             SystemConfigKey.FRAUD_SUSPENSION_THRESHOLD,
         );
+        if (result.isSuccess) {
+            return result;
+        }
+        return Result.ok(USER_SUSPENSION_CONSTANTS.SUSPENSION_THRESHOLD);
     }
 
     async getFraudTemporarySuspensionDurationMs(): Promise<Result<number>> {

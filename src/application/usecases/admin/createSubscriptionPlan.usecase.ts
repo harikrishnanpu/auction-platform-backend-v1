@@ -15,6 +15,8 @@ import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 import { ISubscriptionFeaturesRepository } from '@domain/repositories/ISubscriptionFetauresRepository';
 import { SubscriptionPlanFeature } from '@domain/entities/subscription/subscriptionPlanFetaure.entity';
+import { ICacheService } from '@application/interfaces/services/ICacheService';
+import { CACHE_CONSTANTS } from '@application/constants/cache/cache.conatants';
 
 @injectable()
 export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUsecase {
@@ -27,6 +29,8 @@ export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUse
         private readonly _razorpaySubscriptionGateway: IRazorpaySubscriptionGatewayService,
         @inject(TYPES.ISubscriptionFeaturesRepository)
         private readonly _subscriptionPFeatureRepository: ISubscriptionFeaturesRepository,
+        @inject(TYPES.ICacheService)
+        private readonly _cacheService: ICacheService,
     ) {}
 
     async execute(
@@ -138,6 +142,10 @@ export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUse
             planResult.getValue(),
         );
         if (savedResult.isFailure) return Result.fail(savedResult.getError());
+
+        await this._cacheService.remove(
+            CACHE_CONSTANTS.SUBSCRIPTION_PLAN_KEY(planId),
+        );
 
         return Result.ok(
             AdminMapperProfile.toSubscriptionPlanDto(savedResult.getValue()),

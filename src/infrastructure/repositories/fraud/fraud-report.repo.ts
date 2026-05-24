@@ -62,44 +62,83 @@ export class PrismaFraudReportRepository
         return this.mapper.toDomain(row);
     }
 
+    async count(filters: IFindFraudReportsFilters): Promise<Result<number>> {
+        try {
+            const total = await this._prisma.fraudReport.count({
+                where: {
+                    ...(filters.status ? { status: filters.status } : {}),
+                    ...(filters.search
+                        ? {
+                              OR: [
+                                  {
+                                      reportedUser: {
+                                          name: {
+                                              contains: filters.search,
+                                              mode: 'insensitive',
+                                          },
+                                      },
+                                  },
+                                  {
+                                      targetedUser: {
+                                          name: {
+                                              contains: filters.search,
+                                              mode: 'insensitive',
+                                          },
+                                      },
+                                  },
+                                  {
+                                      reason: {
+                                          contains: filters.search,
+                                          mode: 'insensitive',
+                                      },
+                                  },
+                              ],
+                          }
+                        : {}),
+                },
+            });
+            return Result.ok(total);
+        } catch {
+            return Result.fail('Failed to count reports');
+        }
+    }
+
     async findAll(
         filters: IFindFraudReportsFilters,
     ): Promise<Result<FraudReport[]>> {
         try {
-            const where = {
-                ...(filters.status ? { status: filters.status } : {}),
-                ...(filters.search
-                    ? {
-                          OR: [
-                              {
-                                  reportedUser: {
-                                      name: {
-                                          contains: filters.search,
-                                          mode: 'insensitive' as const,
-                                      },
-                                  },
-                              },
-                              {
-                                  targetedUser: {
-                                      name: {
-                                          contains: filters.search,
-                                          mode: 'insensitive' as const,
-                                      },
-                                  },
-                              },
-                              {
-                                  reason: {
-                                      contains: filters.search,
-                                      mode: 'insensitive' as const,
-                                  },
-                              },
-                          ],
-                      }
-                    : {}),
-            };
-
             const rows = await this._prisma.fraudReport.findMany({
-                where,
+                where: {
+                    ...(filters.status ? { status: filters.status } : {}),
+                    ...(filters.search
+                        ? {
+                              OR: [
+                                  {
+                                      reportedUser: {
+                                          name: {
+                                              contains: filters.search,
+                                              mode: 'insensitive',
+                                          },
+                                      },
+                                  },
+                                  {
+                                      targetedUser: {
+                                          name: {
+                                              contains: filters.search,
+                                              mode: 'insensitive',
+                                          },
+                                      },
+                                  },
+                                  {
+                                      reason: {
+                                          contains: filters.search,
+                                          mode: 'insensitive',
+                                      },
+                                  },
+                              ],
+                          }
+                        : {}),
+                },
                 orderBy: { [filters.sort]: filters.order },
                 skip: (filters.page - 1) * filters.limit,
                 take: filters.limit,
@@ -160,15 +199,17 @@ export class PrismaFraudReportRepository
     async findAllTodayReportsByTragetedUserId(
         userId: string,
     ): Promise<Result<FraudReport[]>> {
-        const startTime = new Date().setHours(0, 0, 0, 0);
-        const endTime = new Date().setHours(23, 23, 23, 23);
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
 
         const rawResult = await this._prisma.fraudReport.findMany({
             where: {
                 targetedUserId: userId,
                 createdAt: {
-                    gt: new Date(startTime),
-                    lte: new Date(endTime),
+                    gte: startOfDay,
+                    lte: endOfDay,
                 },
             },
             include: {
@@ -182,6 +223,7 @@ export class PrismaFraudReportRepository
 
         for (const raw of rawResult) {
             const entity = this.mapper.toDomain(raw);
+            if (entity.isFailure) return Result.fail(entity.getError());
             result.push(entity.getValue());
         }
 

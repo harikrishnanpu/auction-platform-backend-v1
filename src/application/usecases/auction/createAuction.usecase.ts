@@ -60,12 +60,6 @@ export class CreateAuctionUsecase implements ICreateAuctionUsecase {
             return Result.fail(canCreateAuctionResult.getError());
         }
 
-        if (!canCreateAuctionResult.getValue()) {
-            return Result.fail(
-                'You have reached the maximum number of auctions you can create with your subscription plan',
-            );
-        }
-
         const categoryResult = await this._auctionCategoryRepository.findById(
             validatedAuctionInput.categoryId,
         );

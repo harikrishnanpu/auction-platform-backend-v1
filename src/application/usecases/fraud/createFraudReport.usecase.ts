@@ -3,15 +3,22 @@ import {
     IFraudReportOutputDto,
 } from '@application/dtos/fraud/fraud-report.dto';
 import { IIdGeneratingService } from '@application/interfaces/services/IIdGeneratingService';
+import { ISystemConfigService } from '@application/interfaces/services/ISystemConfigService';
 import { ICreateFraudReportUsecase } from '@application/interfaces/usecases/fraud/ICreateFraudReportUsecase';
 import { TYPES } from '@di/types.di';
 import {
     FraudReport,
     FraudReporterType,
 } from '@domain/entities/fraud/fraud-report.entity';
-import { UserStatus } from '@domain/entities/user/user.entity';
+import {
+    SuspensionType,
+    UserSuspension,
+} from '@domain/entities/fraud/user-suspension.entity';
+import { UserRoleType } from '@application/dtos/auth/userRole.dto';
+import { User, UserStatus } from '@domain/entities/user/user.entity';
 import { IFraudReportRepository } from '@domain/repositories/IFraudReportRepository';
 import { IUserRepository } from '@domain/repositories/IUserRepository';
+import { IUserSuspensionRepository } from '@domain/repositories/IUserSuspensionRepository';
 import { Result } from '@domain/shared/result';
 import { inject, injectable } from 'inversify';
 
@@ -24,21 +31,44 @@ export class CreateFraudReportUsecase implements ICreateFraudReportUsecase {
         private readonly _idGeneratingService: IIdGeneratingService,
         @inject(TYPES.IUserRepository)
         private readonly _userRepository: IUserRepository,
+        @inject(TYPES.IUserSuspensionRepository)
+        private readonly _suspensionRepository: IUserSuspensionRepository,
+        @inject(TYPES.ISystemConfigService)
+        private readonly _systemConfigService: ISystemConfigService,
     ) {}
 
     async execute(
         input: ICreateFraudReportInputDto,
     ): Promise<Result<IFraudReportOutputDto>> {
+        if (input.reportedUserId === input.targetedUserId) {
+            return Result.fail('report failed : self');
+        }
+
         const reportedUserResult = await this._userRepository.findById(
             input.reportedUserId,
         );
-        if (reportedUserResult.isFailure)
+        if (reportedUserResult.isFailure) {
             return Result.fail(reportedUserResult.getError());
+        }
+
         const targetedUserResult = await this._userRepository.findById(
             input.targetedUserId,
         );
-        if (targetedUserResult.isFailure)
+        if (targetedUserResult.isFailure) {
             return Result.fail(targetedUserResult.getError());
+        }
+
+        const reporter = reportedUserResult.getValue();
+        const reporterRoles = reporter
+            .getRoles()
+            .map((role) => role.getValue());
+
+        if (
+            input.reportedUserType === FraudReporterType.SELLER &&
+            !reporterRoles.includes(UserRoleType.SELLER)
+        ) {
+            return Result.fail('Only sellers can file:  seller report');
+        }
 
         const reportResult = FraudReport.create({
             id: this._idGeneratingService.generateId(),
@@ -49,7 +79,7 @@ export class CreateFraudReportUsecase implements ICreateFraudReportUsecase {
             category: input.category,
             level: input.level,
             reason: input.reason,
-            reportedUser: reportedUserResult.getValue(),
+            reportedUser: reporter,
             targetedUser: targetedUserResult.getValue(),
             reviewedBy: null,
         });
@@ -59,35 +89,44 @@ export class CreateFraudReportUsecase implements ICreateFraudReportUsecase {
         const saveResult = await this._fraudRepository.save(
             reportResult.getValue(),
         );
+        if (saveResult.isFailure) return Result.fail(saveResult.getError());
 
         const previousReportsResult =
             await this._fraudRepository.findAllTodayReportsByTragetedUserId(
                 targetedUserResult.getValue().getId(),
             );
+        if (previousReportsResult.isFailure) {
+            return Result.fail(previousReportsResult.getError());
+        }
 
         const previousReports = previousReportsResult.getValue();
+        const sellerReportCount = previousReports.filter(
+            (report) => report.getReporterType() === FraudReporterType.SELLER,
+        ).length;
+        const userReportCount = previousReports.filter(
+            (report) => report.getReporterType() === FraudReporterType.USER,
+        ).length;
 
-        const totalSellerReports = previousReports.filter((report) => {
-            if (report.getReporterType() === FraudReporterType.SELLER) {
-                return report;
+        const thresholdResult =
+            await this._systemConfigService.getFraudSuspensionThreshold();
+        if (thresholdResult.isFailure) {
+            return Result.fail(thresholdResult.getError());
+        }
+        const reportThreshold = thresholdResult.getValue();
+
+        const shouldAutoSuspend =
+            sellerReportCount >= reportThreshold &&
+            userReportCount >= reportThreshold;
+
+        if (shouldAutoSuspend) {
+            const suspendResult = await this.applyAutoSuspension(
+                targetedUserResult.getValue(),
+                saveResult.getValue().getId(),
+                reportThreshold,
+            );
+            if (suspendResult.isFailure) {
+                return Result.fail(suspendResult.getError());
             }
-        });
-
-        const totalUserReports = previousReports.filter((report) => {
-            if (report.getReporterType() === FraudReporterType.USER) {
-                return report;
-            }
-        });
-
-        if (saveResult.isFailure) return Result.fail(saveResult.getError());
-
-        const isSuspentionNeeeded =
-            totalSellerReports.length === 3 && totalUserReports.length === 3;
-
-        const targetUser = targetedUserResult.getValue();
-        if (isSuspentionNeeeded) {
-            targetUser.setStatus(UserStatus.SUSPENDED);
-            await this._userRepository.save(targetUser);
         }
 
         const report = saveResult.getValue();
@@ -107,5 +146,53 @@ export class CreateFraudReportUsecase implements ICreateFraudReportUsecase {
             reviewedAt: report.getReviewedAt(),
             createdAt: report.getCreatedAt(),
         });
+    }
+
+    private async applyAutoSuspension(
+        targetedUser: User,
+        reportId: string,
+        reportThreshold: number,
+    ): Promise<Result<void>> {
+        if (targetedUser.getStatus() === UserStatus.SUSPENDED) {
+            return Result.ok();
+        }
+
+        const durationResult =
+            await this._systemConfigService.getFraudTemporarySuspensionDurationMs();
+        if (durationResult.isFailure) {
+            return Result.fail(durationResult.getError());
+        }
+
+        const startsAt = new Date();
+        const endsAt = new Date(startsAt.getTime() + durationResult.getValue());
+
+        const suspensionResult = UserSuspension.create({
+            id: this._idGeneratingService.generateId(),
+            userId: targetedUser.getId(),
+            reportId,
+            type: SuspensionType.TEMPORARY,
+            reason: `Auto suspension: ${reportThreshold}+ user and seller reports today`,
+            startsAt,
+            endsAt,
+            isActive: true,
+        });
+        if (suspensionResult.isFailure) {
+            return Result.fail(suspensionResult.getError());
+        }
+
+        const saveSuspensionResult = await this._suspensionRepository.create(
+            suspensionResult.getValue(),
+        );
+        if (saveSuspensionResult.isFailure) {
+            return Result.fail(saveSuspensionResult.getError());
+        }
+
+        targetedUser.suspend();
+        const saveUserResult = await this._userRepository.save(targetedUser);
+        if (saveUserResult.isFailure) {
+            return Result.fail(saveUserResult.getError());
+        }
+
+        return Result.ok();
     }
 }

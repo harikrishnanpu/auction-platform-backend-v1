@@ -23,7 +23,11 @@ export class MarkFraudReportUnderReviewUsecase implements IMarkFraudReportUnderR
         const report = reportResult.getValue();
         if (!report) return Result.fail('Fraud report not found');
 
-        report.markUnderReview();
+        const markResult = report.markUnderReview();
+        if (markResult.isFailure) {
+            return Result.fail(markResult.getError());
+        }
+
         const result = await this._fraudRepository.updateReport(report);
         if (result.isFailure) return Result.fail(result.getError());
         return Result.ok(null);
