@@ -1,6 +1,7 @@
 import { Result } from '@domain/shared/result';
 import { BinaryLike } from 'crypto';
 import { IsubcriptionWebhookEventHandleInputDto } from '../usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
+import { UserSubscription } from '@domain/entities/subscription/user-subscription.entity';
 
 export interface EnsureRazorpayCustomerInput {
     razorpayCustomerId: string | null;
@@ -33,6 +34,9 @@ export interface CreateRazorpayPlanInput {
 }
 
 export interface IRazorpaySubscriptionGatewayService {
+    findSubscriptionBySubscriptionId(
+        razorpaySubscriptionId: string,
+    ): Promise<Result<UserSubscription | null>>;
     getRazorpayCustomer(
         input: EnsureRazorpayCustomerInput,
     ): Promise<Result<{ customerId: string }>>;

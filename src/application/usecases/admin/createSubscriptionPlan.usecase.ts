@@ -42,8 +42,11 @@ export class CreateSubscriptionPlanUsecase implements ICreateSubscriptionPlanUse
         if (dto.isDefault) {
             const hasDefaultResult =
                 await this._subscriptionPlanRepository.findActiveDefault();
-            if (hasDefaultResult.isFailure)
+
+            if (hasDefaultResult.isFailure) {
                 return Result.fail(hasDefaultResult.getError());
+            }
+
             if (hasDefaultResult.getValue()) {
                 return Result.fail(
                     'Already a default subscription plan exists',

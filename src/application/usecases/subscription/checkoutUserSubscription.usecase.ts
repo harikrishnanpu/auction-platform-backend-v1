@@ -61,6 +61,37 @@ export class checkoutUserSubscriptionUsecase implements ICheckoutUserSubscriptio
                 return Result.fail('User is already subscribed to this plan');
             }
 
+            const razorpaySubscriptionId =
+                currentUserSubscription.getRazorpaySubscriptionId();
+
+            if (razorpaySubscriptionId) {
+                console.log(
+                    'razorpaySubscriptionId =---',
+                    razorpaySubscriptionId,
+                );
+
+                const razropayUserCurrSubscription =
+                    await this._razorpaySubscriptionGateway.findSubscriptionBySubscriptionId(
+                        razorpaySubscriptionId,
+                    );
+
+                if (razropayUserCurrSubscription.isFailure) {
+                    return Result.fail(razropayUserCurrSubscription.getError());
+                }
+
+                const razropayUserCurrSubscriptionEntity =
+                    razropayUserCurrSubscription.getValue();
+
+                if (
+                    razropayUserCurrSubscriptionEntity?.getSubscriptionPlanId() ===
+                    subscriptionPlanId
+                ) {
+                    return Result.fail(
+                        'user is already subscribed to this plan -- razorpay',
+                    );
+                }
+            }
+
             if (
                 currentUserSubscription.getSubscriptionPlanId() ===
                     subscriptionPlanId &&

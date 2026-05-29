@@ -9,6 +9,10 @@ import { Result } from '@domain/shared/result';
 import Razorpay from 'razorpay';
 import crypto, { BinaryLike } from 'crypto';
 import { IsubcriptionWebhookEventHandleInputDto } from '@application/interfaces/usecases/webhooks/IRazpSubscriptionWebhookhandlerUsecase';
+import { UserSubscription } from '@domain/entities/subscription/user-subscription.entity';
+import { TYPES } from '@di/types.di';
+import { IUserSubscriptionRepository } from '@domain/repositories/IUserSubscriptionRepository';
+import { inject, injectable } from 'inversify';
 
 // type RazorpayCustomer = {
 //     id: string;
@@ -16,11 +20,51 @@ import { IsubcriptionWebhookEventHandleInputDto } from '@application/interfaces/
 //     email?: string;
 //   };
 
+// ubscriptions =--- {
+//     id: 'sub_SqIW2j7mkQ8vWS',
+//     entity: 'subscription',
+//     plan_id: 'plan_SpWDrvQiSfTq1x',
+//     customer_id: null,
+//     customer_email: null,
+//     customer_contact: null,
+//     status: 'created',
+//     current_start: null,
+//     current_end: null,
+//     ended_at: null,
+//     quantity: 1,
+//     notes: {
+//       userSubscriptionId: '6b235d65-b82e-475c-827a-ad3b8eaeed68',
+//       userId: '4a3b3c66-9e4a-4bfa-8872-c5c41c12353e',
+//       appSubscriptionPlanId: '7fe77175-ac25-4db2-aa7f-c5f6d8a53c62'
+//     },
+//     charge_at: null,
+//     start_at: null,
+//     end_at: null,
+//     auth_attempts: 0,
+//     total_count: 12,
+//     paid_count: 0,
+//     customer_notify: true,
+//     created_at: 1778991718,
+//     expire_by: null,
+//     short_url: 'https://rzp.io/rzp/Gfsg2FT',
+//     has_scheduled_changes: false,
+//     change_scheduled_at: null,
+//     source: 'api',
+//     payment_method: null,
+//     offer_id: null,
+//     halted_at: null,
+//     remaining_count: 11
+//   }
+
+@injectable()
 export class RazorpaySubscriptionGatewayService implements IRazorpaySubscriptionGatewayService {
     private readonly _razorpay: Razorpay;
     private readonly _webhookSecret: string;
 
-    constructor() {
+    constructor(
+        @inject(TYPES.IUserSubscriptionRepository)
+        private readonly _userSubscriptionRepository: IUserSubscriptionRepository,
+    ) {
         const keyId = process.env.RAZORPAY_KEY_ID ?? '';
         const keySecret = process.env.RAZORPAY_KEY_SECRET ?? '';
         this._webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET ?? '';
@@ -33,6 +77,49 @@ export class RazorpaySubscriptionGatewayService implements IRazorpaySubscription
             key_id: keyId,
             key_secret: keySecret,
         });
+    }
+
+    async findSubscriptionBySubscriptionId(
+        razorpaySubscriptionId: string,
+    ): Promise<Result<UserSubscription | null>> {
+        try {
+            console.log('razorpaySubscriptionId =---', razorpaySubscriptionId);
+
+            const subscriptions = await this._razorpay.subscriptions.fetch(
+                razorpaySubscriptionId,
+            );
+
+            console.log('subscriptions =---', subscriptions);
+
+            const isActive =
+                subscriptions.paid_count >= 1 &&
+                (subscriptions.status === 'active' ||
+                    subscriptions.status === 'created');
+
+            if (!isActive) {
+                return Result.ok(null);
+            }
+
+            const dbSubscription =
+                await this._userSubscriptionRepository.findByRazorpaySubscriptionId(
+                    razorpaySubscriptionId,
+                );
+
+            if (dbSubscription.isFailure) {
+                return Result.fail(dbSubscription.getError());
+            }
+
+            const dbSubscriptionEntity = dbSubscription.getValue();
+
+            if (!dbSubscriptionEntity) {
+                return Result.ok(null);
+            }
+
+            return Result.ok(dbSubscriptionEntity);
+        } catch (err) {
+            console.log(err);
+            return Result.fail('Razorpay subscription find error');
+        }
     }
 
     async getRazorpayCustomer(

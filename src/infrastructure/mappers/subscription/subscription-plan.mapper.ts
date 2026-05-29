@@ -85,8 +85,6 @@ export class SubscriptionPlanMapper implements IDbMapper<
             updatedAt: entity.getUpdatedAt(),
             features: entity.getFeatures().map((planFeature) => ({
                 id: planFeature.getId(),
-                subscriptionPlanId: planFeature.getSubscriptionPlanId(),
-                featureId: planFeature.getFeatureId(),
                 value: planFeature.getValue(),
                 createdAt: entity.getCreatedAt(),
                 updatedAt: entity.getUpdatedAt(),

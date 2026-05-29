@@ -36,6 +36,8 @@ export class PrismaSubscriptionPlanRepository
             plan,
         ) as PrismaSubscriptionPlanWithFeatures;
 
+        console.log(persistence);
+
         const rawRes = await this._prisma.subscriptionPlan.upsert({
             where: { id: persistence.id },
             create: {

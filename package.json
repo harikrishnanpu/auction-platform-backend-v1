@@ -16,7 +16,9 @@
     "db:migrate": "prisma migrate deploy",
     "db:seed": "npm run seed:all",
     "db:admin": "tsx scripts/admin.create.ts",
-    "db:setup": "npm run db:generate && npm run db:migrate && npm run db:seed && npm run db:admin"
+    "db:setup": "npm run db:generate && npm run db:migrate && npm run db:seed && npm run db:admin",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -98,6 +100,7 @@
     "tsc-alias": "^1.8.16",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vitest": "^4.1.7"
   }
 }
