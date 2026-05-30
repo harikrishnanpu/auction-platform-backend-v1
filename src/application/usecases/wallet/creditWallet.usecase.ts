@@ -35,6 +35,9 @@ export class CreditWalletUsecase implements ICreditWalletUsecase {
 
         if (!wallet) return Result.fail('Wallet not found');
 
+        if (input.amount <= 0)
+            return Result.fail('Amount must be greater than 0');
+
         const walletTransaction = WalletTransaction.create({
             id: this._idGeneratingService.generateId(),
             walletId: wallet.getId(),

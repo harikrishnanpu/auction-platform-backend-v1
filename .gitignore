@@ -8,3 +8,5 @@ dist
 
 sample
 /chroma
+
+coverage/

@@ -2,49 +2,59 @@ import { AuthProviderType } from '@domain/entities/user/user.entity';
 import { Result } from '@domain/shared/result';
 
 export class AuthProvider {
-  private constructor(
-    private readonly type: AuthProviderType,
-    private readonly providerId: string | null,
-    private readonly passwordHash?: string,
-  ) {
-    if (type === AuthProviderType.LOCAL && !passwordHash) {
-      Result.fail('Password hash is required for local auth provider');
+    private constructor(
+        private readonly type: AuthProviderType,
+        private readonly providerId: string | null,
+        private readonly passwordHash?: string,
+    ) {
+        if (type === AuthProviderType.LOCAL && !passwordHash) {
+            Result.fail('Password hash is required for local auth provider');
+        }
+
+        if (type === AuthProviderType.GOOGLE && !providerId) {
+            Result.fail('Provider id is required for google auth provider');
+        }
     }
 
-    if (type === AuthProviderType.GOOGLE && !providerId) {
-      Result.fail('Provider id is required for google auth provider');
-    }
-  }
-
-  public static createLocal(passwordHash: string): Result<AuthProvider> {
-    return Result.ok(
-      new AuthProvider(AuthProviderType.LOCAL, null, passwordHash),
-    );
-  }
-
-  public static createOAuth(
-    type: AuthProviderType,
-    providerId: string,
-  ): AuthProvider {
-    if (type === AuthProviderType.LOCAL) {
-      Result.fail('Invalid auth provider type for OAuth');
+    public static createLocal(passwordHash: string): Result<AuthProvider> {
+        if (!passwordHash) {
+            return Result.fail(
+                'Password hash is required for local auth provider',
+            );
+        }
+        return Result.ok(
+            new AuthProvider(AuthProviderType.LOCAL, null, passwordHash),
+        );
     }
 
-    return new AuthProvider(type, providerId);
-  }
+    public static createOAuth(
+        type: AuthProviderType,
+        providerId: string,
+    ): Result<AuthProvider> {
+        if (type === AuthProviderType.LOCAL) {
+            return Result.fail('Invalid auth provider type for OAuth');
+        }
+        if (!providerId) {
+            return Result.fail(
+                'Provider id is required for google auth provider',
+            );
+        }
 
-  getType() {
-    return this.type;
-  }
-
-  getProviderId() {
-    return this.providerId;
-  }
-
-  getPasswordHash(): Result<string> {
-    if (this.type !== AuthProviderType.LOCAL) {
-      return Result.fail('user is not using local auth provider');
+        return Result.ok(new AuthProvider(type, providerId));
     }
-    return Result.ok(this.passwordHash!);
-  }
+
+    getType() {
+        return this.type;
+    }
+
+    getProviderId() {
+        return this.providerId;
+    }
+
+    getPasswordHash(): Result<string> {
+        if (this.type !== AuthProviderType.LOCAL) {
+            return Result.fail('user is not using local auth provider');
+        }
+        return Result.ok(this.passwordHash!);
+    }
 }

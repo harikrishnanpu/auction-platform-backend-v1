@@ -44,6 +44,9 @@ export class AuctionCategory {
         submittedBy: string;
         submittedByUser?: string;
     }): Result<AuctionCategory> {
+        if (!slug) {
+            return Result.fail('Auction category slug cannot be empty');
+        }
         return Result.ok(
             new AuctionCategory(
                 id,

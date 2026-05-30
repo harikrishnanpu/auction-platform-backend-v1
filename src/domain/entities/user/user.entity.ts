@@ -1,7 +1,6 @@
 import { Result } from '@domain/shared/result';
 import { AuthProvider } from '@domain/value-objects/auth-provider.vo';
 import { Email } from '@domain/value-objects/email.vo';
-import { Kyc } from '@domain/value-objects/kyc.vo';
 import { Phone } from '@domain/value-objects/phone.vo';
 import { UserRole } from '@domain/value-objects/user-roles.vo';
 
@@ -18,7 +17,6 @@ export enum UserStatus {
 
 export class User {
     private roles: Set<UserRole>;
-    private kyc?: Kyc;
     private status: UserStatus;
 
     private constructor(
@@ -34,11 +32,9 @@ export class User {
         status: UserStatus = UserStatus.ACTIVE,
         private userFraudLevel: number = 0,
         private razorpayCustomerId: string | null,
-        kyc?: Kyc,
     ) {
         this.roles = new Set(roles);
         this.status = status;
-        this.kyc = kyc;
     }
 
     public static create({
@@ -103,18 +99,6 @@ export class User {
 
     public removeRole(role: UserRole) {
         this.roles.delete(role);
-    }
-
-    public verifyKyc() {
-        if (!this.kyc) {
-            return Result.fail('no KYC submitted');
-        }
-
-        this.kyc = this.kyc.verify();
-    }
-
-    public submitKyc(documentId: string) {
-        this.kyc = new Kyc(false, documentId);
     }
 
     public hasRole(role: UserRole): boolean {

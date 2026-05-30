@@ -126,10 +126,14 @@ export class GoogleAuthUsecase implements IGoogleAuthUsecase {
 
         const userId = this._idGeneratingService.generateId();
 
-        const authProviderVo = AuthProvider.createOAuth(
+        const authProviderResult = AuthProvider.createOAuth(
             AuthProviderType.GOOGLE,
             data.googleId,
         );
+        if (authProviderResult.isFailure) {
+            return Result.fail(authProviderResult.getError());
+        }
+        const authProviderVo = authProviderResult.getValue();
 
         const newUserEntity = User.create({
             id: userId,

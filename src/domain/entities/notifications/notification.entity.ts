@@ -25,6 +25,9 @@ export class Notification {
         isRead?: boolean;
         isDelivered?: boolean;
     }): Result<Notification> {
+        if (!title || !title.trim()) {
+            return Result.fail('Notification title cannot be empty');
+        }
         return Result.ok(
             new Notification(id, title, message, userId, isRead, isDelivered),
         );

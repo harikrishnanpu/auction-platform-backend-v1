@@ -18,4 +18,17 @@ describe('Notification Domain Entity', () => {
         expect(notifResult.getValue().getIsRead()).toBe(false);
         expect(notifResult.getValue().getIsDelivered()).toBe(false);
     });
+
+    it('should fail to create a Notification entity if the title is not provided', () => {
+        const notifResult = Notification.create({
+            id: 'not-1',
+            title: '',
+            message: 'New message',
+            userId: 'user-123',
+        });
+        expect(notifResult.isSuccess).toBe(false);
+        expect(notifResult.getError()).toBe(
+            'Notification title cannot be empty',
+        );
+    });
 });

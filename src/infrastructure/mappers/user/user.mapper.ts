@@ -41,10 +41,15 @@ export class UserMapper implements IDbMapper<User, PrismaUserWithRoles> {
                 dbUser.password!,
             ).getValue();
         } else {
-            authProviderVo = AuthProvider.createOAuth(
+            const authProviderResult = AuthProvider.createOAuth(
                 AuthProviderType.GOOGLE,
                 dbUser.id,
             );
+
+            if (authProviderResult.isFailure) {
+                return Result.fail(authProviderResult.getError());
+            }
+            authProviderVo = authProviderResult.getValue();
         }
 
         const roles = new Set<UserRole>();
